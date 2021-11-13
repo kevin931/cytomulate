@@ -1,0 +1,7 @@
+# Python Cache Files 
+*.pyc
+*__pycache__
+*_cache
+
+# Local IDE Build Files
+*.vscode
