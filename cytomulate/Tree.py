@@ -24,5 +24,8 @@ class Tree:
         node_ids = [x.id for x in self.cell_types]
         self.edges = generate_random_tree(node_ids)
 
+
+
+
     def construct_paths(self):
         pass
