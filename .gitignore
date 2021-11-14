@@ -3,8 +3,11 @@
 *__pycache__
 *_cache
 
+# Pyton Build Files and Directory
+*.egg-info
+
 # CI: Testing and coverage
 *.coverage
 
-# Local IDE Build Files
+# Local IDE Files
 *.vscode

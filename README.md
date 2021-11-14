@@ -16,10 +16,17 @@ pytest-cov
 coverage
 ```
 
-To run our tests, we currently support the following:
+To run tests by installing the package which is recommended, we can do the following:
+
+```shell
+python setup.py develop 
+pytest . --cov
+```
+
+To run our tests on local files:
 
 ```shell
 python -m pytest . --cov
 ```
 
-If tests don't pass at this stage, it's okay. Kevin will be catching up on writing tests and talking with the team on what works and what not. The instructions will be updated shortly once the package is installable so that we can test accordingly.
+If tests don't pass at this stage, it's okay. Kevin will be catching up on writing tests and talking with the team on what works and what not. .
