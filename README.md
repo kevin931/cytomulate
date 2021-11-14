@@ -29,4 +29,13 @@ To run our tests on local files:
 python -m pytest . --cov
 ```
 
-If tests don't pass at this stage, it's okay. Kevin will be catching up on writing tests and talking with the team on what works and what not. .
+If tests don't pass at this stage, it's okay. Kevin will be catching up on writing tests and talking with the team on what works and what not.
+
+## CLI
+
+We do have a CLI now! To test how it works, run the following: 
+
+```shell
+python -m cytomulate --version
+python -m cytomulate -h
+```
