@@ -3,5 +3,8 @@
 *__pycache__
 *_cache
 
+# CI: Testing and coverage
+*.coverage
+
 # Local IDE Build Files
 *.vscode
