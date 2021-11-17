@@ -23,11 +23,18 @@ class Tree:
 
     def sketch_tree(self):
         """
-        Construct a tree structure out of the cell types
+        Construct the edges of the tree
+
         :return: a nested list
         """
         node_ids = [x.id for x in self.cell_types]
         self.edges = generate_random_tree(node_ids)
+
+    def sketch_family_tree(self):
+        """
+        Use the edges and the root to get parents and children
+
+        """
         # We then use breadth first search
         doing_list = [self.root]
         while len(doing_list) > 0:
@@ -42,9 +49,6 @@ class Tree:
                         child_cell.parent = parent_cell
                         doing_list.append(child_cell)
                         parent_cell.children.append(child_cell)
-
-
-
 
     def grow_tree(self):
         pass

@@ -22,6 +22,9 @@ class Forest:
     def __str__(self):
         return "Forest"
 
+    def generate_root_marker_patterns(self):
+        pass
+
     def assign_cell_types(self):
         nodes = rd.permutation(self.cell_types)
         dividing_points = [self.n_cell_types]
@@ -39,6 +42,7 @@ class Forest:
     def sketch_trees(self):
         for t in range(self.n_trees):
             self.trees[t].sketch_tree()
+            self.trees[t].sketch_family_tree()
 
     def grow_trees(self):
         for t in range(self.n_trees):

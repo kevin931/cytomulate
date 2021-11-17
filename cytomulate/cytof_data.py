@@ -3,6 +3,7 @@ import numpy as np
 from numpy import random as rd
 
 from cytomulate.forest import Forest
+from cytomulate.utilities import smooth_brownian_bridge
 
 
 class CytofData:
@@ -36,7 +37,9 @@ class CytofData:
         pass
 
     def generate_temporal_effect(self):
-        pass
+        for b in range(self.n_batches):
+            temporal_function = smooth_brownian_bridge(0, rd.normal(0, 0.1), N=5, sigma2=0.1)
+            self.temporal_effect.append(temporal_function)
 
     def generate_cell_type_proportions(self):
         # We use a Dirichlet distribution to generate

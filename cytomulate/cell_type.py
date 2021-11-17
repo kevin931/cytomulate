@@ -10,4 +10,5 @@ class CellType:
         self.children = []
         self.marker_pattern = np.zeros(n_markers)
         self.expression_level = np.zeros(n_markers)
+        self.variance_level = np.zeros(n_markers)
         self.gating_markers = []
