@@ -9,5 +9,8 @@
 # CI: Testing and coverage
 *.coverage
 
+# Documentation
+/docs/build
+
 # Local IDE Files
 *.vscode

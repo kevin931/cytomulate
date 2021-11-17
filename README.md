@@ -39,3 +39,20 @@ We do have a CLI now! To test how it works, run the following:
 python -m cytomulate --version
 python -m cytomulate -h
 ```
+
+## Build Documentation
+
+To build documentation locally, you will need the following packages:
+
+```
+sphinx
+sphix-rtd-theme
+```
+which are both available as python packages in both ``PyPI`` and ``conda``. To build locally, run the following commands:
+
+```shell
+cd docs
+make html
+```
+
+The automatic build process will create the ``/docs/build`` dictory, which contains all the local html files. You can open the documentation by opening ``/docs/build/html/index.html``. This whole directory is designed **not** to be tracked by Git as all such files are considered build artifacts.
