@@ -1,5 +1,5 @@
-from cell_type import CellType
-from tree import Tree
+from cytomulate.cell_type import CellType
+from cytomulate.tree import Tree
 
 
 class Forest:

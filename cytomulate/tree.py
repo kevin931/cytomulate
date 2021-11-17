@@ -2,8 +2,8 @@
 from numpy import random as rd
 
 # Tree and path generation
-from utilities import generate_random_tree
-from utilities import smooth_brownian_bridge
+from cytomulate.utilities import generate_random_tree
+from cytomulate.utilities import smooth_brownian_bridge
 
 
 class Tree:

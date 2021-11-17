@@ -2,7 +2,7 @@
 import numpy as np
 from numpy import random as rd
 
-from forest import Forest
+from cytomulate.forest import Forest
 
 
 class CytofData:
