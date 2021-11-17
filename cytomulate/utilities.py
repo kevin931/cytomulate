@@ -8,8 +8,8 @@ from copy import deepcopy
 
 
 def linear_function(start_value, end_value):
-    """
-    Generate a linear function
+    """ Generate a linear function
+    
     :param start_value: the starting value
     :param end_value: the ending value
     :return: a function that interpolate the two points
@@ -21,8 +21,8 @@ def linear_function(start_value, end_value):
 
 def smooth_brownian_bridge(start_value=0, end_value=0, \
                            N=5, sigma2=1):
-    """
-    Simulate a spline-smoothed brownian bridge
+    """Simulate a spline-smoothed brownian bridge
+    
     :param start_value: the starting value of the brownian bridge
     :param end_value: the ending value of the brownian bridge
     :param N: number of steps
@@ -48,8 +48,8 @@ def smooth_brownian_bridge(start_value=0, end_value=0, \
 
 
 def generate_prufer_sequence(node_ids):
-    """
-    Generate a Prufer sequence
+    """Generate a Prufer sequence
+    
     :param node_ids: an list or an array of IDs of nodes
     :return: a Prufer sequence
     """
@@ -58,8 +58,8 @@ def generate_prufer_sequence(node_ids):
 
 
 def generate_random_tree(node_ids=[], S=[]):
-    """
-    Generate a random tree given the nodes and a Prufer sequence
+    """Generate a random tree given the nodes and a Prufer sequence
+    
     :param node_ids: IDs of the nodes
     :param S: a Prufer sequence
     :return: a nested list whose elements are pairs of ids in ascending order
