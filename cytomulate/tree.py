@@ -37,8 +37,8 @@ class Tree:
                     child_cell_id = set(e) - {parent_cell.id}
                     if not (parent_cell.parent is None):
                         child_cell_id = child_cell_id - {parent_cell.parent.id}
-                    if len(child_cell_id) > 0:
-                        child_cell = self.find_cell_type_by_id(child_cell_id)
+                    if len(child_cell_id) == 1:
+                        child_cell = self.find_cell_type_by_id(child_cell_id.pop())
                         child_cell.parent = parent_cell
                         doing_list.append(child_cell)
                         parent_cell.children.append(child_cell)
