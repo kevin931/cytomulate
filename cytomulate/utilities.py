@@ -49,7 +49,6 @@ def smooth_brownian_bridge(start_value=0, end_value=0, \
 
 def generate_prufer_sequence(node_ids):
     """Generate a Prufer sequence
-    
     :param node_ids: an list or an array of IDs of nodes
     :return: a Prufer sequence
     """
@@ -57,13 +56,12 @@ def generate_prufer_sequence(node_ids):
     return S
 
 
-def generate_random_tree(node_ids=[], S=[]):
+def generate_random_tree(node_ids):
     """Generate a random tree given the nodes and a Prufer sequence
-    
     :param node_ids: IDs of the nodes
-    :param S: a Prufer sequence
     :return: a nested list whose elements are pairs of ids in ascending order
     """
+    S = generate_prufer_sequence(node_ids)
     nodes = deepcopy(node_ids)
     seq = deepcopy(S)
     nodes.sort()
