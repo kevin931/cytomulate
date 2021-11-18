@@ -14,4 +14,5 @@ Find Your Documentation
 .. toctree::
    :maxdepth: 1
 
+   change/index
    documentation/index

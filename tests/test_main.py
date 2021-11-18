@@ -1,4 +1,4 @@
-from cytomulate.__main__ import main, _Cli
+from cytomulate import __main__
 import cytomulate
 
 import argparse
@@ -8,15 +8,10 @@ import pytest
 from typing import List
 
 
-class TestCli():
-    
-    @classmethod
-    def setup_class(cls):
-        cls.arguments_parser: _Cli = _Cli()
-        
+class TestCli():    
         
     def test_parser_type(self):
-        assert isinstance(self.arguments_parser.parser, argparse.ArgumentParser)
+        assert isinstance(__main__.parser, argparse.ArgumentParser)
         
     
     # TODO: test_parse namespace
@@ -26,7 +21,7 @@ class TestCli():
                             [["-h"], ["--version"]])
     def test_version_system_exit(self, arguments):
         try:
-            self.arguments_parser.parse(arguments)
+            __main__.parser.parse_args(arguments)
         except SystemExit:
             assert True
         else:
@@ -43,7 +38,7 @@ class TestCli():
         sys.stdout = string_stdout
         
         try: 
-            self.arguments_parser.parse(arguments)
+            __main__.parser.parse_args(arguments)
         except SystemExit:
             output = string_stdout.getvalue()
             sys.stdout = screen_stdout
