@@ -47,6 +47,9 @@ To build documentation locally, you will need the following packages:
 ```
 sphinx
 sphix-rtd-theme
+sphinx-git
+sphinxcontrib-autoprogram
+sphinx-autodoc-typehints
 ```
 which are both available as python packages in both ``PyPI`` and ``conda``. To build locally, run the following commands:
 
