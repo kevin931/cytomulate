@@ -1,5 +1,6 @@
 # Math computation
 from numpy import random as rd
+from scipy.stats import truncnorm
 
 # List manipulation
 from copy import deepcopy
@@ -10,13 +11,15 @@ from cytomulate.utilities import smooth_brownian_bridge
 
 
 class Tree:
-    def __init__(self, id, name, cell_type_list, root):
+    def __init__(self, id, name, cell_type_list, root, high_expression, low_expression):
         self.id = id
         self.name = name
         self.cell_types = cell_type_list
         self.size = len(self.cell_types)
         self.root = root
         self.n_markers = len(self.root.marker_pattern)
+        self.high_expression = high_expression
+        self.low_expression = low_expression
         self.edges = []
         self.differentiation_paths = []
 
@@ -24,6 +27,13 @@ class Tree:
         for c in self.cell_types:
             if c.id == id:
                 return c
+
+    def find_edge_by_ids(self, id1, id2):
+        small_id = np.min([id1, id2])
+        big_id = np.max([id1, id2])
+        for e in self.edges:
+            if (e[0] == small_id) and (e[1] == big_id):
+                return e
 
     def sketch_tree(self):
         """
@@ -55,31 +65,56 @@ class Tree:
                         parent_cell.children.append(child_cell)
 
     def grow_tree(self):
+        p = 0.2
         # We will again use BFS to grow the tree
-        # We first generate marker patterns for all cell types
         doing_list = [self.root]
         while len(doing_list) > 0:
             parent_cell = doing_list.pop(0)
             for child_cell in parent_cell.children:
+
                 child_cell.marker_pattern = deepcopy(parent_cell.marker_patter)
                 child_cell.gating_markers = deepcopy(parent_cell.gating_markers)
-                # We get potential new gating markers
-                new_gating_markers = set(rd.choice(self.n_markers, 2, replace = False)) - \
-                    set(child_cell.gating_markers)
-                while len(new_gating_markers) > 0:
-                    temp = new_gating_markers.pop()
-                    child_cell.marker_pattern[temp] = -1 * child_cell.marker_pattern[temp] + 1
-                    child_cell.gating_markers.append(temp)
+                child_cell.expression_level = deepcopy(parent_cell.expression_level)
+                child_cell.variance_level = deepcopy(parent_cell.variance_level)
+
+                fickle_markers = set(range(self.n_markers)) - set(child_cell.gating_markers)
+                flip_markers = set(rd.choice(list(fickle_markers), int(p * len(fickle_markers))))
+
+                counter = 1
+
+                while len(fickle_markers) > 0:
+                    marker_id = fickle_markers.pop()
+                    if marker_id in flip_markers:
+                        child_cell.marker_pattern[marker_id] = -1 * child_cell.marker_pattern[marker_id] + 1
+                        if counter <= 2:
+                            child_cell.gating_markers.append(marker_id)
+                            counter += 1
+                    if child_cell.marker_pattern[marker_id] == 0:
+                        level = rd.choice(self.low_expression, 1)
+                    else:
+                        level = rd.choice(self.high_expression, 1)
+
+                    if level == 0:
+                        child_cell.expression_level[marker_id] = 0
+                        child_cell.variance_level[marker_id] = 0
+                    else:
+                        child_cell.expression_level[marker_id] = truncnorm.rvs(0, np.Inf, loc=level, scale=0.01, size=1)
+                        child_cell.variance_level[marker_id] = 1 / rd.gamma(100, 1 / 10, size=1)
+
+                e = self.find_edge_by_ids(parent_cell.id, child_cell.id)
+                differentiation_path = []
+                for marker_id in range(self.n_markers):
+                    if parent_cell.expression_level[marker_id] == child_cell.expression_level[marker_id]:
+                        differentiation_path.append(None)
+                    else:
+                        differentiation_path.append(smooth_brownian_bridge(0,\
+                                                                           child_cell.expression_level[marker_id] - \
+                                                                           parent_cell.expression_level[marker_id],N = 5,\
+                                                                           sigma2= 0.1))
+                self.differentiation_paths.append([e, differentiation_path])
+
                 doing_list.append(child_cell)
 
-        # Depending on the marker patterns
-        # we can construct expression levels
-        doing_list = [self.root]
-        while len(doing_list) > 0:
-            parent_cell = doing_list.pop(0)
-            for child_cell in parent_cell.children:
-                pass
 
-
-def visualize_tree(self):
+    def visualize_tree(self):
         pass
