@@ -21,19 +21,19 @@ class Tree:
         self.high_expression = high_expression
         self.low_expression = low_expression
         self.edges = []
-        self.differentiation_paths = []
+        # self.differentiation_paths = []
 
     def find_cell_type_by_id(self, id):
         for c in self.cell_types:
             if c.id == id:
                 return c
 
-    def find_edge_by_ids(self, id1, id2):
-        small_id = np.min([id1, id2])
-        big_id = np.max([id1, id2])
-        for e in self.edges:
-            if (e[0] == small_id) and (e[1] == big_id):
-                return e
+    # def find_edge_by_ids(self, id1, id2):
+    #     small_id = np.min([id1, id2])
+    #     big_id = np.max([id1, id2])
+    #     for e in self.edges:
+    #         if (e[0] == small_id) and (e[1] == big_id):
+    #             return e
 
     def sketch_tree(self):
         """
@@ -62,7 +62,7 @@ class Tree:
                         child_cell = self.find_cell_type_by_id(child_cell_id.pop())
                         child_cell.parent = parent_cell
                         doing_list.append(child_cell)
-                        parent_cell.children.append(child_cell)
+                        parent_cell.children.append([child_cell, []])
 
     def grow_tree(self):
         p = 0.2
@@ -70,8 +70,8 @@ class Tree:
         doing_list = [self.root]
         while len(doing_list) > 0:
             parent_cell = doing_list.pop(0)
-            for child_cell in parent_cell.children:
-
+            for child_list in parent_cell.children:
+                child_cell = child_list[0]
                 child_cell.marker_pattern = deepcopy(parent_cell.marker_patter)
                 child_cell.gating_markers = deepcopy(parent_cell.gating_markers)
                 child_cell.expression_level = deepcopy(parent_cell.expression_level)
@@ -101,20 +101,16 @@ class Tree:
                         child_cell.expression_level[marker_id] = truncnorm.rvs(0, np.Inf, loc=level, scale=0.01, size=1)
                         child_cell.variance_level[marker_id] = 1 / rd.gamma(100, 1 / 10, size=1)
 
-                e = self.find_edge_by_ids(parent_cell.id, child_cell.id)
-                differentiation_path = []
                 for marker_id in range(self.n_markers):
                     if parent_cell.expression_level[marker_id] == child_cell.expression_level[marker_id]:
-                        differentiation_path.append(None)
+                        child_list[1].append(None)
                     else:
-                        differentiation_path.append(smooth_brownian_bridge(0,\
-                                                                           child_cell.expression_level[marker_id] - \
-                                                                           parent_cell.expression_level[marker_id],N = 5,\
-                                                                           sigma2= 0.1))
-                self.differentiation_paths.append([e, differentiation_path])
+                        child_list[1].append(smooth_brownian_bridge(0,\
+                                               child_cell.expression_level[marker_id] - \
+                                               parent_cell.expression_level[marker_id],N = 5,\
+                                               sigma2= 0.1))
 
                 doing_list.append(child_cell)
-
 
     def visualize_tree(self):
         pass
