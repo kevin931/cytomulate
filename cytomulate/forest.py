@@ -23,9 +23,22 @@ class Forest:
         return "Forest"
 
     def generate_root_marker_patterns(self):
-        pass
+        p = 0.4
+        is_valid = False
+        while not is_valid:
+            # Each column of the matrix will be the marker
+            # pattern of a cell type
+            marker_pattern_matrix = rd.binomial(1, p, self.n_markers * self.n_trees).reshape((self.n_markers,\
+                                                                                              self.n_trees))
+            col_sum = np.sum(marker_pattern_matrix, axis = 0)
+            row_sum = np.sum(marker_pattern_matrix, axis = 1)
+            temp = np.unique(marker_pattern_matrix, axis = 1)
+            if np.any(col_sum > 0) and np.any(row_sum > 0) and (temp.shape[1] == marker_pattern_matrix.shape[1]):
+                is_valid = True
+        return marker_pattern_matrix
 
     def assign_cell_types(self):
+        marker_pattern_matrix = self.generate_root_marker_patterns()
         nodes = rd.permutation(self.cell_types)
         dividing_points = [self.n_cell_types]
         if self.n_trees > 1:
@@ -36,6 +49,8 @@ class Forest:
         for t in range(self.n_trees):
             cell_type_list = nodes[(dividing_points[t]):(dividing_points[t + 1])]
             root = rd.choice(cell_type_list, 1)
+            root.marker_patter = marker_pattern_matrix[:,t]
+            root.gating_markers = list(rd.choice(self.n_markers, 2, replace = False))
             tree = Tree(t, t, cell_type_list, root)
             self.trees.append(tree)
 

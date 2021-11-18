@@ -1,6 +1,9 @@
 # Math computation
 from numpy import random as rd
 
+# List manipulation
+from copy import deepcopy
+
 # Tree and path generation
 from cytomulate.utilities import generate_random_tree
 from cytomulate.utilities import smooth_brownian_bridge
@@ -13,6 +16,7 @@ class Tree:
         self.cell_types = cell_type_list
         self.size = len(self.cell_types)
         self.root = root
+        self.n_markers = len(self.root.marker_pattern)
         self.edges = []
         self.differentiation_paths = []
 
@@ -51,7 +55,31 @@ class Tree:
                         parent_cell.children.append(child_cell)
 
     def grow_tree(self):
-        pass
+        # We will again use BFS to grow the tree
+        # We first generate marker patterns for all cell types
+        doing_list = [self.root]
+        while len(doing_list) > 0:
+            parent_cell = doing_list.pop(0)
+            for child_cell in parent_cell.children:
+                child_cell.marker_pattern = deepcopy(parent_cell.marker_patter)
+                child_cell.gating_markers = deepcopy(parent_cell.gating_markers)
+                # We get potential new gating markers
+                new_gating_markers = set(rd.choice(self.n_markers, 2, replace = False)) - \
+                    set(child_cell.gating_markers)
+                while len(new_gating_markers) > 0:
+                    temp = new_gating_markers.pop()
+                    child_cell.marker_pattern[temp] = -1 * child_cell.marker_pattern[temp] + 1
+                    child_cell.gating_markers.append(temp)
+                doing_list.append(child_cell)
 
-    def visualize_tree(self):
+        # Depending on the marker patterns
+        # we can construct expression levels
+        doing_list = [self.root]
+        while len(doing_list) > 0:
+            parent_cell = doing_list.pop(0)
+            for child_cell in parent_cell.children:
+                pass
+
+
+def visualize_tree(self):
         pass
