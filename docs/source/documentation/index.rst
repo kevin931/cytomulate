@@ -12,6 +12,7 @@ Module Reference
 .. toctree::
    :maxdepth: 1
 
+   main
    cell_type
    cytof_data
    forest
