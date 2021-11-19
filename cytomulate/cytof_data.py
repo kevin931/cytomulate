@@ -62,5 +62,15 @@ class CytofData:
             expression_matrix = np.zeros((self.n_cells_per_batch[b], self.n_markers))
             for event in range(self.n_cells_per_batch[b]):
                 cell = self.forest.find_cell_type_by_id(cell_type_indices[event])
+                child_cell = rd.choice(cell.children, 1)
                 for marker_id in range(self.n_markers):
-                    pass
+                    mu = cell.expression_level[marker_id]
+                    sig2 = cell.variance_level[marker_id]
+                    pseudo_time = rd.beta(a=0.4, b=1, size=1)
+
+                    mu += child_cell[1](pseudo_time)
+
+                    expression_matrix[event, marker_id] = rd.normal(loc = mu, scale = np.sqrt(sig2), size = 1)
+
+            self.cytof_data["batch" + str(b)]["expression_matrix"] = expression_matrix
+

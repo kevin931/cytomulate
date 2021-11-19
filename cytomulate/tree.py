@@ -6,6 +6,7 @@ from scipy.stats import truncnorm
 from copy import deepcopy
 
 # Tree and path generation
+from cytomulate.cell_type import CellType
 from cytomulate.utilities import generate_random_tree
 from cytomulate.utilities import smooth_brownian_bridge
 
@@ -57,6 +58,13 @@ class Tree:
                         doing_list.append(child_cell)
                         parent_cell.children.append([child_cell, []])
 
+        # Then we find all the leaf nodes
+        # and add "shadow" cells
+        for cell in self.cell_types:
+            if len(cell.children) == 0:
+                shadow_cell = CellType(id = "_" + str(cell.id), name=str(cell.name)+"_shadow", n_markers=self.n_markers)
+                cell.children.append([shadow_cell, []])
+
     def inherit_marker_patterns(self):
         # We will again use BFS to grow the tree
         p = 0.2
@@ -65,21 +73,22 @@ class Tree:
             parent_cell = doing_list.pop(0)
             for child_list in parent_cell.children:
                 child_cell = child_list[0]
-                child_cell.marker_pattern = deepcopy(parent_cell.marker_patter)
+                child_cell.marker_pattern = deepcopy(parent_cell.marker_pattern)
                 child_cell.gating_markers = deepcopy(parent_cell.gating_markers)
 
-                fickle_markers = set(range(self.n_markers)) - set(child_cell.gating_markers)
-                flip_markers = set(rd.choice(list(fickle_markers), int(p * len(fickle_markers))))
+                if not isinstance(child_cell.id, str):
+                    fickle_markers = set(range(self.n_markers)) - set(child_cell.gating_markers)
+                    flip_markers = set(rd.choice(list(fickle_markers), int(p * len(fickle_markers))))
 
-                counter = 1
-                while len(fickle_markers) > 0:
-                    marker_id = fickle_markers.pop()
-                    if marker_id in flip_markers:
-                        child_cell.marker_pattern[marker_id] = -1 * child_cell.marker_pattern[marker_id] + 1
-                        if counter <= 2:
-                            child_cell.gating_markers.append(marker_id)
-                            counter += 1
-                doing_list.append(child_cell)
+                    counter = 1
+                    while len(fickle_markers) > 0:
+                        marker_id = fickle_markers.pop()
+                        if marker_id in flip_markers:
+                            child_cell.marker_pattern[marker_id] = -1 * child_cell.marker_pattern[marker_id] + 1
+                            if counter <= 2:
+                                child_cell.gating_markers.append(marker_id)
+                                counter += 1
+                    doing_list.append(child_cell)
 
     def inherit_expression_variance_levels(self):
         doing_list = [self.root]
@@ -89,23 +98,32 @@ class Tree:
                 child_cell = child_list[0]
                 child_cell.expression_level = deepcopy(parent_cell.expression_level)
                 child_cell.variance_level = deepcopy(parent_cell.variance_level)
-                for marker_id in range(self.n_markers):
+                if not isinstance(child_cell.id, str):
+                    # If it's not a shadow cell
+                    for marker_id in range(self.n_markers):
+                        if marker_id in parent_cell.gating_markers:
+                            continue
 
-                    if marker_id in parent_cell.gating_markers:
-                        continue
+                        if child_cell.marker_pattern[marker_id] == 0:
+                            level = rd.choice(self.low_expression, 1)
+                        else:
+                            level = rd.choice(self.high_expression, 1)
 
-                    if child_cell.marker_pattern[marker_id] == 0:
-                        level = rd.choice(self.low_expression, 1)
-                    else:
-                        level = rd.choice(self.high_expression, 1)
-
-                    if level == 0:
-                        child_cell.expression_level[marker_id] = 0
-                        child_cell.variance_level[marker_id] = 0
-                    else:
-                        child_cell.expression_level[marker_id] = truncnorm.rvs(0, np.Inf, loc=level, scale=0.01, size=1)
-                        child_cell.variance_level[marker_id] = 1 / rd.gamma(100, 1 / 10, size=1)
-                doing_list.append(child_cell)
+                        if level == 0:
+                            child_cell.expression_level[marker_id] = 0
+                            child_cell.variance_level[marker_id] = 0
+                        else:
+                            child_cell.expression_level[marker_id] = truncnorm.rvs(0, np.Inf, loc=level, scale=0.01, size=1)
+                            child_cell.variance_level[marker_id] = 1 / rd.gamma(100, 1 / 10, size=1)
+                    doing_list.append(child_cell)
+                else:
+                    # If it is a shadow cell
+                    for marker_id in range(self.n_markers):
+                        if marker_id in child_cell.gating_markers:
+                            continue
+                        if child_cell.expression_level[marker_id] != 0:
+                            child_cell.expression_level[marker_id] = truncnorm.rvs(-1 * child_cell.expression_level[marker_id],\
+                                                                                   np.Inf, loc=0, scale=0.01, size=1)
 
     def grow_branches(self):
         doing_list = [self.root]

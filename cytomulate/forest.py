@@ -60,7 +60,7 @@ class Forest:
         dividing_points = np.concatenate(([0], dividing_points))
         for t in range(self.n_trees):
             cell_type_list = nodes[(dividing_points[t]):(dividing_points[t + 1])]
-            root = rd.choice(cell_type_list, 1)
+            root = rd.choice(cell_type_list, 1)[0]
             root.variance_level = np.zeros(self.n_markers)
             root.marker_pattern = marker_pattern_matrix[:,t]
             root.gating_markers = list(rd.choice(self.n_markers, 2, replace = False))
