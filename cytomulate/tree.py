@@ -28,13 +28,6 @@ class Tree:
             if c.id == id:
                 return c
 
-    # def find_edge_by_ids(self, id1, id2):
-    #     small_id = np.min([id1, id2])
-    #     big_id = np.max([id1, id2])
-    #     for e in self.edges:
-    #         if (e[0] == small_id) and (e[1] == big_id):
-    #             return e
-
     def sketch_tree(self):
         """
         Construct the edges of the tree

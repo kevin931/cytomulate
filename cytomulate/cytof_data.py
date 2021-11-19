@@ -53,4 +53,5 @@ class CytofData:
         self.forest.grow_trees()
 
     def grow_leaves(self):
-        pass
+        for b in range(self.n_batches):
+            pass
