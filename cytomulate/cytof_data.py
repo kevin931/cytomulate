@@ -48,7 +48,10 @@ class CytofData:
                                                   self.n_batches)
 
     def grow_forest(self):
-        pass
+        self.forest.assign_cell_types()
+        self.forest.sketch_trees()
+        self.forest.grow_trees()
 
     def grow_leaves(self):
-        pass
+        for b in range(self.n_batches):
+            pass
