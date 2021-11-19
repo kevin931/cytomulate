@@ -6,3 +6,8 @@ cytomulate.utilities
 .. autofunction:: smooth_brownian_bridge
 .. autofunction:: generate_prufer_sequence
 .. autofunction:: generate_random_tree
+
+.. autoclass:: FileIO
+    :members:
+    :undoc-members:
+    :show-inheritance:

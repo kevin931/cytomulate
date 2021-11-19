@@ -109,10 +109,10 @@ class FileIO():
         :type col_names: bool
         :param drop_columns: Indicies of columns to drop (starts at 0), defaults to None
         :type drop_columns: bool, optional
-        :param delim: File delimiter, defaults to "\t"
+        :param delim: File delimiter, defaults to "\\t"
         :type delim: str
         :param dtype: Expression matrix data type (not including the col_names if applicable), defaults to float.
-        :type stype: float
+        :type stype: <class 'float'>
 
         :return: A list of two arrays with column names and expression matrix
         :rtype: List[np.ndarray]
