@@ -29,7 +29,9 @@ class CytofData:
 
         self.cytof_data = {}
         for b in range(self.n_batches):
-            self.cytof_data["batch" + str(b)] = np.zeros((self.n_cells_per_batch[b], self.n_markers))
+            self.cytof_data["batch" + str(b)] = {}
+            self.cytof_data["batch" + str(b)]["cell_type_indices"] = np.zeros(self.n_cells_per_batch[b])
+            self.cytof_data["batch" + str(b)]["expression_matrix"] = np.zeros((self.n_cells_per_batch[b], self.n_markers))
 
         self.forest = Forest(self.n_trees, self.n_cell_types, self.n_markers)
 
@@ -54,4 +56,11 @@ class CytofData:
 
     def grow_leaves(self):
         for b in range(self.n_batches):
-            pass
+            cell_type_indices = rd.choice(self.n_cell_types, self.n_cells_per_batch[b],\
+                                                replace=True, p=self.cell_type_proportions[b,:])
+            self.cytof_data["batch" + str(b)]["cell_type_indices"] = cell_type_indices
+            expression_matrix = np.zeros((self.n_cells_per_batch[b], self.n_markers))
+            for event in range(self.n_cells_per_batch[b]):
+                cell = self.forest.find_cell_type_by_id(cell_type_indices[event])
+                for marker_id in range(self.n_markers):
+                    pass

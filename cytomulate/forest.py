@@ -28,6 +28,12 @@ class Forest:
     def __str__(self):
         return "Forest"
 
+    def find_cell_type_by_id(self, id):
+        for c in self.cell_types:
+            if c.id == id:
+                return c
+
+
     def generate_root_marker_patterns(self):
         p = 0.4
         is_valid = False
