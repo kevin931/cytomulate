@@ -1,6 +1,10 @@
 # cytomulate
 CyTOF Simulation: When in doubt, cytomulate it!
 
+## Notice
+
+This package is currently under development! **All rights reserved** until an official project license is added by our team. For questions and permissions, please contact our team!
+
 ## Project Dashboard
 
 Check out our new [project dashboard](https://github.com/kevin931/cytomulate/projects/1). 
