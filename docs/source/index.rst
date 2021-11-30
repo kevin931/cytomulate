@@ -16,3 +16,13 @@ Find Your Documentation
 
    change/index
    documentation/index
+
+***********************
+Resources
+***********************
+
+For more resources on our labs, collaborators, and related projects, please visit the following:
+
+   * `Dr. Xinlei (Shery) Wang faculty page <https://people.smu.edu/swang/>`_
+   * `Dr. Tao Wang Lab <https://qbrc.swmed.edu/labs/wanglab/aboutpi.php>`_
+   * `Database for Actionable Immunology (DBAI) for more computational immunology-related tools <https://dbai.biohpc.swmed.edu/>`_
