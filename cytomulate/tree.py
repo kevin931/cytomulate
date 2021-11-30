@@ -6,6 +6,7 @@ from scipy.stats import truncnorm
 from copy import deepcopy
 
 # Tree and path generation
+import networkx as nx
 from cytomulate.cell_type import CellType
 from cytomulate.utilities import generate_random_tree
 from cytomulate.utilities import smooth_brownian_bridge
@@ -28,6 +29,9 @@ class Tree:
         for c in self.cell_types:
             if c.id == id:
                 return c
+
+    def MST(self):
+        pass
 
     def sketch_tree(self):
         """
@@ -147,4 +151,11 @@ class Tree:
         self.grow_branches()
 
     def visualize_tree(self):
-        pass
+        G = nx.Graph()
+        for cell in self.cell_types:
+            G.add_node(cell.id)
+        #     children = cell.children
+        #     for child in children:
+        #         if not isinstance(child[0].id, str):
+        #             G.add_edge(cell.id, child[0].id)
+        return G.number_of_nodes()

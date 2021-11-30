@@ -49,6 +49,10 @@ class CytofData:
         self.cell_type_proportions = rd.dirichlet(np.ones(self.n_cell_types),\
                                                   self.n_batches)
 
+    def cluster_data(self):
+        pass
+
+
     def grow_forest(self):
         self.forest.assign_cell_types()
         self.forest.sketch_trees()

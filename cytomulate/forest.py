@@ -52,14 +52,14 @@ class Forest:
     def assign_cell_types(self):
         marker_pattern_matrix = self.generate_root_marker_patterns()
         nodes = rd.permutation(self.cell_types)
-        dividing_points = [self.n_cell_types]
+        dividing_points = []
         if self.n_trees > 1:
-            temp = rd.choice(self.n_cell_types - 1, self.n_trees - 1, replace=False)
+            temp = rd.choice(range(1, self.n_cell_types), self.n_trees - 1, replace=False)
             temp.sort()
             dividing_points = np.concatenate((temp, dividing_points))
-        dividing_points = np.concatenate(([0], dividing_points))
+        dividing_points = np.concatenate(([0], dividing_points, [self.n_cell_types]))
         for t in range(self.n_trees):
-            cell_type_list = nodes[(dividing_points[t]):(dividing_points[t + 1])]
+            cell_type_list = nodes[int(dividing_points[t]):int(dividing_points[t + 1])]
             root = rd.choice(cell_type_list, 1)[0]
             root.variance_level = np.zeros(self.n_markers)
             root.marker_pattern = marker_pattern_matrix[:,t]
