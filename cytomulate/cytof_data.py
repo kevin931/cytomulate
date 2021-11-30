@@ -8,7 +8,19 @@ from cytomulate.utilities import smooth_brownian_bridge
 
 class CytofData:
     def __init__(self, n_batches, n_trees, n_cells_per_batch,\
-                 n_cell_types, n_markers):
+                 n_cell_types, n_markers, expression_matrix = None, \
+                 cell_type_indicator = None):
+
+        if expression_matrix is None:
+            self.simulation_mode = "Data"
+        else:
+            self.simulation_mode = "Model"
+
+        self.background_noise_level = None
+
+        self.expression_matrix = expression_matrix
+        self.cell_type_indicator = cell_type_indicator
+
         self.n_markers = n_markers
         self.n_cell_types = n_cell_types
 
@@ -33,7 +45,50 @@ class CytofData:
             self.cytof_data["batch" + str(b)]["cell_type_indices"] = np.zeros(self.n_cells_per_batch[b])
             self.cytof_data["batch" + str(b)]["expression_matrix"] = np.zeros((self.n_cells_per_batch[b], self.n_markers))
 
+        self.forest = None
+
+    def initialize_cell_types(self, **kwargs):
+        """
+        If the simulation_mode is data,
+        and if cell types are not provided  this function performs a clustering
+        on the data, fills in the cell type indicator and initialize the cell types
+        If cell types are provided, or the simulation mode is Model
+        this function simply initializes cell type objects
+        :param kwargs:
+        :return: a partition of the data_set
+        """
+        pass
+
+    def get_markers_pattern_and_background_noise_level(self):
+        """
+        If the simulation_mode is Data then this function
+        uses the results of the clustering to estimate the
+        background noise level as well as the markers pattern
+        for each cell type
+        Otherwise, the user needs to provide one
+        :return:
+        """
+        pass
+
+    def initialize_cell_type_models(self):
+        """
+        This function uses the markers pattern information
+        and the clustering result to fit a Gaussian Mixture
+        to each cell type
+        The results will be biased. We will adjust them once we
+        have the tree structure 
+        :return:
+        """
+        pass
+
+    def grow_forest(self):
         self.forest = Forest(self.n_trees, self.n_cell_types, self.n_markers)
+        self.forest.assign_cell_types()
+        self.forest.sketch_trees()
+        self.forest.grow_trees()
+
+
+
 
     def generate_batch_effect(self):
         pass
@@ -49,14 +104,8 @@ class CytofData:
         self.cell_type_proportions = rd.dirichlet(np.ones(self.n_cell_types),\
                                                   self.n_batches)
 
-    def cluster_data(self):
-        pass
 
 
-    def grow_forest(self):
-        self.forest.assign_cell_types()
-        self.forest.sketch_trees()
-        self.forest.grow_trees()
 
     def grow_leaves(self):
         for b in range(self.n_batches):
