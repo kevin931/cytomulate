@@ -1,4 +1,5 @@
 # Math computation
+import numpy as np
 from numpy import random as rd
 from scipy.stats import truncnorm
 
@@ -7,22 +8,29 @@ from copy import deepcopy
 
 # Tree and path generation
 import networkx as nx
+from networkx.algorithms import tree
 from cytomulate.cell_type import CellType
 from cytomulate.utilities import generate_random_tree
 from cytomulate.utilities import smooth_brownian_bridge
 
 
 class Tree:
-    def __init__(self, id, name, cell_type_list, root, high_expression, low_expression):
+    def __init__(self, id, name, cell_type_list, root, high_expression, low_expression,\
+                 cell_types = {}, simulation_mode = None):
         self.id = id
         self.name = name
-        self.cell_types = cell_type_list
+        # self.cell_types = cell_type_list
         self.size = len(self.cell_types)
         self.root = root
         self.n_markers = len(self.root.marker_pattern)
         self.high_expression = high_expression
         self.low_expression = low_expression
         self.edges = []
+
+        self.cell_types = cell_types
+        self.simulation_mode = simulation_mode
+        self.graph = None
+        self.mst = None
         # self.differentiation_paths = []
 
     def find_cell_type_by_id(self, id):
@@ -30,8 +38,22 @@ class Tree:
             if c.id == id:
                 return c
 
+    def construct_complete_graph(self):
+        self.graph = nx.Graph()
+        for i in self.cell_types.keys():
+            for j in self.cell_types.keys():
+                if i != j:
+                    if self.simulation_mode == "Data":
+                        weight = np.linalg.norm(self.cell_types[i].overall_mean,\
+                                                self.cell_types[j].overall_mean)
+                        self.graph.add_edge(i, j, weight = weight)
+                    else:
+                        self.graph.add_edge(i, j, weight=1)
+
     def MST(self):
-        pass
+        # We can generate a random tree using Kruskal or Prim
+        # with a graph with equal weights
+        self.mst = tree.minimum_spanning_edges(self.graph, algorithm="kruskal", data=False)
 
     def sketch_tree(self):
         """

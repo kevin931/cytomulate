@@ -55,6 +55,9 @@ class CellType:
         # Gating markers will be a set of indices
         self.gating_markers = {}
 
+        self.overall_mean = None
+        self.overall_var = None
+
     def inherit_markers_pattern(self, mutation_probability = 0.2, \
                                 n_additional_gating_markers = 2):
         if len(self.parent_cell_type) == 0:
@@ -112,12 +115,12 @@ class CellType:
         :return:
         """
         initial_expressions = np.zeros((1, self.n_markers))
-        expressed = self.model_for_expressed_markers.sample(1)[0][0]
-        counter = 0
-        for m in range(self.n_markers):
-            if self.markers_pattern[0, m] != 0:
-                initial_expressions[0, m] = expressed[counter]
-                counter += 1
+        initial_expressions = self.model_for_expressed_markers.sample(1)[0][0]
+        # counter = 0
+        # for m in range(self.n_markers):
+        #     if self.markers_pattern[0, m] != 0:
+        #         initial_expressions[0, m] = expressed[counter]
+        #         counter += 1
         return initial_expressions
 
     def generate_final_expressions(self, differentiate = True, alpha = 0.4, beta = 1):

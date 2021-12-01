@@ -8,7 +8,7 @@ from cytomulate.tree import Tree
 
 
 class Forest:
-    def __init__(self, n_trees, n_cell_types, n_markers):
+    def __init__(self, n_trees, n_cell_types, n_markers, cell_types = {}):
         self.n_cell_types = n_cell_types
         self.n_trees = n_trees
         self.n_markers = n_markers

@@ -20,6 +20,8 @@ class CytofData:
 
         self.expression_matrix = expression_matrix
         self.cell_type_indicator = cell_type_indicator
+        self.cell_types = {}
+
 
         self.n_markers = n_markers
         self.n_cell_types = n_cell_types
@@ -76,7 +78,7 @@ class CytofData:
         and the clustering result to fit a Gaussian Mixture
         to each cell type
         The results will be biased. We will adjust them once we
-        have the tree structure 
+        have the tree structure
         :return:
         """
         pass
