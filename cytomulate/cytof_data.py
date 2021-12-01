@@ -2,6 +2,9 @@
 import numpy as np
 from numpy import random as rd
 
+from sklearn import cluster
+
+from cytomulate.cell_type import CellType
 from cytomulate.forest import Forest
 from cytomulate.utilities import smooth_brownian_bridge
 
@@ -11,7 +14,7 @@ class CytofData:
                  n_cell_types, n_markers, expression_matrix = None, \
                  cell_type_indicator = None):
 
-        if expression_matrix is None:
+        if expression_matrix is not None:
             self.simulation_mode = "Data"
         else:
             self.simulation_mode = "Model"
@@ -59,7 +62,24 @@ class CytofData:
         :param kwargs:
         :return: a partition of the data_set
         """
-        pass
+        if (self.simulation_mode == "Data") and (self.cell_type_indicator is None):
+            cluster_model = cluster.KMeans(**kwargs).fit(self.expression_matrix)
+            self.n_cell_types = np.max(cluster_model.labels_) + 1
+            for id in range(self.n_cell_types):
+                self.cell_types[id] = CellType(id = id, name= id, n_markers=self.n_markers)
+                self.cell_types[id].fit_model(dat = self.expression_matrix[cluster_model.labels_ == id, :])
+
+        elif (self.simulation_mode == "Data") and (self.cell_type_indicator is not None):
+            cell_type_names = np.unique(self.cell_type_indicator)
+            self.n_cell_types = len(cell_type_names)
+            for id in range(len(cell_type_names)):
+                self.cell_types[id] = CellType(id=id, name=cell_type_names[id], n_markers=self.n_markers)
+                self.cell_types[id].fit_model(dat=self.expression_matrix[cell_type_names == cell_type_names[id], :])
+
+        else:
+            for id in range(self.n_cell_types):
+                self.cell_types[id] = CellType(id = id, name= id, n_markers=self.n_markers)
+
 
     def get_markers_pattern_and_background_noise_level(self):
         """

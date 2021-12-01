@@ -55,8 +55,9 @@ class CellType:
         # Gating markers will be a set of indices
         self.gating_markers = {}
 
-        self.overall_mean = None
-        self.overall_var = None
+        self.overall_mean = np.zeros((1, n_markers))
+        self.overall_var = np.zeros((n_markers, n_markers))
+        self.background_noise_level = None
 
     def inherit_markers_pattern(self, mutation_probability = 0.2, \
                                 n_additional_gating_markers = 2):
@@ -88,8 +89,21 @@ class CellType:
 
         self.model_for_expressed_markers = deepcopy(parent.model_for_expressed_markers)
 
-    def fit_model(self, dat = None):
-        self.model_for_expressed_markers = GaussianMixture(n_components = 4, random_state = 0).fit(dat)
+    def fit_model(self, dat = None, max_n_components = 9, min_n_components = 1):
+        best_model = GaussianMixture(n_components = max_n_components, covariance_type = "diag").fit(dat)
+        best_bic = best_model.bic(dat)
+        for n_comp in range(min_n_components, max_n_components):
+            temp_model = GaussianMixture(n_components = n_comp, covariance_type = "diag").fit(dat)
+            temp_bic = temp_model.bic(dat)
+            if temp_bic < best_bic:
+                best_model = temp_model
+                best_bic = temp_bic
+        self.model_for_expressed_markers = best_model
+
+        self.overall_mean = self.model_for_expressed_markers.weights_.dot(self.model_for_expressed_markers.means_)
+        self.overall_var = None
+
+
 
     def generate_from_paths(self, child_id, alpha = 0.4, beta = 1):
         """
