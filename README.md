@@ -1,5 +1,12 @@
+![Logo](/assets/cytomulate.jpg)
+
 # cytomulate
-CyTOF Simulation: When in doubt, cytomulate it!
+> A simulation package for Cytometry by Time-of-Flight (CyTOF)
+
+| Branch | Release | CI/CD | Documentation | Code Coverage |
+| --- | --- | --- | --- | --- |
+| main | ![Badge1](https://img.shields.io/badge/Version-PreRelease-success) | ![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=main) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/main/?badge=main) | [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/main/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
+| dev | ![Badge1](https://img.shields.io/badge/Version-PreRelease-success) |![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=dev) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/dev/?badge=dev) | [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
 
 ## Notice
 
@@ -24,13 +31,13 @@ To run tests by installing the package which is recommended, we can do the follo
 
 ```shell
 python setup.py develop 
-pytest . --cov
+pytest --cov cytomulate
 ```
 
 To run our tests on local files:
 
 ```shell
-python -m pytest . --cov
+python -m pytest --cov cytomulate
 ```
 
 If tests don't pass at this stage, it's okay. Kevin will be catching up on writing tests and talking with the team on what works and what not.
@@ -46,20 +53,4 @@ python -m cytomulate -h
 
 ## Build Documentation
 
-To build documentation locally, you will need the following packages:
-
-```
-sphinx
-sphix-rtd-theme
-sphinx-git
-sphinxcontrib-autoprogram
-sphinx-autodoc-typehints
-```
-which are both available as python packages in both ``PyPI`` and ``conda``. To build locally, run the following commands:
-
-```shell
-cd docs
-make html
-```
-
-The automatic build process will create the ``/docs/build`` dictory, which contains all the local html files. You can open the documentation by opening ``/docs/build/html/index.html``. This whole directory is designed **not** to be tracked by Git as all such files are considered build artifacts.
+The documentation is built automatically on the cloud. Upon update, please check [our website](https://cytomulate.readthedocs.io/)!
