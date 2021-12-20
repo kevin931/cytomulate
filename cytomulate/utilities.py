@@ -11,53 +11,66 @@ import _csv
 import csv
 import os
 
-from typing import Union, Optional, Any, List
+from typing import Union, Optional, Any, List, Callable
 
 
-def linear_function(start_value, end_value):
+def linear_function(start_value: Union[int, float], end_value: Union[int, float]) -> Callable[[Union[int, float]], Union[int, float]]:
     """ Generate a linear function
     
     :param start_value: the starting value
     :param end_value: the ending value
-    :return: a function that interpolate the two points
+    :return: a linear function (line segment) that interpolate the two points
     """
-    def line_segment(t):
+    def line_segment(t: Union[int, float]) -> Union[int, float]:
         return start_value + t * (end_value - start_value)
     return line_segment
 
 
-def smooth_brownian_bridge(start_value=0, end_value=0, \
-                           N=5, sigma2=1):
+def smooth_brownian_bridge(start_value: Union[int, float]=0, end_value: Union[int, float]=0, \
+                           N: int=5, sigma2: Union[int, float]=1
+                           ) -> Union[Akima1DInterpolator, Callable[[Union[int, float]], Union[int, float]]]:
     """Simulate a spline-smoothed brownian bridge
     
     :param start_value: the starting value of the brownian bridge
+    :type start_value: Union[int, float]
     :param end_value: the ending value of the brownian bridge
+    :type end_value: Union[int, float]
     :param N: number of steps
+    :type N: int
     :param sigma2: variance
+    :type sigma2: Union[int, float]
+    
     :return: a spline function defined on interval [0,1]
+    :rtype: Union[Akima1DInterpolator, Callable[[Union[int, float]], Union[int, float]]]
+    
+    .. Note:: When the variance ``sigma2`` is 0, a linear function is returned.
     """
     if sigma2 > 0:
-        t_interval = np.linspace(0, 1, num=N, endpoint=True)
-        delta = 1 / (N - 1)
+        t_interval: "np.ndarray" = np.linspace(0, 1, num=N, endpoint=True)
+        delta: float = 1 / (N - 1)
         # We first generate a Wiener process
-        wiener_process = rd.normal(0, np.sqrt(sigma2), N - 1) * np.sqrt(delta)
+        wiener_process: "np.ndarray" = rd.normal(0, np.sqrt(sigma2), N - 1) * np.sqrt(delta)
         wiener_process = np.cumsum(wiener_process)
         wiener_process = np.concatenate(([0], wiener_process))
         # Then we can construct a Brownian bridge
-        brownian_bridge = np.array([start_value + wiener_process[i] - \
-                                    t_interval[i] * (wiener_process[N - 1] - end_value + start_value) \
-                                    for i in range(N)])
+        brownian_bridge: "np.ndarray" = np.array([start_value + wiener_process[i] - \
+                                                 t_interval[i] * (wiener_process[N - 1] - end_value + start_value) \
+                                                 for i in range(N)])
         # Akima spline to interpolate
-        spline_function = Akima1DInterpolator(t_interval, brownian_bridge)
+        spline_function: Akima1DInterpolator = Akima1DInterpolator(t_interval, brownian_bridge)
         return spline_function
     else:
         return linear_function(start_value, end_value)
 
 
-def generate_prufer_sequence(node_ids):
+def generate_prufer_sequence(node_ids: Union[List[int], "np.ndarray"]) -> "np.ndarray":
     """Generate a Prufer sequence
-    :param node_ids: an list or an array of IDs of nodes
+    
+    :param node_ids: an list or an array of integer IDs of nodes. Minimum length is 2.
+    :type node_ids: Union[List[int], "np.ndarray"]
+    
     :return: a Prufer sequence
+    :rtype: np.ndarray
     """
     if len(node_ids) < 2:
         raise ValueError("At least 2 nodes needed for a prufer sequence.")
@@ -66,26 +79,30 @@ def generate_prufer_sequence(node_ids):
     return S
 
 
-def generate_random_tree(node_ids):
+def generate_random_tree(node_ids: Union[List[int], "np.ndarray"]) -> List[List[int]]:
     """Generate a random tree given the nodes and a Prufer sequence
+    
     :param node_ids: IDs of the nodes
+    :type node_ids: Union[List[int], "np.ndarray"]
+    
     :return: a nested list whose elements are pairs of ids in ascending order
+    :rtype: List[List[int]]
     """
-    S = generate_prufer_sequence(node_ids)
-    nodes = deepcopy(node_ids)
-    seq = deepcopy(S)
+    S: "np.ndarray" = generate_prufer_sequence(node_ids)
+    nodes: Union[List[int], "np.ndarray"] = deepcopy(node_ids)
+    seq: "np.ndarray" = deepcopy(S)
     nodes.sort()
-    edges = []
+    edges: List[List[int]] = []
     while len(seq) > 0:
         # We find the smallest element in nodes that is
         # not in the Prufer sequence
         # Since it's already sorted, we simply iterate thru the nodes
-        counter = 0
+        counter: int = 0
         while counter < len(nodes):
             if nodes[counter] not in seq:
                 break
             counter += 1
-        temp = [nodes[counter], seq[0]]
+        temp: List[int] = [nodes[counter], seq[0]]
         temp.sort()
         edges.append(temp)
         nodes = np.delete(nodes, counter)
@@ -144,7 +161,7 @@ class FileIO():
     
     
     @staticmethod
-    def save_2d_list_to_csv(data: List[List[Any]], path: str):
+    def save_2d_list_to_csv(data: List[List[Any]], path: str, overwrite: bool = False):
         """Save a nested list to a CSV file.
 
         :param data: The nested list to be written to disk
@@ -159,7 +176,7 @@ class FileIO():
             raise FileExistsError()
         
         i: int
-        j: int   
+        j: int
         
         with open(path, "w") as f:      
             w: "_csv._writer" = csv.writer(f)
