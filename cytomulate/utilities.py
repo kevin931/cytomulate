@@ -59,7 +59,10 @@ def generate_prufer_sequence(node_ids):
     :param node_ids: an list or an array of IDs of nodes
     :return: a Prufer sequence
     """
-    S = rd.choice(node_ids, size=len(node_ids) - 2, replace=True)
+    if len(node_ids) < 2:
+        raise ValueError("At least 2 nodes needed for a prufer sequence.")
+    
+    S: "np.ndarray" = rd.choice(node_ids, size=len(node_ids) - 2, replace=True)
     return S
 
 
@@ -148,7 +151,12 @@ class FileIO():
         :type data: List[List[Any]]
         :param path: Path to save the CSV file
         :type path: str
+        
+        ..note:: By default, this method does not overwrite existing files. In case a file exists,
+            a ``FileExistsError`` is thrown.
         """
+        if os.path.exists(path) and not overwrite:
+            raise FileExistsError()
         
         i: int
         j: int   
@@ -166,7 +174,8 @@ class FileIO():
     def save_np_array(array: "np.ndarray",
                       path: str,
                       col_names: Optional["np.ndarray"]=None,
-                      dtype: str="%.18e") -> None:
+                      dtype: str="%.18e",
+                      overwrite: bool = False) -> None:
         """Save a NumPy array to a plain text file
 
         :param array: The NumPy array to be saved
@@ -177,7 +186,13 @@ class FileIO():
         :type col_names: np.ndarray, optional
         :param dtype: NumPy data type, defaults to "%.18e"
         :type dtype: str, optional
+        
+        ..note:: By default, this method does not overwrite existing files. In case a file exists,
+            a ``FileExistsError`` is thrown.
         """
+        if os.path.exists(path) and not overwrite:
+            raise FileExistsError()
+            
         with open(path, "w") as f:
             if col_names is not None:
                 f.write("\t".join(list(map(str, col_names))))
