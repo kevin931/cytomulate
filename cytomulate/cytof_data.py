@@ -74,7 +74,7 @@ class CytofData:
             self.n_cell_types = len(cell_type_names)
             for id in range(len(cell_type_names)):
                 self.cell_types[id] = CellType(id=id, name=cell_type_names[id], n_markers=self.n_markers)
-                self.cell_types[id].fit_model(dat=self.expression_matrix[cell_type_names == cell_type_names[id], :])
+                self.cell_types[id].fit_model(dat=self.expression_matrix[self.cell_type_indicator == cell_type_names[id], :])
 
         else:
             for id in range(self.n_cell_types):
