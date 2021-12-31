@@ -6,14 +6,11 @@ import pytest
 from typing import List, Any, Union, Callable
 
 
-class TestFileIO():
+class TestCytofData():
     
     @classmethod
     def setup_class(cls):
         existing_data: "np.ndarray" = np.random.rand(3000, 35)
-        cell_type_indicator: List["np.ndarray"] = []
-        cell_type_indicator.append(np.repeat(list(range(15)), 100))
-        cell_type_indicator.append(np.repeat(list(range(15)), 200))
         cls.cytof_data_model: "cytomulate.cytof_data.CytofData"  = cytomulate.cytof_data.CytofData(n_batches=2,
                                                                                                    n_trees=5, 
                                                                                                    n_cells_per_batch=[1500, 3000],

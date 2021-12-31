@@ -8,9 +8,27 @@ from copy import deepcopy
 # Gaussian Mixtures
 from sklearn.mixture import GaussianMixture
 
+from typing import Union, Optional
+
 
 class CellType:
-    def __init__(self, id, name, n_markers):
+    """The Cell Type Class
+
+    This class the basis for all cells in our simulation. It stores all the relavant information for
+    the cell and computes the expressions for the cell.
+    """
+    def __init__(self, id: int, name: Union[str, int], n_markers: int):
+        """The CellType Class constructor
+
+        This constructor sets up the bare-minimum of a cell.
+
+        :param id: The ID of the cell
+        :type id: int
+        :param name: The name of the cell
+        :type name: Union[str, int]
+        :param n_markers: The number of markers
+        :type n_markers: int
+        """
         self.id = id
         self.name = name
         self.n_markers = n_markers
@@ -21,7 +39,7 @@ class CellType:
         self.expression_level = np.zeros(n_markers)
         self.variance_level = np.zeros(n_markers)
 
-        # parent_cell_type will be a dictionary on size 1
+        # parent_cell_type will be a dictionary of size 1
         # whose key is the id of the parent
         # and whose value is the actual CellType
         # object of the parent
@@ -53,16 +71,29 @@ class CellType:
         self.model_for_expressed_markers = None
 
         # Gating markers will be a set of indices
-        self.gating_markers = {}
+        self.gating_markers = set()
 
         self.overall_mean = np.zeros((1, n_markers))
         self.overall_var = np.zeros((n_markers, n_markers))
         self.background_noise_level = None
 
+
     def inherit_markers_pattern(self, mutation_probability = 0.2, \
                                 n_additional_gating_markers = 2):
+        """Inherit markers pattern from parent
+
+        If the cell is not a root, this method inherits the marker pattern
+        from the parent cell.
+
+        :param mutation_probability: The mutation probability of markers by flipping the marker pattern, defaults to 0.2
+        :type mutation_probability: float, optional
+        :raises Exception: This is the root cell without a parent
+        :raises ValueError: Mutation probability is not between 0 and 1
+        :raises ValueError: Marker number exceeds the number of remaining markers (not counting gating markers)
+        :raises ValueError: Marker numbers are not positive
+        """
+        
         if len(self.parent_cell_type) == 0:
-            # if this is the root
             raise Exception("This is the root.")
         if mutation_probability > 1 or mutation_probability < 0:
             raise ValueError("Mutation probability must be between 0 and 1.")
@@ -87,16 +118,37 @@ class CellType:
         new_gating_markers = set(rd.choice(list(fickle_markers), n_additional_gating_markers, False))
         self.gating_markers = self.gating_markers.union(new_gating_markers)
 
+
     def inherit_model(self):
+        """Inherit the model from the parent cell
+
+        If the cell is not the root, i.e. there is a parent cell, this model inherits
+        the Gaussian Mixture Model from the parent cell.
+
+        :raises Exception: This is the root cell without parent.
+        """
         if len(self.parent_cell_type) == 0:
             # if this is the root
             raise Exception("This is the root.")
         # Get the parent
         parent = list(self.parent_cell_type.values())[0]
-
         self.model_for_expressed_markers = deepcopy(parent.model_for_expressed_markers)
 
-    def fit_model(self, dat = None, max_n_components = 9, min_n_components = 1):
+
+    def fit_model(self, dat: Optional[np.ndarray] = None, max_n_components: int = 9, min_n_components: int = 1):
+        """Fit the Gaussian Mixture Model of the cell
+
+        For each cell, a Gaussian Mixture Model is used to act as the base for initial expression levels. 
+        This method fits a Gaussian Mixture Model with a range of components and the best model based on
+        BIC.
+
+        :param dat: The expression matrix for data-based simulation, defaults to None
+        :type dat: Optional[np.ndarray], optional
+        :param max_n_components: Maximum number of components, defaults to 9
+        :type max_n_components: int, optional
+        :param min_n_components: Minimum number of components, defaults to 1
+        :type min_n_components: int, optional
+        """
         best_model = GaussianMixture(n_components = max_n_components, covariance_type = "diag").fit(dat)
         best_bic = best_model.bic(dat)
         for n_comp in range(min_n_components, max_n_components):
@@ -111,14 +163,21 @@ class CellType:
         self.overall_var = None
 
 
-
-    def generate_from_paths(self, child_id, alpha = 0.4, beta = 1):
-        """
-        Generates an array of differential points that can be later on added to the true expression
+    def generate_from_paths(self, child_id: Union[str, int], alpha: float = 0.4, beta: float = 1) -> np.ndarray:
+        """Generates an array of differential points
+        
+        This array of differential points are used to simulation the differentiation path between
+        cell populations. These values are to be added to the original expressions to simulate the
+        final expressions.
+        
         :param child_id: ID of the child to differentiate to
-        :param alpha: alpha parameter in the Beta distribution
-        :param beta: beta parameter in the Beta distribution
+        :type child_id:
+        :param alpha: alpha parameter in the Beta distribution, defaults to 0.4
+        :type alpha: float
+        :param beta: beta parameter in the Beta distribution, defaults to to 1
+        :type float: float
         :return: an array of differential points
+        :rtype: np.ndarray
         """
         differential_paths = self.differential_paths_to_children[child_id]
         differential_points = np.zeros((1, self.n_markers))
@@ -130,11 +189,18 @@ class CellType:
                 differential_points[0, m] = path(pseudo_time)
         return differential_points
 
-    def generate_initial_expressions(self):
+
+    def generate_initial_expressions(self) -> np.ndarray:
+        """ Generates the initial expressions of the cell
+        
+        This method samples from the Gaussian Mixture Model stored in
+        ``model_for_expressed_markers``. The resulting expressions are
+        a 1-dimensional array with a value for each marker.
+        
+        :return: The initial expressions of the cell
+        :rtype: np.ndarray
         """
-        Generates
-        :return:
-        """
+        assert self.model_for_expressed_markers is not None
         initial_expressions = np.zeros((1, self.n_markers))
         initial_expressions = self.model_for_expressed_markers.sample(1)[0][0]
         # counter = 0
@@ -144,13 +210,23 @@ class CellType:
         #         counter += 1
         return initial_expressions
 
-    def generate_final_expressions(self, differentiate = True, alpha = 0.4, beta = 1):
-        """
-        Generates the final expression
-        :param differentiate: A boolean variable indicating if differentiation is being considered
-        :param alpha: alpha parameter in the Beta distribution
-        :param beta: beta parameter in the Beta distribution
+
+    def generate_final_expressions(self, differentiate: bool = True, alpha: float = 0.4, beta: float = 1) -> np.ndarray:
+        """ Generates the final expression of the cell
+        
+        The final expression of the cell takes differentiation into consideration. The values are generated
+        using the initial expressions as a starting point and add the differentiation path, which is
+        in turn generated by a Brownian Bridge or a linear function connecting the cell and its child node.
+        
+        :param differentiate: A boolean variable indicating if differentiation is being considered,
+            defaults to True
+        :type differentiate: bool
+        :param alpha: alpha parameter in the Beta distribution, defaults to 0.4
+        :type alpha: float
+        :param beta: beta parameter in the Beta distribution, defaults to 1
+        :type beta: float
         :return: An array of the final expressions
+        :rtype: np.ndarray
         """
         final_expressions = self.generate_initial_expressions()
         if differentiate:
