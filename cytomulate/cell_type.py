@@ -81,10 +81,10 @@ class CellType:
         # expression levels or even from 1 to 0
         fickle_markers = set(range(self.n_markers)) - self.gating_markers
         # flip markers are fickle markers that will flip from 0 to 1 and vice versa
-        flip_markers = set(rd.choice(list(fickle_markers), int(mutation_probability * len(fickle_markers))))
+        flip_markers = set(rd.choice(list(fickle_markers), int(mutation_probability * len(fickle_markers)), False))
         for m in flip_markers:
             self.markers_pattern[0, m] = -1 * self.markers_pattern[0, m] + 1
-        new_gating_markers = set(rd.choice(list(fickle_markers), n_additional_gating_markers))
+        new_gating_markers = set(rd.choice(list(fickle_markers), n_additional_gating_markers, False))
         self.gating_markers = self.gating_markers.union(new_gating_markers)
 
     def inherit_model(self):
