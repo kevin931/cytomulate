@@ -64,6 +64,13 @@ class CellType:
         if len(self.parent_cell_type) == 0:
             # if this is the root
             raise Exception("This is the root.")
+        if mutation_probability > 1 or mutation_probability < 0:
+            raise ValueError("Mutation probability must be between 0 and 1.")
+        if n_additional_gating_markers > self.n_markers - len(self.gating_markers):
+            raise ValueError("Maker number exceeds the number of remaining markers.")
+        if n_additional_gating_markers < 0:
+            raise ValueError("Marker number has to be positive.")
+        
         # Get the parent
         parent = list(self.parent_cell_type.values())[0]
         # simply copy the information needed
