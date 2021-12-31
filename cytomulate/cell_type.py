@@ -156,6 +156,6 @@ class CellType:
         if differentiate:
             children_ids = list(self.children_cell_types)
             child_id = rd.choice(children_ids, 1)[0]
-            differential_points = self.differential_paths_to_children(child_id, alpha, beta)
-            final_expressions += differential_points
+            differential_points = self.generate_from_paths(child_id, alpha, beta)
+            final_expressions += differential_points.reshape(self.n_markers, )
         return final_expressions
