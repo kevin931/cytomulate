@@ -1,9 +1,10 @@
 import cytomulate
 import numpy as np
+from sklearn.mixture import GaussianMixture
 
 import pytest
 
-from typing import List, Any, Union, Callable
+from typing import List, Any
 
 
 class TestCytofData():
@@ -134,26 +135,26 @@ class TestCytofData():
             
             
     def test_initialize_cell_types_data_types_given(self):
-        existing_data: "np.ndarray" = np.random.rand(500, 35)
-        cell_types: List[str] = ["a", "b", "c", "d", "e"]
+        existing_data: "np.ndarray" = np.random.rand(200, 35)
+        cell_types: List[str] = ["a", "b"]
         cell_type_indicator: "np.ndarray" = np.repeat(cell_types, 100)
         cytof_data_types_given: "cytomulate.cytof_data.CytofData"  = cytomulate.cytof_data.CytofData(n_batches=1,
                                                                                                      n_trees=2,
-                                                                                                     n_cells_per_batch=[500],
-                                                                                                     n_cell_types=5,
+                                                                                                     n_cells_per_batch=[200],
+                                                                                                     n_cell_types=2,
                                                                                                      n_markers=35,
                                                                                                      expression_matrix=existing_data,
                                                                                                      cell_type_indicator=cell_type_indicator)
         cytof_data_types_given.initialize_cell_types()
-        assert cytof_data_types_given.n_cell_types == 5
+        assert cytof_data_types_given.n_cell_types == 2
         for i in range(cytof_data_types_given.n_cell_types):
             assert isinstance(cytof_data_types_given.cell_types[i], cytomulate.cell_type.CellType)
             assert cytof_data_types_given.cell_types[i].id == i
             assert cytof_data_types_given.cell_types[i].name == cell_types[i]
             assert cytof_data_types_given.cell_types[i].n_markers == 35
+            assert isinstance(cytof_data_types_given.cell_types[i].model_for_expressed_markers, GaussianMixture)
             
             
-    ## TODO: Initialize cell types fit_model method 
     ## TODO: Fix the Forest class. Now, this is broken.    
     # def test_grow_forest(self):
     #     self.cytof_data_model.grow_forest()
