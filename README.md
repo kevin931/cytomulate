@@ -12,36 +12,6 @@
 
 This package is currently under development! **All rights reserved** until an official project license is added by our team. For questions and permissions, please contact our team!
 
-## Project Dashboard
-
-Check out our new [project dashboard](https://github.com/kevin931/cytomulate/projects/1). 
-
-## Unit Testing
-
-We will be using ``pytest`` for unit testing (talk to Kevin if this is an issue or if there are justifications for other solutions). Let's strive for 100% test coverage eventually! To get started, you will need to install the following packages:
-
-```
-pytest
-pytest-mock
-pytest-cov
-coverage
-```
-
-To run tests by installing the package which is recommended, we can do the following:
-
-```shell
-python setup.py develop 
-pytest --cov cytomulate
-```
-
-To run our tests on local files:
-
-```shell
-python -m pytest --cov cytomulate
-```
-
-If tests don't pass at this stage, it's okay. Kevin will be catching up on writing tests and talking with the team on what works and what not.
-
 ## CLI
 
 We do have a CLI now! To test how it works, run the following: 
@@ -51,6 +21,14 @@ python -m cytomulate --version
 python -m cytomulate -h
 ```
 
-## Build Documentation
+## Documentation
 
-The documentation is built automatically on the cloud. Upon update, please check [our website](https://cytomulate.readthedocs.io/)!
+For more detailed documentation on ``cytomulate``, please visit our [website](https://cytomulate.readthedocs.io/)! You will find detailed tutorials,
+guidelines, development guides, etc.
+
+Our documentation is built automatically on the cloud! If you wish to build locally, check our detailed guide [here](https://cytomulate.readthedocs.io/en/latest/documentation/build.html)!
+
+
+## Project Dashboard
+
+Check out our new [project dashboard](https://github.com/kevin931/cytomulate/projects/1). 
