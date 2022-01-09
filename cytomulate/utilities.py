@@ -134,7 +134,7 @@ class FileIO():
         :param dtype: Expression matrix data type (not including the col_names if applicable), defaults to float.
         :type stype: <class 'float'>
 
-        :return: A list of two arrays with column names and expression matrix
+        :return: A list of two arrays: The first is column names (could be None) and and the second is the expression matrix
         :rtype: List[np.ndarray]
         """
     
@@ -169,7 +169,9 @@ class FileIO():
         :param path: Path to save the CSV file
         :type path: str
         
-        ..note:: By default, this method does not overwrite existing files. In case a file exists,
+        ..note:: 
+        
+            By default, this method does not overwrite existing files. In case a file exists,
             a ``FileExistsError`` is thrown.
         """
         if os.path.exists(path) and not overwrite:
@@ -229,8 +231,10 @@ class FileIO():
         :return: The path to the new directory
         :rtype: str
         
-        .. Warning:: The ``add_number_if_dir_exists`` can be dangerously when this method is run inside
-            of a loop. This behavior may be removed in the future.
+        .. Warning:: 
+        
+            The ``add_number_if_dir_exists`` can be dangerous when this method is run inside
+            of a loop. This behavior may be deprecated and removed in the future.
         """
         dir_path = dir_path.rstrip("/")
         if _counter==0:
