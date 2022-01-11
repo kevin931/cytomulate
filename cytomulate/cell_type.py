@@ -60,7 +60,8 @@ class CellType:
 
         # We expect the markers_pattern to be a list of 1's and 0's
         self.markers_pattern = np.zeros((1, n_markers))
-
+        self.expressed_markers = None
+        self.unexpressed_markers = None
         # We will use Gaussian Mixture to model or learn
         # the expression of this CellType
         # Consequently, there will be no need for
@@ -69,12 +70,12 @@ class CellType:
         # We expect the class of this field
         # to be sklearn.mixture._gaussian_mixture.GaussianMixture
         self.model_for_expressed_markers = None
-
+        self.model_for_unexpressed_markers = None
         # Gating markers will be a set of indices
         self.gating_markers = set()
 
         self.overall_mean = np.zeros((1, n_markers))
-        self.overall_var = np.zeros((n_markers, n_markers))
+        self.overall_cov = np.zeros((n_markers, n_markers))
         self.background_noise_level = None
 
 
