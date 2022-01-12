@@ -14,6 +14,8 @@ from scipy.stats import gaussian_kde
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 import networkx as nx
+from networkx.algorithms import tree
+from networkx.algorithms.community import greedy_modularity_communities
 
 temp = FileIO()
 
@@ -47,15 +49,44 @@ for c_type in unique_labels:
     id += 1
 
 # If cell differentiation is sought after
-# We use gaussian mixture to perform a meta cluster on the overall means
+# We will use the overall means of the each cell type
+# to find pairwise distances
+# Then we will construct a weighted complete graph
+# Then construct an MST
+# Then use a community detection to partition the trees
 cell_differentiation = True
 cell_means = np.zeros((len(unique_labels), n_markers))
 for i in range(len(unique_labels)):
     cell_means[i,:] = cell_types[unique_labels[i]].overall_mean
 
-gm = GaussianMixture(n_components=5,
-                     covariance_type="full").fit(cell_means)
-gm_labels = gm.predict(cell_means)
+complete_G = nx.Graph()
+for i in range(len(unique_labels)):
+    for j in range(i, len(unique_labels)):
+        complete_G.add_edge(i,j, weight = np.linalg.norm(cell_means[i,:] - cell_means[j,:]))
+
+mst = tree.minimum_spanning_edges(complete_G, algorithm="kruskal", data=False)
+
+mst_G = nx.Graph()
+mst_G.add_edges_from(list(mst))
+forest = list(greedy_modularity_communities(mst_G))
+
+root_list = []
+for t in range(len(forest)):
+    nodes_list = list(forest[t])
+    root_list.append(np.random.choice(nodes_list))
+    doing_list = [root_list[t]]
+    done_list = []
+    while len(doing_list) > 0:
+        parent_cell = doing_list.pop(0)
+        done_list.append(parent_cell)
+        for e in list(mst_G.edges):
+            if parent_cell in e:
+                child_cell = (set(e) - {parent_cell}).pop()
+                if (child_cell not in done_list) and (child_cell in nodes_list):
+                    doing_list.append(child_cell)
+                    cell_types[unique_labels[child_cell]].parent = parent_cell
+                    cell_types[unique_labels[parent_cell]].children.append(child_cell)
+
 
 
 
@@ -125,6 +156,9 @@ for n_components in range(min_components, max_components + 1):
             best_gm = gm
 
 model_for_expressed_markers["all"] = best_gm
+
+
+
 
 
 
