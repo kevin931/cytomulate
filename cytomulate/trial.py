@@ -17,6 +17,8 @@ import networkx as nx
 from networkx.algorithms import tree
 from networkx.algorithms.community import greedy_modularity_communities
 
+
+
 temp = FileIO()
 
 expression_matrix = temp.load_data("./test_data/expression_matrix.txt")
@@ -87,19 +89,15 @@ for t in range(len(forest)):
                     cell_types[unique_labels[child_cell]].parent = parent_cell
                     cell_types[unique_labels[parent_cell]].children.append(child_cell)
 
-
-
-
-
-
-
+# If we have bead information, we can use those to estimate background noise variance
+# If not, we will use the cells
 background_noise_variance = np.Inf
 max_components = 9
 min_components = 1
 cv_types = ["spherical", "tied", "diag", "full"]
 
 
-c_type = "Basophils"
+c_type = "Mature_B_cells"
 df = cell_types_data[c_type]
 col_median = np.median(df, axis=0).reshape(-1,1)
 
@@ -157,7 +155,188 @@ for n_components in range(min_components, max_components + 1):
 
 model_for_expressed_markers["all"] = best_gm
 
+def moment_of_beta(alpha, beta, moment_type):
+    if moment_type == "mean":
+        moment = alpha / (alpha + beta)
+    elif moment_type == "variance":
+        moment = (alpha * beta) / (np.power(alpha + beta, 2) * (alpha + beta + 1))
+    elif moment_type == "second":
+        moment = (alpha * beta) / (np.power(alpha + beta, 2) * (alpha + beta + 1)) + \
+                 np.power(alpha / (alpha + beta) , 2)
+    else:
+        raise ValueError('Unknown moment type')
 
+    return moment
+
+def moment_of_multinomial(p, n, moment_type):
+    d = len(p)
+    p = p.reshape(-1)
+    if moment_type == "mean":
+        moment = n * p
+    elif moment_type == "variance":
+        moment = np.zeros((d,d))
+        for i in range(d):
+            for j in range(d):
+                if i == j:
+                    moment[i,j] = p[i] * (1 - p[i])
+                else:
+                    moment[i,j] = -p[i] * p[j]
+        moment = n * moment
+    elif moment_type == "second":
+        v = np.zeros((d,d))
+        for i in range(d):
+            for j in range(d):
+                if i == j:
+                    v[i,j] = p[i] * (1 - p[i])
+                else:
+                    v[i,j] = -p[i] * p[j]
+        m2 = np.reshape(n * p, (-1, 1)) @ np.reshape(n * p, (1, -1))
+
+        moment = v + m2
+    else:
+        raise ValueError('Unknown moment type')
+
+    return moment
+
+
+def rearrange_mean(expressed_mean_parameters,
+                   unexpressed_mean_parameters,
+                   expressed_markers,
+                   unexpressed_markers):
+    n_expressed = len(expressed_markers)
+    n_unexpressed = len(unexpressed_markers)
+    n_markers = n_expressed + n_unexpressed
+
+    mean_parameters = np.zeros((n_markers))
+    mean_parameters[expressed_markers] = expressed_mean_parameters
+    mean_parameters[unexpressed_markers] = unexpressed_mean_parameters
+    return mean_parameters
+
+
+def rearrange_covariance(expressed_covariance_parameters,
+                         unexpressed_covariance_parameters,
+                         expressed_markers,
+                         unexpressed_markers):
+    n_expressed = len(expressed_markers)
+    n_unexpressed = len(unexpressed_markers)
+    n_markers = n_expressed + n_unexpressed
+
+    covariance_parameters = np.zeros((n_markers, n_markers))
+    covariance_parameters[np.ix_(expressed_markers, expressed_markers)] = expressed_covariance_parameters
+    covariance_parameters[np.ix_(unexpressed_markers, unexpressed_markers)] = unexpressed_covariance_parameters
+
+    return covariance_parameters
+
+
+def parameters_to_mean_and_covariance(parameters,
+                                      expressed_markers,
+                                      unexpressed_markers):
+    n_expressed = len(expressed_markers)
+    n_unexpressed = len(unexpressed_markers)
+    n_markers = n_expressed + n_unexpressed
+
+    mean_parameters = parameters[0:n_markers]
+    covariance_parameters = parameters[n_markers : (len(parameters) - n_markers)]
+    pseudo_time_parameters = parameters[(len(parameters) - n_markers) : ]
+
+    expressed_mean = mean_parameters[0:len(expressed_markers)]
+    unexpressed_mean = mean_parameters[(len(expressed_markers)) : ]
+    expressed_mean = np.exp(expressed_mean)
+    unexpressed_mean = np.exp(unexpressed_mean)
+
+    mean = rearrange_mean(expressed_mean,
+                          unexpressed_mean,
+                          expressed_markers,
+                          unexpressed_markers)
+
+    temp_basis = covariance_parameters[0:np.power(n_expressed,2)]
+    temp_diag = covariance_parameters[np.power(n_expressed,2) : (np.power(n_expressed,2) + n_expressed)]
+    temp_basis = temp_basis.reshape((n_expressed, n_expressed))
+    Q, R = np.linalg.qr(temp_basis)
+    temp_diag = np.exp(temp_diag)
+    temp_diag = np.diag(temp_diag)
+
+    expressed_covariance = np.matmul(np.matmul(Q, temp_diag), Q.transpose())
+
+    unexpressed_covariance = covariance_parameters[(np.power(n_expressed,2) + n_expressed) : ]
+    unexpressed_covariance = np.diag(unexpressed_covariance)
+
+    covariance = rearrange_covariance(expressed_covariance,
+                                      unexpressed_covariance,
+                                      expressed_markers,
+                                      unexpressed_markers)
+
+    pseudo_time = 1/(1 + np.exp(-pseudo_time_parameters))
+
+    n_children = len(pseudo_time) // len(mean)
+    pseudo_time = np.reshape(pseudo_time, (-1, n_children), order='F')
+
+    return mean, covariance, pseudo_time
+
+
+def unconditional_mean_and_covariance(mean_parameters,
+                                      covariance_parameters,
+                                      pseudo_time_parameters,
+                                      background_noise_variance,
+                                      children_cell_types):
+
+    #
+    slopes_of_paths_to_children = np.zeros((len(mean_parameters), len(children_cell_types)))
+    children_cell_types_ids = np.zeros(len(children_cell_types))
+    p = np.ones((len(children_cell_types))) / len(children_cell_types)
+    counter = 0
+    for c_type in children_cell_types:
+        children_cell_types_ids[counter] = c_type.id
+        slopes_of_paths_to_children[:, counter] = c_type.overall_mean - mean_parameters
+        counter += 1
+
+    mean_pseudo_time = np.zeros((len(mean_parameters), len(children_cell_types)))
+    for i in range(len(mean_parameters)):
+        for j in range(len(children_cell_types)):
+            mean_pseudo_time[i,j] = moment_of_beta(pseudo_time_parameters[i,j], 1, "mean") * p[j]
+
+
+    mean = mean_parameters + np.sum(slopes_of_paths_to_children * mean_pseudo_time, axis=1)
+
+
+
+    covariance = 0
+
+    return mean, covariance
+
+
+
+def distance_between_observed_and_adjusted(parameters,
+                                           expressed_markers,
+                                           unexpressed_markers,
+                                           background_noise_variance,
+                                           observed_mean,
+                                           observed_covariance,
+                                           children_cell_types):
+    mean, covariance, pseudo_time = parameters_to_mean_and_covariance(parameters,
+                                                                      expressed_markers,
+                                                                      unexpressed_markers)
+    mean, covariance = unconditional_mean_and_covariance(mean,
+                                                         covariance,
+                                                         pseudo_time,
+                                                         background_noise_variance,
+                                                         children_cell_types)
+
+    dist = np.linalg.norm(mean - observed_mean) + np.linalg.norm(covariance - observed_covariance)
+
+    return dist
+
+def adjust_mean_and_covariance(parameters,
+                               expressed_markers,
+                               unexpressed_markers,
+                               background_noise_variance,
+                               observed_mean,
+                               observed_covariance,
+                               children_cell_types):
+    res = minimize(distance_between_observed_and_adjusted,
+                   x0,
+                   method='nelder-mead',
+                   options={'xatol': 1e-8, 'disp': True})
 
 
 
