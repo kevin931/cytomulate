@@ -11,13 +11,12 @@ import matplotlib.pyplot as plot
 
 # data analysis
 from scipy.stats import gaussian_kde
+from scipy.optimize import minimize
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 import networkx as nx
 from networkx.algorithms import tree
 from networkx.algorithms.community import greedy_modularity_communities
-
-
 
 temp = FileIO()
 
@@ -199,6 +198,7 @@ def moment_of_multinomial(p, n, moment_type):
     return moment
 
 
+
 def rearrange_mean(expressed_mean_parameters,
                    unexpressed_mean_parameters,
                    expressed_markers,
@@ -279,7 +279,6 @@ def unconditional_mean_and_covariance(mean_parameters,
                                       pseudo_time_parameters,
                                       background_noise_variance,
                                       children_cell_types):
-
     #
     slopes_of_paths_to_children = np.zeros((len(mean_parameters), len(children_cell_types)))
     children_cell_types_ids = np.zeros(len(children_cell_types))
@@ -290,20 +289,37 @@ def unconditional_mean_and_covariance(mean_parameters,
         slopes_of_paths_to_children[:, counter] = c_type.overall_mean - mean_parameters
         counter += 1
 
-    mean_pseudo_time = np.zeros((len(mean_parameters), len(children_cell_types)))
+    pseudo_time_mean = np.zeros((len(mean_parameters), len(children_cell_types)))
+    pseudo_time_covariance = np.zeros((len(mean_parameters), len(children_cell_types)))
+
     for i in range(len(mean_parameters)):
         for j in range(len(children_cell_types)):
-            mean_pseudo_time[i,j] = moment_of_beta(pseudo_time_parameters[i,j], 1, "mean") * p[j]
+            pseudo_time_mean[i,j] = moment_of_beta(pseudo_time_parameters[i,j], 1, "mean")
+            pseudo_time_covariance[i, j] = moment_of_beta(pseudo_time_parameters[i, j], 1, "variance")
 
+    differentiation_path_conditional_mean = np.zeros((len(mean_parameters), len(children_cell_types)))
+    differentiation_path_conditional_covariance = np.zeros((len(mean_parameters), len(children_cell_types)))
+    for j in range(len(children_cell_types)):
+        differentiation_path_conditional_mean[:, j] = slopes_of_paths_to_children[:, j] * \
+                                                     pseudo_time_mean[:, j]
+        differentiation_path_conditional_covariance[:, j] = np.power(slopes_of_paths_to_children[:, j], 2) * \
+                                                           pseudo_time_covariance[:, j]
 
-    mean = mean_parameters + np.sum(slopes_of_paths_to_children * mean_pseudo_time, axis=1)
+    Omega_mean = moment_of_multinomial(p, 1, "mean").reshape((-1,1))
+    Omega_covariance = moment_of_multinomial(p, 1, "variance")
+    Omega_second = moment_of_multinomial(p, 1, "second")
 
+    differentiation_path_unconditional_mean = differentiation_path_conditional_mean @ Omega_mean
+    differentiation_path_unconditional_covariance = differentiation_path_conditional_mean @ Omega_covariance @ \
+                                                    differentiation_path_conditional_mean.transpose()
+    for j in range(len(children_cell_types)):
+        differentiation_path_unconditional_covariance += Omega_second[j, j] * np.diag(differentiation_path_conditional_covariance[:, j])
 
+    mean = mean_parameters + differentiation_path_unconditional_mean
 
-    covariance = 0
+    covariance = covariance_parameters + differentiation_path_unconditional_covariance + background_noise_variance * np.eye(len(mean_parameters))
 
     return mean, covariance
-
 
 
 def distance_between_observed_and_adjusted(parameters,
@@ -326,7 +342,7 @@ def distance_between_observed_and_adjusted(parameters,
 
     return dist
 
-def adjust_mean_and_covariance(parameters,
+def adjust_mean_and_covariance(parameters0,
                                expressed_markers,
                                unexpressed_markers,
                                background_noise_variance,
@@ -334,9 +350,17 @@ def adjust_mean_and_covariance(parameters,
                                observed_covariance,
                                children_cell_types):
     res = minimize(distance_between_observed_and_adjusted,
-                   x0,
+                   x0 = parameters0,
+                   args = (expressed_markers,
+                           unexpressed_markers,
+                           background_noise_variance,
+                           observed_mean,
+                           observed_covariance,
+                           children_cell_types),
                    method='nelder-mead',
                    options={'xatol': 1e-8, 'disp': True})
+
+    return res
 
 
 
@@ -348,8 +372,7 @@ plot.scatter(unexpressed_data[:,0], expressed_data[:,0])
 gm_labels = gm.predict(unexpressed_data[:,1].reshape(-1,1))
 
 a = gm.sample(1000)[0]
-b = gm1.sample(1000)[0]
-plot.scatter(a,b)
+
 
 plot.scatter(np.arange(946), unexpressed_data[:,1].reshape(-1,1),
              c = gm_labels, s= 1)
