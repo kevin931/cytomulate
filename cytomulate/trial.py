@@ -46,7 +46,7 @@ for c_type in unique_labels:
     ind = np.where(labels == c_type)[0]
     cell_types_data[c_type] = expression_matrix[ind, :]
     cell_types[c_type].overall_mean = np.mean(expression_matrix[ind, :], axis=0)
-    cell_types[c_type].overall_cov = np.cov(expression_matrix[ind, :])
+    cell_types[c_type].overall_cov = np.cov(expression_matrix[ind, :], rowvar=False)
     id += 1
 
 # If cell differentiation is sought after
@@ -70,9 +70,10 @@ mst = tree.minimum_spanning_edges(complete_G, algorithm="kruskal", data=False)
 mst_G = nx.Graph()
 mst_G.add_edges_from(list(mst))
 forest = list(greedy_modularity_communities(mst_G))
-
+tree_list = []
 root_list = []
 for t in range(len(forest)):
+    tree_list.append(nx.DiGraph())
     nodes_list = list(forest[t])
     root_list.append(np.random.choice(nodes_list))
     doing_list = [root_list[t]]
@@ -87,7 +88,9 @@ for t in range(len(forest)):
                     doing_list.append(child_cell)
                     cell_types[unique_labels[child_cell]].parent = parent_cell
                     cell_types[unique_labels[parent_cell]].children.append(child_cell)
+                    tree_list[t].add_edge(parent_cell, child_cell)
 
+list(nx.topological_sort(tree_list[0]))
 # If we have bead information, we can use those to estimate background noise variance
 # If not, we will use the cells
 background_noise_variance = np.Inf
@@ -95,64 +98,67 @@ max_components = 9
 min_components = 1
 cv_types = ["spherical", "tied", "diag", "full"]
 
+for c_type in cell_types:
+    #c_type = "Mature_B_cells"
+    df = cell_types_data[c_type]
+    col_median = np.median(df, axis=0).reshape(-1,1)
 
-c_type = "Mature_B_cells"
-df = cell_types_data[c_type]
-col_median = np.median(df, axis=0).reshape(-1,1)
+    # We will use K-means with 2 groups to
+    # group markers into two groups
+    # expressed and unexpressed
+    kmeans = KMeans(n_clusters=2).fit(col_median)
 
-# We will use K-means with 2 groups to
-# group markers into two groups
-# expressed and unexpressed
-kmeans = KMeans(n_clusters=2).fit(col_median)
+    group_0_mean = np.mean(col_median[kmeans.labels_ == 0])
+    group_1_mean = np.mean(col_median[kmeans.labels_ == 1])
+    if group_1_mean > group_0_mean:
+        expressed_group = 1
+        unexpressed_group = 0
+    else:
+        expressed_group = 0
+        unexpressed_group = 1
 
-group_0_mean = np.mean(col_median[kmeans.labels_ == 0])
-group_1_mean = np.mean(col_median[kmeans.labels_ == 1])
-if group_1_mean > group_0_mean:
-    expressed_group = 1
-    unexpressed_group = 0
-else:
-    expressed_group = 0
-    unexpressed_group = 1
+    cell_types[c_type].expressed_markers = np.where(kmeans.labels_ == expressed_group)[0]
+    cell_types[c_type].unexpressed_markers = np.where(kmeans.labels_ == unexpressed_group)[0]
 
-expressed_markers = np.where(kmeans.labels_ == expressed_group)[0]
-unexpressed_markers = np.where(kmeans.labels_ == unexpressed_group)[0]
+    # For unexpressed markers
+    # we fit gaussian mixture model with 2 components to each marginal
+    # as it seems reasonable to assume unexpressed markers are independent
+    # one with background noise
+    # one with lowly expressed protein
+    # The main purpose is to speed up the algorithm
+    # since the majority of the markers are un/lowly expressed
+    unexpressed_data = df[:, cell_types[c_type].unexpressed_markers]
+    expressed_data = df[:, cell_types[c_type].expressed_markers]
 
-# For unexpressed markers
-# we fit gaussian mixture model with 2 components to each marginal
-# as it seems reasonable to assume unexpressed markers are independent
-# one with background noise
-# one with lowly expressed protein
-# The main purpose is to speed up the algorithm
-# since the majority of the markers are un/lowly expressed
-unexpressed_data = df[:, unexpressed_markers]
-expressed_data = df[:, expressed_markers]
+    cell_types[c_type].model_for_expressed_markers = {}
+    cell_types[c_type].model_for_unexpressed_markers = {}
 
-model_for_expressed_markers = {}
-model_for_unexpressed_markers = {}
+    for m in range(len(cell_types[c_type].unexpressed_markers)):
+        gm = GaussianMixture(n_components=2).fit(unexpressed_data[:, m].reshape(-1, 1))
+        est_background_noise_variance = gm.covariances_[np.argmin(gm.means_)][0][0]
+        if est_background_noise_variance < background_noise_variance:
+            background_noise_variance = est_background_noise_variance
+        cell_types[c_type].model_for_unexpressed_markers[cell_types[c_type].unexpressed_markers[m]] = gm
 
-for m in range(len(unexpressed_markers)):
-    gm = GaussianMixture(n_components=2).fit(unexpressed_data[:, m].reshape(-1, 1))
-    est_background_noise_variance = gm.covariances_[np.argmin(gm.means_)][0][0]
-    if est_background_noise_variance < background_noise_variance:
-        background_noise_variance = est_background_noise_variance
-    model_for_unexpressed_markers[unexpressed_markers[m]] = gm
+    # Since we expect only a few markers to be highly expressed
+    # we can probably afford fitting the entire data
+    # with multivariate GMM as well as some model selection
+    smallest_bic = np.Inf
+    current_bic = 0
+    best_gm = None
+    for n_components in range(min_components, max_components + 1):
+        for cv_type in cv_types:
+            gm = GaussianMixture(n_components=n_components,
+                                 covariance_type=cv_type).fit(expressed_data)
+            current_bic = gm.bic(expressed_data)
+            if current_bic < smallest_bic:
+                smallest_bic = current_bic
+                best_gm = gm
 
-# Since we expect only a few markers to be highly expressed
-# we can probably afford fitting the entire data
-# with multivariate GMM as well as some model selection
-smallest_bic = np.Inf
-current_bic = 0
-best_gm = None
-for n_components in range(min_components, max_components + 1):
-    for cv_type in cv_types:
-        gm = GaussianMixture(n_components=n_components,
-                             covariance_type=cv_type).fit(expressed_data)
-        current_bic = gm.bic(expressed_data)
-        if current_bic < smallest_bic:
-            smallest_bic = current_bic
-            best_gm = gm
+    cell_types[c_type].model_for_expressed_markers["all"] = best_gm
 
-model_for_expressed_markers["all"] = best_gm
+
+
 
 def moment_of_beta(alpha, beta, moment_type):
     if moment_type == "mean":
@@ -259,6 +265,7 @@ def parameters_to_mean_and_covariance(parameters,
     expressed_covariance = np.matmul(np.matmul(Q, temp_diag), Q.transpose())
 
     unexpressed_covariance = covariance_parameters[(np.power(n_expressed,2) + n_expressed) : ]
+    unexpressed_covariance = np.exp(unexpressed_covariance)
     unexpressed_covariance = np.diag(unexpressed_covariance)
 
     covariance = rearrange_covariance(expressed_covariance,
@@ -365,45 +372,35 @@ def adjust_mean_and_covariance(parameters0,
 
 
 
+c_type = 'pDCs'
+parameters = np.array([])
+
+expressed_markers = cell_types[c_type].expressed_markers
+unexpressed_markers = cell_types[c_type].unexpressed_markers
+
+log_mean = np.log(cell_types[c_type].overall_mean)
+parameters = np.append(parameters, [(log_mean[expressed_markers]),
+                       (log_mean[unexpressed_markers])])
+
+cov = cell_types[c_type].overall_cov
+expressed_cov = cov[np.ix_(expressed_markers, expressed_markers)]
+w, v = np.linalg.eig(expressed_cov)
+parameters = np.append(parameters, [v.reshape((-1)), np.log(w)])
+
+unexpressed_cov = cov[np.ix_(unexpressed_markers, unexpressed_markers)]
+parameters = np.append(parameters, [np.log(np.diag(unexpressed_cov))])
+
+n_childrens = len(list(tree_list[0].successors()))
+
+parameters = np.append(parameters, [np.ones(n_childrens * n_markers) * (1/(1 + np.exp(-0.4)))])
 
 
-plot.scatter(unexpressed_data[:,0], expressed_data[:,0])
+def adjust_gaussian_mixture_means(gm,
+                                  target_mean):
+    pass
 
-gm_labels = gm.predict(unexpressed_data[:,1].reshape(-1,1))
-
-a = gm.sample(1000)[0]
-
-
-plot.scatter(np.arange(946), unexpressed_data[:,1].reshape(-1,1),
-             c = gm_labels, s= 1)
-
-
-
-
-
-
-
-
-
-
-
-
-ind = np.where(labels == "Monocytes")[0]
-y = expression_matrix[ind, 0]
-
-plot.hist(y, bins = 100)
-plot.show()
-
-density = gaussian_kde(y)
-x = np.linspace(-1,5,300)
-density.covariance_factor = lambda : .25
-density._compute_covariance()
-plot.plot(x, density(x))
-plot.show()
-
-fig, ax = plot.subplots()
-ax.scatter(np.arange(len(ind[0])), expression_matrix[ind, 0],
-           s = 0.1, c = "black")
-plot.show()
+def adjust_gaussian_mixture_covariance(gm,
+                                       target_covariance):
+    pass
 
 
