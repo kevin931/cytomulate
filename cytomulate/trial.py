@@ -394,13 +394,36 @@ n_childrens = len(list(tree_list[0].successors()))
 
 parameters = np.append(parameters, [np.ones(n_childrens * n_markers) * (1/(1 + np.exp(-0.4)))])
 
-
-def adjust_gaussian_mixture_means(gm,
+def adjust_gaussian_mixture_means(cell_type,
                                   target_mean):
-    pass
+    target_mean = target_mean.reshape((-1))
+    expressed_markers = cell_type.expressed_markers
+    unexpressed_markers = cell_type.unexpressed_markers
+    expressed_mean = target_mean[expressed_markers]
+
+    # We first adjust means for the expressed markers
+    for c in range(cell_type.model_for_expressed_markers["all"].n_components):
+        cell_type.model_for_expressed_markers["all"].means_[c,:] = \
+            cell_type.model_for_expressed_markers["all"].weights[c] * expressed_mean
+
+    # Then we adjust means for the unexpressed markers
+    for m in unexpressed_markers:
+        max_ind = np.argmax(cell_type.model_for_expressed_markers[m].means_)
+        min_ind = -1 * max_ind + 1
+        cell_type.model_for_expressed_markers[m].means_[min_ind, :] = 0
+        cell_type.model_for_expressed_markers[m].means_[max_ind, :] = \
+            target_mean[m] / cell_type.model_for_expressed_markers[m].weights[max_ind]
+
+    return cell_type
+
 
 def adjust_gaussian_mixture_covariance(gm,
                                        target_covariance):
-    pass
+    if is_expressed:
+        pass
+    else:
+        pass
+
+    return 0
 
 
