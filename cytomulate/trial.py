@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plot
 
 # data analysis
+from collections import Counter
 from scipy.stats import gaussian_kde
 from scipy.optimize import minimize
 from sklearn.cluster import KMeans
@@ -17,6 +18,8 @@ from sklearn.mixture import GaussianMixture
 import networkx as nx
 from networkx.algorithms import tree
 from networkx.algorithms.community import greedy_modularity_communities
+
+from typing import Union, Optional, Any, List, Callable
 
 temp = FileIO()
 
@@ -32,6 +35,14 @@ labels = temp.load_data("./test_data/labels.txt", dtype = "str")
 labels = labels[1]
 
 unique_labels = np.unique(labels)
+frequency = Counter(labels)
+observed_p = np.zeros(len(unique_labels))
+counter = 0
+for l in unique_labels:
+    observed_p[counter] = frequency[l]/len(labels)
+    counter += 1
+
+
 
 # We first initialize the CellType objects
 # we also associate with eacy cell type
@@ -90,13 +101,16 @@ for t in range(len(forest)):
                     cell_types[unique_labels[parent_cell]].children.append(child_cell)
                     tree_list[t].add_edge(parent_cell, child_cell)
 
+
+
+
 list(nx.topological_sort(tree_list[0]))
 # If we have bead information, we can use those to estimate background noise variance
 # If not, we will use the cells
 background_noise_variance = np.Inf
 max_components = 9
 min_components = 1
-cv_types = ["spherical", "tied", "diag", "full"]
+cv_types = ["full"]
 
 for c_type in cell_types:
     #c_type = "Mature_B_cells"
@@ -236,14 +250,16 @@ def rearrange_covariance(expressed_covariance_parameters,
 
 def parameters_to_mean_and_covariance(parameters,
                                       expressed_markers,
-                                      unexpressed_markers):
+                                      unexpressed_markers,
+                                      children_cell_types):
     n_expressed = len(expressed_markers)
     n_unexpressed = len(unexpressed_markers)
     n_markers = n_expressed + n_unexpressed
 
+
     mean_parameters = parameters[0:n_markers]
-    covariance_parameters = parameters[n_markers : (len(parameters) - n_markers)]
-    pseudo_time_parameters = parameters[(len(parameters) - n_markers) : ]
+    covariance_parameters = parameters[n_markers : (len(parameters) - len(children_cell_types) * n_markers)]
+    pseudo_time_parameters = parameters[(len(parameters) - len(children_cell_types) * n_markers) : ]
 
     expressed_mean = mean_parameters[0:len(expressed_markers)]
     unexpressed_mean = mean_parameters[(len(expressed_markers)) : ]
@@ -275,10 +291,10 @@ def parameters_to_mean_and_covariance(parameters,
 
     pseudo_time = 1/(1 + np.exp(-pseudo_time_parameters))
 
-    n_children = len(pseudo_time) // len(mean)
-    pseudo_time = np.reshape(pseudo_time, (-1, n_children), order='F')
+    pseudo_time = np.reshape(pseudo_time, (-1, len(children_cell_types)), order='F')
 
     return mean, covariance, pseudo_time
+
 
 
 def unconditional_mean_and_covariance(mean_parameters,
@@ -301,7 +317,7 @@ def unconditional_mean_and_covariance(mean_parameters,
 
     for i in range(len(mean_parameters)):
         for j in range(len(children_cell_types)):
-            pseudo_time_mean[i,j] = moment_of_beta(pseudo_time_parameters[i,j], 1, "mean")
+            pseudo_time_mean[i, j] = moment_of_beta(pseudo_time_parameters[i, j], 1, "mean")
             pseudo_time_covariance[i, j] = moment_of_beta(pseudo_time_parameters[i, j], 1, "variance")
 
     differentiation_path_conditional_mean = np.zeros((len(mean_parameters), len(children_cell_types)))
@@ -322,7 +338,7 @@ def unconditional_mean_and_covariance(mean_parameters,
     for j in range(len(children_cell_types)):
         differentiation_path_unconditional_covariance += Omega_second[j, j] * np.diag(differentiation_path_conditional_covariance[:, j])
 
-    mean = mean_parameters + differentiation_path_unconditional_mean
+    mean = mean_parameters + differentiation_path_unconditional_mean.reshape((-1))
 
     covariance = covariance_parameters + differentiation_path_unconditional_covariance + background_noise_variance * np.eye(len(mean_parameters))
 
@@ -338,7 +354,8 @@ def distance_between_observed_and_adjusted(parameters,
                                            children_cell_types):
     mean, covariance, pseudo_time = parameters_to_mean_and_covariance(parameters,
                                                                       expressed_markers,
-                                                                      unexpressed_markers)
+                                                                      unexpressed_markers,
+                                                                      children_cell_types)
     mean, covariance = unconditional_mean_and_covariance(mean,
                                                          covariance,
                                                          pseudo_time,
@@ -371,29 +388,6 @@ def adjust_mean_and_covariance(parameters0,
 
 
 
-
-c_type = 'pDCs'
-parameters = np.array([])
-
-expressed_markers = cell_types[c_type].expressed_markers
-unexpressed_markers = cell_types[c_type].unexpressed_markers
-
-log_mean = np.log(cell_types[c_type].overall_mean)
-parameters = np.append(parameters, [(log_mean[expressed_markers]),
-                       (log_mean[unexpressed_markers])])
-
-cov = cell_types[c_type].overall_cov
-expressed_cov = cov[np.ix_(expressed_markers, expressed_markers)]
-w, v = np.linalg.eig(expressed_cov)
-parameters = np.append(parameters, [v.reshape((-1)), np.log(w)])
-
-unexpressed_cov = cov[np.ix_(unexpressed_markers, unexpressed_markers)]
-parameters = np.append(parameters, [np.log(np.diag(unexpressed_cov))])
-
-n_childrens = len(list(tree_list[0].successors()))
-
-parameters = np.append(parameters, [np.ones(n_childrens * n_markers) * (1/(1 + np.exp(-0.4)))])
-
 def adjust_gaussian_mixture_means(cell_type,
                                   target_mean):
     target_mean = target_mean.reshape((-1))
@@ -403,27 +397,173 @@ def adjust_gaussian_mixture_means(cell_type,
 
     # We first adjust means for the expressed markers
     for c in range(cell_type.model_for_expressed_markers["all"].n_components):
-        cell_type.model_for_expressed_markers["all"].means_[c,:] = \
-            cell_type.model_for_expressed_markers["all"].weights[c] * expressed_mean
+        cell_type.model_for_expressed_markers["all"].means_[c,:] += \
+            cell_type.model_for_expressed_markers["all"].weights_[c] * \
+            (expressed_mean - cell_type.model_for_expressed_markers["all"].means_[c,:])
 
     # Then we adjust means for the unexpressed markers
     for m in unexpressed_markers:
-        max_ind = np.argmax(cell_type.model_for_expressed_markers[m].means_)
+        max_ind = np.argmax(cell_type.model_for_unexpressed_markers[m].means_)
         min_ind = -1 * max_ind + 1
-        cell_type.model_for_expressed_markers[m].means_[min_ind, :] = 0
-        cell_type.model_for_expressed_markers[m].means_[max_ind, :] = \
-            target_mean[m] / cell_type.model_for_expressed_markers[m].weights[max_ind]
+        cell_type.model_for_unexpressed_markers[m].means_[min_ind, :] = 0
+        cell_type.model_for_unexpressed_markers[m].means_[max_ind, :] = \
+            target_mean[m] / cell_type.model_for_unexpressed_markers[m].weights[max_ind]
 
     return cell_type
 
 
-def adjust_gaussian_mixture_covariance(gm,
-                                       target_covariance):
-    if is_expressed:
-        pass
-    else:
-        pass
 
-    return 0
+def adjust_gaussian_mixture_covariance(cell_type,
+                                       target_covariance):
+
+    expressed_markers = cell_type.expressed_markers
+    unexpressed_markers = cell_type.unexpressed_markers
+
+    temp_covariance = target_covariance + cell_type.overall_mean.reshape((-1, 1)) @ cell_type.overall_mean.reshape((1, -1))
+    expressed_cov = temp_covariance[np.ix_(expressed_markers, expressed_markers)]
+    unexpressed_cov = np.diag(temp_covariance[np.ix_(unexpressed_markers, unexpressed_markers)])
+
+    # For expressed markers
+    n_components = cell_type.model_for_expressed_markers["all"].n_components
+    for i in range(n_components):
+        expressed_cov -= cell_type.model_for_expressed_markers["all"].weights_[i] * \
+                         (cell_type.model_for_expressed_markers["all"].means_[i,:].reshape((-1, 1)) @
+                          cell_type.model_for_expressed_markers["all"].means_[i,:].reshape((1, -1)))
+
+    for i in range(n_components):
+        cell_type.model_for_expressed_markers["all"].covariances_[i, :, :] += cell_type.model_for_expressed_markers["all"].weights_[i] * \
+                                                                             (expressed_cov - cell_type.model_for_expressed_markers["all"].covariances_[i, :, :])
+    # For unexpressed markers
+    counter = 0
+    for m in unexpressed_markers:
+        max_ind = np.argmax(cell_type.model_for_unexpressed_markers[m].means_)
+        min_ind = -1 * max_ind + 1
+        unexpressed_cov[counter] -= cell_type.model_for_unexpressed_markers[m].weights_[max_ind] * \
+                                    cell_type.model_for_unexpressed_markers[m].means_[max_ind]
+        cell_type.model_for_unexpressed_markers[0].covariances_[min_ind, :] = 0
+        cell_type.model_for_unexpressed_markers[0].covariances_[max_ind, :] = unexpressed_cov[counter] / \
+                                                                              cell_type.model_for_unexpressed_markers[m].weights[max_ind]
+        counter += 1
+
+    return cell_type
+
+
+
+
+
+tree0 = tree_list[0]
+topological_sorting_0 = list(reversed(list(nx.topological_sort(tree0))))
+
+for c_id in topological_sorting_0:
+    c_type = unique_labels[c_id]
+    successor_ids = list(tree0.successors(c_id))
+    if len(successor_ids) == 0:
+        # This is a leaf node
+        continue
+    else:
+        children_cell_types = []
+        for s in successor_ids:
+            children_cell_types.append(cell_types[unique_labels[s]])
+
+            parameters = np.array([])
+
+            expressed_markers = cell_types[c_type].expressed_markers
+            unexpressed_markers = cell_types[c_type].unexpressed_markers
+
+            observed_mean = cell_types[c_type].overall_mean
+            observed_covariance = cell_types[c_type].overall_cov
+
+            log_mean = np.log(observed_mean)
+            parameters = np.concatenate((parameters,
+                                         log_mean[expressed_markers],
+                                         log_mean[unexpressed_markers]))
+
+            cov = observed_covariance
+            expressed_cov = cov[np.ix_(expressed_markers, expressed_markers)]
+            w, v = np.linalg.eig(expressed_cov)
+            parameters = np.concatenate((parameters,
+                                         v.reshape((-1)),
+                                         np.log(w)))
+
+            unexpressed_cov = cov[np.ix_(unexpressed_markers, unexpressed_markers)]
+            parameters = np.concatenate((parameters,
+                                         np.log(np.diag(unexpressed_cov))))
+
+            parameters = np.concatenate((parameters,
+                                         np.ones(len(successor_ids) * n_markers) * (0.4)))
+
+            res = adjust_mean_and_covariance(parameters,
+                                             expressed_markers,
+                                             unexpressed_markers,
+                                             background_noise_variance,
+                                             observed_mean,
+                                             observed_covariance,
+                                             children_cell_types)
+
+            mean, covariance, pseudo_time = parameters_to_mean_and_covariance(res.x,
+                                                                              expressed_markers,
+                                                                              unexpressed_markers,
+                                                                              children_cell_types)
+            cell_types[c_type].overall_mean = mean
+            cell_types[c_type].overall_cov = covariance
+
+            cell_types[c_type] = adjust_gaussian_mixture_means(cell_types[c_type],
+                                                               mean)
+            cell_types[c_type] = adjust_gaussian_mixture_covariance(cell_types[c_type],
+                                                                    covariance)
+
+
+def linear_function(start_value: Union[int, float], end_value: Union[int, float]) -> Callable[
+    [Union[int, float]], Union[int, float]]:
+    """ Generate a linear function
+
+    :param start_value: the starting value
+    :param end_value: the ending value
+    :return: a linear function (line segment) that interpolate the two points
+    """
+
+    def line_segment(t: Union[int, float]) -> Union[int, float]:
+        return start_value + t * (end_value - start_value)
+
+    return line_segment
+
+
+n_cells = 5000
+
+simulation_data = np.zeros((n_cells, n_markers))
+
+cell_type_indices = np.random.choice(unique_labels, size=n_cells,
+                                     replace=True, p = observed_p)
+
+for n in range(n_cells):
+    c_type = cell_type_indices[n]
+    cell_type = cell_types[c_type]
+
+    x = np.zeros(n_markers)
+    x[cell_type.expressed_markers] = cell_type.model_for_expressed_markers["all"].sample(1)[0][0]
+    for m in cell_type.unexpressed_markers:
+        x[m] = cell_type.model_for_unexpressed_markers[m].sample(1)[0][0]
+
+    g = np.zeros(n_markers)
+    children_cell_types = cell_type.children
+    if len(children_cell_types) > 0:
+        child_id = np.random.choice(children_cell_types, size = 1,
+                                    p = np.ones(len(children_cell_types))/len(children_cell_types))
+        child_cell = cell_types[unique_labels[child_id]]
+
+        for m in range(n_markers):
+            g[m] = linear_function(cell_type.overall_mean[m], child_cell.overall_mean[m])(np.random.beta(0.4,1,1))
+
+    E = np.random.multivariate_normal(np.zeros(n_markers), np.eye(n_markers), size = 1) * np.sqrt(background_noise_variance)
+
+    y = x + g + E
+
+    simulation_data[n,:] = y
+
+
+
+
+
+
 
 
