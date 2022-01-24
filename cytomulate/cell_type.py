@@ -74,6 +74,8 @@ class CellType:
         # Gating markers will be a set of indices
         self.gating_markers = set()
 
+        self.observed_mean = np.zeros((1, n_markers))
+        self.observed_cov = np.zeros((n_markers, n_markers))
         self.overall_mean = np.zeros((1, n_markers))
         self.overall_cov = np.zeros((n_markers, n_markers))
         self.background_noise_level = None

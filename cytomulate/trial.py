@@ -56,6 +56,8 @@ for c_type in unique_labels:
                                   n_markers = n_markers)
     ind = np.where(labels == c_type)[0]
     cell_types_data[c_type] = expression_matrix[ind, :]
+    cell_types[c_type].observed_mean = np.mean(expression_matrix[ind, :], axis=0)
+    cell_types[c_type].observed_cov = np.cov(expression_matrix[ind, :], rowvar=False)
     cell_types[c_type].overall_mean = np.mean(expression_matrix[ind, :], axis=0)
     cell_types[c_type].overall_cov = np.cov(expression_matrix[ind, :], rowvar=False)
     id += 1
@@ -99,6 +101,7 @@ for t in range(len(forest)):
                     doing_list.append(child_cell)
                     cell_types[unique_labels[child_cell]].parent = parent_cell
                     cell_types[unique_labels[parent_cell]].children.append(child_cell)
+                    cell_types[unique_labels[parent_cell]].differential_paths_to_children[child_cell] = np.ones(n_markers) * 0.4
                     tree_list[t].add_edge(parent_cell, child_cell)
 
 
@@ -407,7 +410,7 @@ def adjust_gaussian_mixture_means(cell_type,
         min_ind = -1 * max_ind + 1
         cell_type.model_for_unexpressed_markers[m].means_[min_ind, :] = 0
         cell_type.model_for_unexpressed_markers[m].means_[max_ind, :] = \
-            target_mean[m] / cell_type.model_for_unexpressed_markers[m].weights[max_ind]
+            target_mean[m] / cell_type.model_for_unexpressed_markers[m].weights_[max_ind]
 
     return cell_type
 
@@ -422,7 +425,7 @@ def adjust_gaussian_mixture_covariance(cell_type,
     temp_covariance = target_covariance + cell_type.overall_mean.reshape((-1, 1)) @ cell_type.overall_mean.reshape((1, -1))
     expressed_cov = temp_covariance[np.ix_(expressed_markers, expressed_markers)]
     unexpressed_cov = np.diag(temp_covariance[np.ix_(unexpressed_markers, unexpressed_markers)])
-
+    unexpressed_cov.setflags(write=1)
     # For expressed markers
     n_components = cell_type.model_for_expressed_markers["all"].n_components
     for i in range(n_components):
@@ -439,31 +442,32 @@ def adjust_gaussian_mixture_covariance(cell_type,
         max_ind = np.argmax(cell_type.model_for_unexpressed_markers[m].means_)
         min_ind = -1 * max_ind + 1
         unexpressed_cov[counter] -= cell_type.model_for_unexpressed_markers[m].weights_[max_ind] * \
-                                    cell_type.model_for_unexpressed_markers[m].means_[max_ind]
-        cell_type.model_for_unexpressed_markers[0].covariances_[min_ind, :] = 0
-        cell_type.model_for_unexpressed_markers[0].covariances_[max_ind, :] = unexpressed_cov[counter] / \
-                                                                              cell_type.model_for_unexpressed_markers[m].weights[max_ind]
+                                    np.power(cell_type.model_for_unexpressed_markers[m].means_[max_ind], 2)
+        cell_type.model_for_unexpressed_markers[m].covariances_[min_ind, :] = 0
+        cell_type.model_for_unexpressed_markers[m].covariances_[max_ind, :] = unexpressed_cov[counter] / \
+                                                                              cell_type.model_for_unexpressed_markers[m].weights_[max_ind]
         counter += 1
 
     return cell_type
 
 
+for tr in tree_list:
+    topological_sorting = list(reversed(list(nx.topological_sort(tr))))
 
-
-
-tree0 = tree_list[0]
-topological_sorting_0 = list(reversed(list(nx.topological_sort(tree0))))
-
-for c_id in topological_sorting_0:
-    c_type = unique_labels[c_id]
-    successor_ids = list(tree0.successors(c_id))
-    if len(successor_ids) == 0:
-        # This is a leaf node
-        continue
-    else:
-        children_cell_types = []
-        for s in successor_ids:
-            children_cell_types.append(cell_types[unique_labels[s]])
+    for c_id in topological_sorting:
+        c_type = unique_labels[c_id]
+        successor_ids = list(tr.successors(c_id))
+        if len(successor_ids) == 0:
+            # This is a leaf node
+            cell_types[c_type] = adjust_gaussian_mixture_means(cell_types[c_type],
+                                                               cell_types[c_type].overall_mean)
+            cell_types[c_type] = adjust_gaussian_mixture_covariance(cell_types[c_type],
+                                                                    cell_types[c_type].overall_cov)
+            continue
+        else:
+            children_cell_types = []
+            for s in successor_ids:
+                children_cell_types.append(cell_types[unique_labels[s]])
 
             parameters = np.array([])
 
@@ -506,6 +510,10 @@ for c_id in topological_sorting_0:
                                                                               children_cell_types)
             cell_types[c_type].overall_mean = mean
             cell_types[c_type].overall_cov = covariance
+            counter = 0
+            for s in successor_ids:
+                cell_types[c_type].differential_paths_to_children[s] = pseudo_time[:, counter]
+                counter += 1
 
             cell_types[c_type] = adjust_gaussian_mixture_means(cell_types[c_type],
                                                                mean)
@@ -528,6 +536,7 @@ def linear_function(start_value: Union[int, float], end_value: Union[int, float]
     return line_segment
 
 
+
 n_cells = 5000
 
 simulation_data = np.zeros((n_cells, n_markers))
@@ -548,11 +557,12 @@ for n in range(n_cells):
     children_cell_types = cell_type.children
     if len(children_cell_types) > 0:
         child_id = np.random.choice(children_cell_types, size = 1,
-                                    p = np.ones(len(children_cell_types))/len(children_cell_types))
+                                    p = np.ones(len(children_cell_types))/len(children_cell_types))[0]
         child_cell = cell_types[unique_labels[child_id]]
 
         for m in range(n_markers):
-            g[m] = linear_function(cell_type.overall_mean[m], child_cell.overall_mean[m])(np.random.beta(0.4,1,1))
+            ps_t = np.random.beta(cell_type.differential_paths_to_children[child_id][m],1,1)
+            g[m] = linear_function(cell_type.overall_mean[m], child_cell.overall_mean[m])(ps_t)
 
     E = np.random.multivariate_normal(np.zeros(n_markers), np.eye(n_markers), size = 1) * np.sqrt(background_noise_variance)
 
@@ -560,7 +570,19 @@ for n in range(n_cells):
 
     simulation_data[n,:] = y
 
+# Posterior adjustment
+for c_type in unique_labels:
+    ind = np.where(cell_type_indices == c_type)[0]
 
+    y = simulation_data[ind, :]
+    o_mean = np.mean(y, axis = 0)
+    o_cov = np.cov(y, rowvar=False)
+    y = y - o_mean
+    L = np.linalg.cholesky(o_cov)
+    y = np.linalg.inv(L) @ (y.transpose())
+    L = np.linalg.cholesky(cell_types[c_type].observed_cov)
+    y = L @ y + cell_types[c_type].observed_mean.reshape((-1,1))
+    simulation_data[ind, :] = y.transpose()
 
 
 
