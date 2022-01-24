@@ -42,7 +42,7 @@ for l in unique_labels:
     observed_p[counter] = frequency[l]/len(labels)
     counter += 1
 
-
+eps = 1e-5
 
 # We first initialize the CellType objects
 # we also associate with eacy cell type
@@ -415,10 +415,17 @@ def adjust_gaussian_mixture_means(cell_type,
     return cell_type
 
 
+def find_nearest_psd(matrix, eps):
+    X = 0.5 * (matrix + matrix.transpose())
+    w, v = np.linalg.eig(X)
+    if np.any(w < 0):
+        w[np.where(w < 0)] = eps
+        X = v @ np.diag(w) @ v.transpose()
+    return X
+
 
 def adjust_gaussian_mixture_covariance(cell_type,
                                        target_covariance):
-
     expressed_markers = cell_type.expressed_markers
     unexpressed_markers = cell_type.unexpressed_markers
 
@@ -436,6 +443,7 @@ def adjust_gaussian_mixture_covariance(cell_type,
     for i in range(n_components):
         cell_type.model_for_expressed_markers["all"].covariances_[i, :, :] += cell_type.model_for_expressed_markers["all"].weights_[i] * \
                                                                              (expressed_cov - cell_type.model_for_expressed_markers["all"].covariances_[i, :, :])
+        cell_type.model_for_expressed_markers["all"].covariances_[i, :, :] = find_nearest_psd(cell_type.model_for_expressed_markers["all"].covariances_[i, :, :], eps)
     # For unexpressed markers
     counter = 0
     for m in unexpressed_markers:
@@ -446,6 +454,9 @@ def adjust_gaussian_mixture_covariance(cell_type,
         cell_type.model_for_unexpressed_markers[m].covariances_[min_ind, :] = 0
         cell_type.model_for_unexpressed_markers[m].covariances_[max_ind, :] = unexpressed_cov[counter] / \
                                                                               cell_type.model_for_unexpressed_markers[m].weights_[max_ind]
+        if cell_type.model_for_unexpressed_markers[m].covariances_[max_ind, :] < 0:
+            cell_type.model_for_unexpressed_markers[m].covariances_[max_ind, :] = eps
+
         counter += 1
 
     return cell_type
@@ -474,8 +485,8 @@ for tr in tree_list:
             expressed_markers = cell_types[c_type].expressed_markers
             unexpressed_markers = cell_types[c_type].unexpressed_markers
 
-            observed_mean = cell_types[c_type].overall_mean
-            observed_covariance = cell_types[c_type].overall_cov
+            observed_mean = cell_types[c_type].observed_mean
+            observed_covariance = cell_types[c_type].observed_cov
 
             log_mean = np.log(observed_mean)
             parameters = np.concatenate((parameters,
@@ -574,15 +585,15 @@ for n in range(n_cells):
 for c_type in unique_labels:
     ind = np.where(cell_type_indices == c_type)[0]
 
-    y = simulation_data[ind, :]
-    o_mean = np.mean(y, axis = 0)
-    o_cov = np.cov(y, rowvar=False)
-    y = y - o_mean
+    ys = simulation_data[ind, :]
+    o_mean = np.mean(ys, axis = 0)
+    o_cov = np.cov(ys, rowvar=False)
+    ys = ys - o_mean
     L = np.linalg.cholesky(o_cov)
-    y = np.linalg.inv(L) @ (y.transpose())
+    ys = np.linalg.inv(L) @ (ys.transpose())
     L = np.linalg.cholesky(cell_types[c_type].observed_cov)
-    y = L @ y + cell_types[c_type].observed_mean.reshape((-1,1))
-    simulation_data[ind, :] = y.transpose()
+    y = L @ ys + cell_types[c_type].observed_mean.reshape((-1,1))
+    simulation_data[ind, :] = ys.transpose()
 
 
 
