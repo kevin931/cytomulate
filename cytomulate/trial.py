@@ -105,9 +105,6 @@ for t in range(len(forest)):
                     tree_list[t].add_edge(parent_cell, child_cell)
 
 
-
-
-list(nx.topological_sort(tree_list[0]))
 # If we have bead information, we can use those to estimate background noise variance
 # If not, we will use the cells
 background_noise_variance = np.Inf
@@ -116,7 +113,6 @@ min_components = 1
 cv_types = ["full"]
 
 for c_type in cell_types:
-    #c_type = "Mature_B_cells"
     df = cell_types_data[c_type]
     col_median = np.median(df, axis=0).reshape(-1,1)
 
@@ -173,6 +169,33 @@ for c_type in cell_types:
                 best_gm = gm
 
     cell_types[c_type].model_for_expressed_markers["all"] = best_gm
+
+
+
+
+
+
+
+
+def moments_of_gaussian_mixture(gm):
+    n_components = gm.n_components
+    means = gm.means_
+    covariances = gm.covariances_
+    weights = gm.weights_
+    d = means.shape[1]
+
+    overall_mean = np.zeros(d)
+    overall_covariance = np.zeros((d, d))
+
+    for c in range(n_components):
+        overall_mean += weights[c] * means[c]
+        overall_covariance += weights[c] * (covariances[c, :, :] +
+                                            means[c].reshape((-1,1)) @ means[c].reshape((1, -1)))
+
+    overall_covariance -= overall_mean.reshape((-1, 1)) @ overall_mean.reshape((1, -1))
+
+    return overall_mean, overall_covariance
+
 
 
 
@@ -565,15 +588,16 @@ for n in range(n_cells):
         x[m] = cell_type.model_for_unexpressed_markers[m].sample(1)[0][0]
 
     g = np.zeros(n_markers)
-    children_cell_types = cell_type.children
-    if len(children_cell_types) > 0:
-        child_id = np.random.choice(children_cell_types, size = 1,
-                                    p = np.ones(len(children_cell_types))/len(children_cell_types))[0]
-        child_cell = cell_types[unique_labels[child_id]]
+    if cell_differentiation:
+        children_cell_types = cell_type.children
+        if len(children_cell_types) > 0:
+            child_id = np.random.choice(children_cell_types, size = 1,
+                                        p = np.ones(len(children_cell_types))/len(children_cell_types))[0]
+            child_cell = cell_types[unique_labels[child_id]]
 
-        for m in range(n_markers):
-            ps_t = np.random.beta(cell_type.differential_paths_to_children[child_id][m],1,1)
-            g[m] = linear_function(cell_type.overall_mean[m], child_cell.overall_mean[m])(ps_t)
+            for m in range(n_markers):
+                ps_t = np.random.beta(cell_type.differential_paths_to_children[child_id][m],1,1)
+                g[m] = linear_function(cell_type.overall_mean[m], child_cell.overall_mean[m])(ps_t)
 
     E = np.random.multivariate_normal(np.zeros(n_markers), np.eye(n_markers), size = 1) * np.sqrt(background_noise_variance)
 
@@ -582,6 +606,10 @@ for n in range(n_cells):
     simulation_data[n,:] = y
 
 # Posterior adjustment
+
+mean_diff = np.zeros(len(unique_labels))
+cov_diff = np.zeros(len(unique_labels))
+counter = 0
 for c_type in unique_labels:
     ind = np.where(cell_type_indices == c_type)[0]
 
@@ -589,11 +617,31 @@ for c_type in unique_labels:
     o_mean = np.mean(ys, axis = 0)
     o_cov = np.cov(ys, rowvar=False)
     ys = ys - o_mean
-    L = np.linalg.cholesky(o_cov)
-    ys = np.linalg.inv(L) @ (ys.transpose())
+    w, v = np.linalg.eigh(o_cov)
+    w[np.where(w < 0)] = 0
+    # L = np.linalg.cholesky(o_cov)
+    ys = np.linalg.inv(v @ np.diag(np.sqrt(w)) @ v.transpose()) @ (ys.transpose())
     L = np.linalg.cholesky(cell_types[c_type].observed_cov)
-    y = L @ ys + cell_types[c_type].observed_mean.reshape((-1,1))
-    simulation_data[ind, :] = ys.transpose()
+    ys = L @ ys + cell_types[c_type].observed_mean.reshape((-1,1))
+    ys = ys.transpose()
+    o_mean = np.mean(ys, axis=0)
+    o_cov = np.cov(ys, rowvar=False)
+    mean_diff[counter] = np.linalg.norm(o_mean - cell_types[c_type].observed_mean)
+    cov_diff[counter] = np.linalg.norm(o_cov - cell_types[c_type].observed_cov)
+    #simulation_data[np.ix_(ind), :] = ys
+    counter += 1
+
+
+mean_diff = 0
+cov_diff = 0
+for c_type in unique_labels:
+    ind = np.where(cell_type_indices == c_type)[0]
+    ys = simulation_data[ind, :]
+    o_mean = np.mean(ys, axis=0)
+    o_cov = np.cov(ys, rowvar=False)
+    mean_diff += np.linalg.norm(o_mean - cell_types[c_type].observed_mean)
+    cov_diff += np.linalg.norm(o_cov - cell_types[c_type].observed_cov)
+
 
 
 

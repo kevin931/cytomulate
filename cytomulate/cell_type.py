@@ -80,6 +80,12 @@ class CellType:
         self.overall_cov = np.zeros((n_markers, n_markers))
         self.background_noise_level = None
 
+    def sample_cell(self, n_samples = 1):
+        result = np.zeros((n_samples, self.n_markers))
+        result[:, self.expressed_markers], _ = self.model_for_expressed_markers["all"].sample(n_samples)
+        for m in self.unexpressed_markers:
+            result[:, m], _ = self.model_for_unexpressed_markers[m].sample(n_samples)
+        return result
 
     def inherit_markers_pattern(self, mutation_probability = 0.2, \
                                 n_additional_gating_markers = 2):
