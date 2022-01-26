@@ -62,6 +62,7 @@ class CellType:
         self.markers_pattern = np.zeros((1, n_markers))
         self.expressed_markers = None
         self.unexpressed_markers = None
+        self.true_zero_indices = {}
         # We will use Gaussian Mixture to model or learn
         # the expression of this CellType
         # Consequently, there will be no need for
