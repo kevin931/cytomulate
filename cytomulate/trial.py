@@ -171,6 +171,145 @@ for c_type in cell_types:
     cell_types[c_type].model_for_expressed_markers["all"] = best_gm
 
 
+def extract_parameters(cell_type):
+    parameters = np.array([])
+    # First deal with expressed markers
+    gm = cell_type.model_for_expressed_markers["all"]
+    n_components = gm.n_components
+    # The means
+    # we expect it to be a n_component * n expressed markers matrix
+    # reshape by row
+    # No transformation is needed
+    means = gm.means_
+    parameters = np.concatenate((parameters,
+                                 means.reshape((-1))))
+    # The covariances
+    # The eigenvalues are non-negative, we will use log-transformation
+    # No transformation is needed for the orthonomal matrix
+    covariances = gm.covariances_
+    for c in range(n_components):
+        cov = covariances[c, :, :]
+        w, v = np.linalg.eigh(cov)
+        parameters = np.concatenate((parameters,
+                                     np.log(w),
+                                     v.reshape((-1))))
+
+    # Now the unexpressed markers
+    # We transform the covariance via log
+    unexpressed_markers = cell_type.unexpressed_markers
+    for m in unexpressed_markers:
+        gm = cell_type.model_for_unexpressed_markers[m]
+        n_components = gm.n_components
+        means = gm.means_
+        ind = np.where(means != 0)
+        means = means[ind]
+        cov = gm.covariances_[ind]
+        parameters = np.concatenate((parameters,
+                                     means,
+                                     np.log(cov.reshape((-1)))))
+
+    return parameters
+
+
+def insert_parameters(parameters,
+                      cell_type):
+    expressed_markers = cell_type.expressed_markers
+    unexpressed_markers = cell_type.unexpressed_markers
+    # The first section will be for expressed markers
+    n_components = cell_type.model_for_expressed_markers["all"].n_components
+
+    expressed_parameters = parameters[0 : ((n_components * len(expressed_markers)) +
+                                           (n_components * (len(expressed_markers) * (len(expressed_markers) + 1))))]
+    unexpressed_parameters = parameters[((n_components * len(expressed_markers)) +
+                                           (n_components * (len(expressed_markers) * (len(expressed_markers) + 1)))) : ]
+
+    # First the means will be the first n_components * n expressed markers
+    means = expressed_parameters[0 : (n_components * len(expressed_markers))]
+    means = means.reshape((n_components, len(expressed_markers)))
+    cell_type.model_for_expressed_markers["all"].means_ = means
+    # Then the covariances
+    covariances = expressed_parameters[(n_components * len(expressed_markers)) : ]
+    covariances = np.split(covariances, n_components)
+    for c in range(n_components):
+        cov = covariances[c]
+        w = cov[0 : len(expressed_markers)]
+        w = np.diag(np.exp(w))
+        v = cov[len(expressed_markers) : ]
+        v = v.reshape((len(expressed_markers), len(expressed_markers)))
+        cell_type.model_for_expressed_markers["all"].covariances_[c, :, :] = v @ w @ v.transpose()
+
+    # Now we deal with unexpressed markers
+    # For unexpressed markers the number of components should be equal for all models
+    unexpressed_parameters = np.split(unexpressed_parameters, len(unexpressed_markers))
+    counter = 0
+    for m in unexpressed_markers:
+        gm = cell_type.model_for_unexpressed_markers[m]
+        n_components = gm.n_components
+        means = gm.means_
+        ind = np.where(means != 0)
+        p = unexpressed_parameters[counter]
+        cell_type.model_for_unexpressed_markers[m].means_[ind] = p[0 : (n_components-1)]
+        cell_type.model_for_unexpressed_markers[m].covariances_[ind] = p[(n_components - 1) : ].reshape((-1,1))
+
+        counter += 1
+
+    return cell_type
+
+
+def sample(n_samples, cell_type_name, cell_types, unique_labels, background_noise_variance):
+    cell_type = cell_types[cell_type_name]
+    X = cell_type.sample_cell(n_samples)
+    g = np.zeros((n_samples, n_markers))
+    children_cell_types = cell_type.children
+    if len(children_cell_types) > 0:
+        for n in range(n_samples):
+            child_id = np.random.choice(children_cell_types, size=1,
+                                        p=np.ones(len(children_cell_types)) / len(children_cell_types))[0]
+            child_cell = cell_types[unique_labels[child_id]]
+
+            for m in range(cell_type.n_markers):
+                ps_t = np.random.beta(cell_type.differential_paths_to_children[child_id][m], 1, 1)
+                g[n, m] = linear_function(cell_type.overall_mean[m], child_cell.overall_mean[m])(ps_t)
+
+    E = np.random.multivariate_normal(np.zeros(cell_type.n_markers), np.eye(cell_type.n_markers), size=1) * np.sqrt(
+        background_noise_variance, n_samples)
+    Y = X + g + E
+    return Y
+
+def distance_between_simulated_and_observed(parameters,
+                                            n_samples,
+                                            cell_type_name,
+                                            cell_types,
+                                            unique_labels,
+                                            background_noise_variance):
+    cell_types[cell_type_name] = insert_parameters(parameters, cell_types[cell_type_name])
+    Y = sample(n_samples, cell_type_name, cell_types, unique_labels, background_noise_variance)
+
+    mean = np.mean(Y, axis = 0)
+    cov = np.cov(Y, rowvar=False)
+
+    dist = np.linalg.norm(mean - cell_types[cell_type_name].observed_mean) + \
+           np.linalg.norm(covariance - cell_types[cell_type_name].observed_cov)
+
+    return dist
+
+def adjust_cell_type(parameters0,
+                     n_samples,
+                     cell_type_name,
+                     cell_types,
+                     unique_labels,
+                     background_noise_variance):
+    res = minimize(distance_between_simulated_and_observed,
+                   x0 = parameters0,
+                   args = (n_samples,
+                           cell_type_name,
+                           cell_types,
+                           unique_labels,
+                           background_noise_variance),
+                   method='nelder-mead',
+                   options={'xatol': 1e-8, 'disp': True})
+
+    return res
 
 
 
