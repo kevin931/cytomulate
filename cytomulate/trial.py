@@ -13,6 +13,7 @@ import matplotlib.pyplot as plot
 from collections import Counter
 from scipy.stats import gaussian_kde
 from scipy.optimize import minimize
+from scipy.stats import norm
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 import networkx as nx
@@ -152,6 +153,7 @@ for c_type in cell_types:
         if est_background_noise_variance < background_noise_variance:
             background_noise_variance = est_background_noise_variance
         cell_types[c_type].model_for_unexpressed_markers[cell_types[c_type].unexpressed_markers[m]] = gm
+        cell_types[c_type].true_zero_indices[m] = np.argmin(gm.means_)
 
     # Since we expect only a few markers to be highly expressed
     # we can probably afford fitting the entire data
@@ -169,6 +171,39 @@ for c_type in cell_types:
                 best_gm = gm
 
     cell_types[c_type].model_for_expressed_markers["all"] = best_gm
+
+
+def adjust_model(cell_type,
+                 background_noise_variance):
+    # We deal with expressed markers first
+    n_components = cell_type.model_for_expressed_markers["all"].n_components
+    expressed_markers = cell_type.expressed_markers
+    for c in range(n_components):
+        cell_type.model_for_expressed_markers["all"].covariances_[c, :, :] -= background_noise_variance * np.eye(len(expressed_markers))
+
+    # Then we deal with lowly/ unexpressed markers
+    unexpressed_markers = cell_type.unexpressed_markers
+    for m in unexpressed_markers:
+        n_components = cell_type.model_for_unexpressed_markers[m].n_components
+        for c in range(n_components):
+            cell_type.model_for_unexpressed_markers[m].covariances_[c, :, :] -= background_noise_variance
+            if cell_type.model_for_unexpressed_markers[m].covariances_[c, :, :] <= 0:
+                cell_type.model_for_unexpressed_markers[m].means_[c] = 0
+                cell_type.model_for_unexpressed_markers[m].covariances_[c, :, :] = 0
+            else:
+                n095quantile = norm.ppf(0.05, loc = cell_type.model_for_unexpressed_markers[m].means_[c],
+                                        scale = np.sqrt(cell_type.model_for_unexpressed_markers[m].covariances_[c, :, :]))
+                if n095quantile <= 0:
+                    cell_type.model_for_unexpressed_markers[m].means_[c] = 0
+                    cell_type.model_for_unexpressed_markers[m].covariances_[c, :, :] = 0
+
+    return cell_type
+
+
+
+
+
+
 
 
 def extract_parameters(cell_type):
@@ -244,12 +279,11 @@ def insert_parameters(parameters,
     counter = 0
     for m in unexpressed_markers:
         gm = cell_type.model_for_unexpressed_markers[m]
-        n_components = gm.n_components
         means = gm.means_
         ind = np.where(means != 0)
         p = unexpressed_parameters[counter]
-        cell_type.model_for_unexpressed_markers[m].means_[ind] = p[0 : (n_components-1)]
-        cell_type.model_for_unexpressed_markers[m].covariances_[ind] = p[(n_components - 1) : ].reshape((-1,1))
+        cell_type.model_for_unexpressed_markers[m].means_[ind] = p[0 : len(ind)]
+        cell_type.model_for_unexpressed_markers[m].covariances_[ind] = np.exp(p[len(ind) : ]).reshape((-1,1))
 
         counter += 1
 
@@ -271,8 +305,8 @@ def sample(n_samples, cell_type_name, cell_types, unique_labels, background_nois
                 ps_t = np.random.beta(cell_type.differential_paths_to_children[child_id][m], 1, 1)
                 g[n, m] = linear_function(cell_type.overall_mean[m], child_cell.overall_mean[m])(ps_t)
 
-    E = np.random.multivariate_normal(np.zeros(cell_type.n_markers), np.eye(cell_type.n_markers), size=1) * np.sqrt(
-        background_noise_variance, n_samples)
+    E = np.random.multivariate_normal(np.zeros(cell_type.n_markers), np.eye(cell_type.n_markers), size=n_samples) * np.sqrt(
+        background_noise_variance)
     Y = X + g + E
     return Y
 
@@ -289,7 +323,7 @@ def distance_between_simulated_and_observed(parameters,
     cov = np.cov(Y, rowvar=False)
 
     dist = np.linalg.norm(mean - cell_types[cell_type_name].observed_mean) + \
-           np.linalg.norm(covariance - cell_types[cell_type_name].observed_cov)
+           np.linalg.norm(cov - cell_types[cell_type_name].observed_cov)
 
     return dist
 
@@ -306,8 +340,8 @@ def adjust_cell_type(parameters0,
                            cell_types,
                            unique_labels,
                            background_noise_variance),
-                   method='nelder-mead',
-                   options={'xatol': 1e-8, 'disp': True})
+                   method='Nelder-Mead',
+                   options={'disp': True})
 
     return res
 
@@ -334,8 +368,6 @@ def moments_of_gaussian_mixture(gm):
     overall_covariance -= overall_mean.reshape((-1, 1)) @ overall_mean.reshape((1, -1))
 
     return overall_mean, overall_covariance
-
-
 
 
 
