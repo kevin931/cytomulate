@@ -55,22 +55,25 @@ class CytofData:
         for c_type in self.cell_types:
             self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
-
     def sample(self, n_samples,
                cell_abundances = None):
         if cell_abundances is None:
             cell_abundances = self.observed_cell_abundances
 
-        result = np.zeros((n_samples, self.n_markers))
+        expression_matrix = np.zeros((n_samples, self.n_markers))
 
         n_per_cell_type = np.random.multinomial(n_samples, cell_abundances)
+        ids = np.repeat(range(len(n_per_cell_type)), n_per_cell_type)
+
         start_n = 0
         end_n = 0
         for cell_id in range(len(n_per_cell_type)):
             c_type = self.cell_type_ids_to_labels[cell_id]
             n = n_per_cell_type[cell_id]
+            if n == 0:
+                continue
             end_n += n
-            result[start_n : end_n, :] = self.cell_types[c_type].sample_cell(n)
+            expression_matrix[start_n : end_n, :] = self.cell_types[c_type].sample_cell(n)
             start_n += n
 
-        return result
+        return expression_matrix, ids
