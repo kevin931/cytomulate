@@ -69,6 +69,9 @@ class CellType:
 
         self.model_for_highly_expressed_markers["all"] = best_gm
 
+    def adjust_models(self):
+        pass
+
     def sample_cell(self, n_samples):
         n_markers = len(self.lowly_expressed_markers) + len(self.highly_expressed_markers)
         result = np.zeros((n_samples, n_markers))

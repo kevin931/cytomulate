@@ -45,7 +45,9 @@ class CytofData:
 
 
     def estimate_background_noise_variance(self):
-        pass
+        self.background_noise_variance = np.Inf
+        for c_type in self.cell_types:
+            pass
 
     def sample(self, n_samples):
         pass
