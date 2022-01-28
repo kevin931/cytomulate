@@ -2,16 +2,18 @@
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
+from scipy.stats import t
 
 
 class CellType:
-    def __init__(self, label, id):
+    def __init__(self, label, cell_id):
         self.label = label
-        self.id = id
+        self.id = cell_id
         self.highly_expressed_markers = None
         self.lowly_expressed_markers = None
         self.model_for_highly_expressed_markers = None
         self.model_for_lowly_expressed_markers = None
+        self.observed_n = None
         self.observed_mean = None
         self.observed_covariance = None
 
@@ -69,8 +71,37 @@ class CellType:
 
         self.model_for_highly_expressed_markers["all"] = best_gm
 
-    def adjust_models(self):
-        pass
+    def adjust_models(self, background_noise_variance):
+        # We deal with expressed markers first
+        n_components = self.model_for_highly_expressed_markers["all"].n_components
+        if self.model_for_highly_expressed_markers["all"].covariance_type == "spherical":
+            self.model_for_highly_expressed_markers["all"].covariances_ -= background_noise_variance
+        elif self.model_for_highly_expressed_markers["all"].covariance_type == "tied":
+            self.model_for_highly_expressed_markers["all"].covariances_ -= background_noise_variance * np.eye(len(self.highly_expressed_markers))
+        elif self.model_for_highly_expressed_markers["all"].covariance_type == "diag":
+            for c in range(n_components):
+                self.model_for_highly_expressed_markers["all"].covariances_[c, :] -= background_noise_variance
+        elif self.model_for_highly_expressed_markers["all"].covariance_type == "full":
+            for c in range(n_components):
+                self.model_for_highly_expressed_markers["all"].covariances_[c, :,:] -= background_noise_variance * np.eye(len(self.highly_expressed_markers))
+        else:
+            raise ValueError('Unknown covariance type')
+
+        # Then we deal with lowly/ unexpressed markers
+        for m in self.lowly_expressed_markers:
+            n_components = self.model_for_lowly_expressed_markers[m].n_components
+            for c in range(n_components):
+                self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] -= background_noise_variance
+                if self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] <= 0:
+                    self.model_for_lowly_expressed_markers[m].means_[c] = 0
+                    self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] = 0
+                else:
+                    t_stat = (self.model_for_lowly_expressed_markers[m].means_[c]) / \
+                             np.sqrt(self.model_for_lowly_expressed_markers[m].covariances_[c, :, :]/self.observed_n)
+                    n095quantile = t.ppf(0.95, df=self.observed_n - 1)
+                    if t_stat <= n095quantile:
+                        self.model_for_lowly_expressed_markers[m].means_[c] = 0
+                        self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] = 0
 
     def sample_cell(self, n_samples):
         n_markers = len(self.lowly_expressed_markers) + len(self.highly_expressed_markers)

@@ -3,7 +3,7 @@
 
 # Read file and cell type
 from utilities import FileIO
-from cell_type import CellType
+from cell_type1 import CellType
 
 # data visual
 import numpy as np
@@ -111,7 +111,7 @@ for t in range(len(forest)):
 background_noise_variance = np.Inf
 max_components = 9
 min_components = 1
-cv_types = ["full"]
+cv_types = ["full", "tied", "diag", "spherical"]
 
 for c_type in cell_types:
     df = cell_types_data[c_type]
