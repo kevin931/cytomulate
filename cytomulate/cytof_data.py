@@ -19,11 +19,11 @@ class CytofData:
         self.cell_type_labels_and_ids = dict.fromkeys(np.unique(labels))
         abundances = Counter(labels)
 
-        self.observed_cell_abundances = np.zeros(len(self.cell_type_labels))
+        self.observed_cell_abundances = np.zeros(len(self.cell_type_labels_and_ids))
         id = 0
-        for c_type in self.cell_type_labels:
+        for c_type in self.cell_type_labels_and_ids:
             self.observed_cell_abundances[id] = abundances[c_type]/len(labels)
-            self.cell_type_labels[c_type] = id
+            self.cell_type_labels_and_ids[c_type] = id
             self.cell_types[c_type] = CellType(label=c_type, id=id)
 
             ind = np.where(labels == c_type)[0]
