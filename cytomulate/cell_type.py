@@ -18,6 +18,11 @@ class CellType:
         self.observed_covariance = None
 
     def fit(self, data, max_components, min_components, covariance_types):
+
+        self.observed_n = data.shape[0]
+        self.observed_mean = np.mean(data, axis=0)
+        self.observed_covariance = np.cov(data, rowvar=False)
+
         col_median = np.median(data, axis=0).reshape(-1,1)
         # We will use K-means with 2 groups to
         # group markers into two groups
@@ -104,7 +109,7 @@ class CellType:
                         self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] = 0
 
     def sample_cell(self, n_samples):
-        n_markers = len(self.lowly_expressed_markers) + len(self.highly_expressed_markers)
+        n_markers = len(self.observed_mean)
         result = np.zeros((n_samples, n_markers))
         result[:, self.highly_expressed_markers], _ = self.model_for_highly_expressed_markers["all"].sample(n_samples)
         for m in self.lowly_expressed_markers:

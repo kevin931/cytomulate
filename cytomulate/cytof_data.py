@@ -8,11 +8,12 @@ from cell_type import CellType
 class CytofData:
     def __init__(self):
 
-        self.background_noise_variance = None
-        self.cell_types = {}
-        self.cell_type_labels_and_ids = {}
-        self.observed_cell_abundances = None
         self.n_markers = None
+        self.observed_cell_abundances = None
+        self.background_noise_variance = None
+        self.cell_type_labels_to_ids = {}
+        self.cell_type_ids_to_labels = {}
+        self.cell_types = {}
 
     def initialize_cell_types(self, expression_matrix,
                               labels,
@@ -20,20 +21,24 @@ class CytofData:
                               min_components=1,
                               covariance_types=("full", "tied", "diag", "spherical")):
         self.n_markers = np.shape(expression_matrix)[1]
-        self.cell_type_labels_and_ids = dict.fromkeys(np.unique(labels))
+
+        unique_labels = np.unique(labels)
+
         abundances = Counter(labels)
+        self.observed_cell_abundances = np.zeros(len(unique_labels))
+
         self.background_noise_variance = np.Inf
-        self.observed_cell_abundances = np.zeros(len(self.cell_type_labels_and_ids))
         cell_id = 0
-        for c_type in self.cell_type_labels_and_ids:
+        for c_type in unique_labels:
             self.observed_cell_abundances[cell_id] = abundances[c_type]/len(labels)
-            self.cell_type_labels_and_ids[c_type] = cell_id
-            self.cell_types[c_type] = CellType(label=c_type, id=cell_id)
-            self.cell_types[c_type].observed_n = abundances[c_type]
+
+            self.cell_type_labels_to_ids[c_type] = cell_id
+            self.cell_type_ids_to_labels[cell_id] = c_type
+
+            self.cell_types[c_type] = CellType(label=c_type, cell_id=cell_id)
+
             ind = np.where(labels == c_type)[0]
             D = expression_matrix[ind, :]
-            self.cell_types[c_type].observed_mean = np.mean(D, axis=0)
-            self.cell_types[c_type].observed_covariance = np.cov(D, rowvar=False)
             self.cell_types[c_type].fit(data=D,
                                         max_components=max_components,
                                         min_components=min_components,
@@ -46,6 +51,26 @@ class CytofData:
 
             cell_id += 1
 
+    def adjust_cell_types(self):
+        for c_type in self.cell_types:
+            self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
-    def sample(self, n_samples):
-        pass
+
+    def sample(self, n_samples,
+               cell_abundances = None):
+        if cell_abundances is None:
+            cell_abundances = self.observed_cell_abundances
+
+        result = np.zeros((n_samples, self.n_markers))
+
+        n_per_cell_type = np.random.multinomial(n_samples, cell_abundances)
+        start_n = 0
+        end_n = 0
+        for cell_id in range(len(n_per_cell_type)):
+            c_type = self.cell_type_ids_to_labels[cell_id]
+            n = n_per_cell_type[cell_id]
+            end_n += n
+            result[start_n : end_n, :] = self.cell_types[c_type].sample_cell(n)
+            start_n += n
+
+        return result
