@@ -3,6 +3,7 @@ import networkx as nx
 from networkx.algorithms import tree
 from networkx.algorithms.community import greedy_modularity_communities
 import itertools
+from utilities import smooth_brownian_bridge
 
 class CellNetwork:
     def __init__(self):
@@ -71,7 +72,7 @@ class CellNetwork:
         else:
             raise ValueError('Unknown network type')
 
-    def generate_trajectories(self):
+    def generate_trajectories(self, cell_types):
         pass
 
     def sample_network(self, n_samples, cell_label, cell_types):
