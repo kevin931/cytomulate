@@ -12,7 +12,7 @@ def linear_function(end_value):
 
 
 def smooth_brownian_bridge(end_values, N = 5, function_type = "linear", lb = 0, ub = 1):
-    end_values = end_values.reshape((-1,1))
+    end_values = np.array(end_values).reshape((-1,1))
     n_markers = end_values.shape[0]
     if function_type == "nonlinear":
         sigma2 = np.abs(end_values) * np.random.uniform(lb, ub, n_markers).reshape((-1,1))

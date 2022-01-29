@@ -143,7 +143,8 @@ class CytofData:
             if n == 0:
                 continue
             end_n += n
-            expression_matrix[start_n : end_n, :] = self.cell_types[c_type].sample_cell(n)
+            X = self.cell_types[c_type].sample_cell(n)
+            expression_matrix[start_n : end_n, :] = X
             start_n += n
 
         return expression_matrix, ids
