@@ -72,8 +72,14 @@ class CellNetwork:
         else:
             raise ValueError('Unknown network type')
 
-    def generate_trajectories(self, cell_types):
-        pass
+    def generate_trajectories(self, cell_types, N = 5,
+                              function_type = "linear", lb = 0, ub = 1):
+        edges = self.network.edges
+        for e in edges:
+            from_label = e[0]
+            to_label = e[1]
+            end_values = cell_types[to_label].observed_mean - cell_types[from_label].observed_mean
+            self.trajectories[edges] = smooth_brownian_bridge(end_values, N, function_type, lb, ub)
 
     def sample_network(self, n_samples, cell_label, cell_types):
         pass
