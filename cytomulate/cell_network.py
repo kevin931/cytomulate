@@ -56,12 +56,18 @@ class CellNetwork:
             mst_G.add_edges_from(list(mst))
             if network_topology == "tree":
                 root = set(mst_G.nodes).pop()
-            
+                self.network = nx.dfs_tree(mst_G, root)
             elif network_topology == "forest":
                 forest = list(greedy_modularity_communities(mst_G))
+                tree_list = []
+                for t in range(len(forest)):
+                    nodes = list(forest[t])
+                    root = np.random.choice(nodes)
+                    tree_list.append(nx.dfs_tree(mst_G.subgraph(nodes), root))
+                self.network = nx.compose_all(tree_list)
             else:
                 raise ValueError('Unknown network type')
-
+            self.network.add_node(self.bead_label)
         else:
             raise ValueError('Unknown network type')
 
