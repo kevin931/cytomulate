@@ -1,7 +1,7 @@
 
 import numpy as np
 from collections import Counter
-
+from utilities import smooth_brownian_bridge
 from cell_type import CellType
 
 
@@ -9,9 +9,15 @@ class CytofData:
     def __init__(self, n_batches = 1):
 
         self.n_markers = None
-        self.n_batchs = n_batches
+
         self.background_noise_variance = None
         self.bead_label = None
+
+        self.n_batches = n_batches
+        self.overall_batch_effects = {}
+        self.local_batch_effects = {}
+        self.temporal_effects = {}
+
         self.observed_cell_abundances = {}
         self.cell_type_labels_to_ids = {}
         self.cell_type_ids_to_labels = {}
@@ -61,13 +67,34 @@ class CytofData:
         for c_type in self.cell_types:
             self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
-    def generate_overall_batch_effects(self):
-        pass
-    def generate_local_batch_effects(self):
-        pass
-    def generate_temporal_effects(self):
-        pass
-    
+    def generate_overall_batch_effects(self, variance=0.001):
+        if self.n_batches == 1:
+            self.overall_batch_effects[0] = 0
+        else:
+            batch_effects = np.zeros(self.n_batches)
+            batch_effects[:(self.n_batches-1)] = np.random.normal(loc=0, scale=np.sqrt(variance),
+                                             size=self.n_batches - 1)
+            batch_effects[self.n_batches-1] = -np.sum(batch_effects)
+            for b in range(self.n_batches):
+                self.overall_batch_effects[b] = batch_effects[b]
+
+    def generate_local_batch_effects(self, variance = 0.001):
+        if self.n_batches == 1:
+            self.local_batch_effects[0] = np.zeros((len(self.cell_types), self.n_markers))
+        else:
+            for b in range(self.n_batches):
+                self.local_batch_effects[b] = np.zeros((len(self.cell_types), self.n_markers))
+                self.local_batch_effects[b][np.ix_(range(len(self.cell_types)-1), range(self.n_markers-1))] = \
+                    np.random.normal(loc=0, scale=np.sqrt(variance), size=(len(self.cell_types)-1)*(self.n_markers-1)).reshape((len(self.cell_types)-1, self.n_markers-1))
+                self.local_batch_effects[b][:, self.n_markers-1] = -np.sum(self.local_batch_effects[b], axis=1)
+                self.local_batch_effects[b][len(self.cell_types)-1, :] = -np.sum(self.local_batch_effects[b], axis=0)
+
+    def generate_temporal_effects(self, variance= 0.001, N = 5,
+                              function_type = "linear", lb = 0, ub = 1):
+        for b in range(self.n_batches):
+            self.temporal_effects[b] = smooth_brownian_bridge(np.random.normal(0,np.sqrt(variance),1),
+                                                              N, function_type, lb, ub)
+
     def sample(self, n_samples,
                cell_abundances = None,
                ordered_by = "ids"):
