@@ -2,33 +2,68 @@ import numpy as np
 import networkx as nx
 from networkx.algorithms import tree
 from networkx.algorithms.community import greedy_modularity_communities
-
+import itertools
 
 class CellNetwork:
     def __init__(self):
+        self.complete_undirected_network = None
         self.network = None
+        self.bead_label = None
         self.trajectories = {}
 
-    def initialize_network(self, cell_types, bead_label):
-        self.network = nx.Graph()
+    def initialize_network(self, cell_types, bead_label=None):
+        self.complete_undirected_network = nx.Graph()
+        self.bead_label = bead_label
         for label in cell_types:
-            self.network.add_node(label)
+            self.complete_undirected_network.add_node(label)
 
-        for label1 in cell_types:
-            mean1 = cell_types[label1].observed_mean
-            for label2 in cell_types:
-                mean2 = cell_types[label2].observed_mean
-                if (label1 == label2) or (label1 == bead_label) or (label2 == bead_label):
-                    continue
+        for labels in itertools.combinations(cell_types.keys(), 2):
+            if (labels[0] == bead_label) or (labels[1] == bead_label):
+                continue
+            else:
+                mean1 = cell_types[labels[0]].observed_mean
+                mean2 = cell_types[labels[1]].observed_mean
+                self.complete_undirected_network.add_edge(labels[0], labels[1], weight=np.linalg.norm(mean1 - mean2))
+
+    def prune_network(self, network_topology="bidirectional complete"):
+        if "complete" in network_topology:
+            self.network = self.complete_undirected_network.to_directed()
+            if network_topology == "complete":
+                nodes = np.array(list(set(self.network.nodes) - {self.bead_label}))
+                np.random.shuffle(nodes)
+                for labels in itertools.combinations(nodes, 2):
+                    self.network.remove_edge(labels[0], labels[1])
+            else:
+                if network_topology != "bidirectional complete":
+                    raise ValueError('Unknown network type')
+        elif "cyclic" in network_topology:
+            nodes = np.array(list(set(self.complete_undirected_network.nodes) - {self.bead_label}))
+            np.random.shuffle(nodes)
+            self.network = nx.DiGraph()
+            self.network.add_node(self.bead_label)
+            for i in range(len(nodes)):
+                if i == len(nodes) - 1:
+                    self.network.add_edge(nodes[i], nodes[0])
+                    if network_topology == "bidirectional cyclic":
+                        self.network.add_edge(nodes[0], nodes[i])
                 else:
-                    self.network.add_edge(label1, label2, weight=np.linalg.norm(mean1 - mean2))
+                    self.network.add_edge(nodes[i], nodes[i+1])
+                    if network_topology == "bidirectional cyclic":
+                        self.network.add_edge(nodes[i+1], nodes[i])
+        elif network_topology in ["tree", "forest"]:
+            mst = tree.minimum_spanning_edges(self.complete_undirected_network, algorithm="kruskal", weight="weight", data=False)
+            mst_G = nx.Graph()
+            mst_G.add_edges_from(list(mst))
+            if network_topology == "tree":
+                root = set(mst_G.nodes).pop()
+            
+            elif network_topology == "forest":
+                forest = list(greedy_modularity_communities(mst_G))
+            else:
+                raise ValueError('Unknown network type')
 
-    def prune_network(self, network_type="complete"):
-        if network_type == "complete":
-            pass
         else:
             raise ValueError('Unknown network type')
-
 
     def generate_trajectories(self):
         pass

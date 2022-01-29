@@ -122,8 +122,8 @@ class CellType:
 
     def sample_cell(self, n_samples):
         n_markers = len(self.observed_mean)
-        result = np.zeros((n_samples, n_markers))
-        result[:, self.highly_expressed_markers], _ = self.model_for_highly_expressed_markers["all"].sample(n_samples)
+        X = np.zeros((n_samples, n_markers))
+        X[:, self.highly_expressed_markers], _ = self.model_for_highly_expressed_markers["all"].sample(n_samples)
         for m in self.lowly_expressed_markers:
-            result[:, [m]], _ = self.model_for_lowly_expressed_markers[m].sample(n_samples)
-        return result
+            X[:, [m]], _ = self.model_for_lowly_expressed_markers[m].sample(n_samples)
+        return X
