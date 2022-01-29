@@ -6,9 +6,10 @@ from cell_type import CellType
 
 
 class CytofData:
-    def __init__(self):
+    def __init__(self, n_batches = 1):
 
         self.n_markers = None
+        self.n_batchs = n_batches
         self.background_noise_variance = None
         self.bead_label = None
         self.observed_cell_abundances = {}
@@ -60,6 +61,13 @@ class CytofData:
         for c_type in self.cell_types:
             self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
+    def generate_overall_batch_effects(self):
+        pass
+    def generate_local_batch_effects(self):
+        pass
+    def generate_temporal_effects(self):
+        pass
+    
     def sample(self, n_samples,
                cell_abundances = None,
                ordered_by = "ids"):
