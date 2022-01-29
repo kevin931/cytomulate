@@ -4,29 +4,41 @@ from numpy import random as rd
 from scipy.interpolate import Akima1DInterpolator
 
 
-def linear_function(end_values):
-    def line_segments(t):
-        return t * end_values
+def linear_function(end_value):
+    def line_segment(t):
+        return np.array(t) * end_value
 
-    return line_segments
+    return line_segment
 
 
-def smooth_brownian_bridge(end_values, N = 5, sigma2 = 1):
-
-    if sigma2 > 0:
+def smooth_brownian_bridge(end_values, N = 5, type = "linear", lb = 0, ub = 1):
+    end_values = end_values.reshape((-1,1))
+    n_markers = end_values.shape[0]
+    if type == "nonlinear":
+        sigma2 = np.abs(end_values) * np.random.uniform(lb, ub, n_markers).reshape((-1,1))
         t_interval: "np.ndarray" = np.linspace(0, 1, num=N, endpoint=True)
         delta: float = 1 / (N - 1)
+
         # We first generate a Wiener process
-        wiener_process: "np.ndarray" = rd.normal(0, np.sqrt(sigma2), N - 1) * np.sqrt(delta)
-        wiener_process = np.cumsum(wiener_process)
-        wiener_process = np.concatenate(([0], wiener_process))
-        # Then we can construct a Brownian bridge
-        brownian_bridge: "np.ndarray" = np.array([wiener_process[i] - \
-                                                  t_interval[i] * (wiener_process[N - 1] - end_values) \
-                                                  for i in range(N)])
+        wiener_process = np.zeros((n_markers, N))
+        for i in range(n_markers):
+            wiener_process[i, 1:] = rd.normal(0, np.sqrt(sigma2[i,0]), N - 1) * np.sqrt(delta)
+
+        wiener_process = np.cumsum(wiener_process, axis=1)
+        brownian_bridge = np.zeros((n_markers, N))
+        for i in range(N):
+            brownian_bridge[:,[i]] = wiener_process[:,[i]] - t_interval[i] * (wiener_process[:,[N - 1]] - end_values)
+
         # Akima spline to interpolate
-        spline_function: Akima1DInterpolator = Akima1DInterpolator(t_interval, brownian_bridge)
-        return spline_function
+        spline_functions = []
+        for i in range(n_markers):
+            spline_functions.append(Akima1DInterpolator(t_interval, brownian_bridge[i,:]))
+        return spline_functions
+    elif type == "linear":
+        linear_functions = []
+        for i in range(n_markers):
+            linear_functions.append(linear_function(end_values[i,0]))
+        return linear_functions
     else:
-        return linear_function(end_values)
+        raise ValueError('Unknown type')
 
