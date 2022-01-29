@@ -17,29 +17,35 @@ class CellType:
         self.observed_mean = None
         self.observed_covariance = None
 
-    def fit(self, data, max_components, min_components, covariance_types):
+    def fit(self, data, max_components,
+            min_components, covariance_types,
+            is_bead=False, bead_channels=None):
 
         self.observed_n = data.shape[0]
         self.observed_mean = np.mean(data, axis=0)
         self.observed_covariance = np.cov(data, rowvar=False)
 
-        col_median = np.median(data, axis=0).reshape(-1,1)
-        # We will use K-means with 2 groups to
-        # group markers into two groups
-        # expressed and unexpressed
-        kmeans = KMeans(n_clusters=2).fit(col_median)
-
-        group_0_mean = np.mean(col_median[kmeans.labels_ == 0])
-        group_1_mean = np.mean(col_median[kmeans.labels_ == 1])
-        if group_1_mean > group_0_mean:
-            highly_expressed_group = 1
-            lowly_expressed_group = 0
+        if is_bead:
+            self.highly_expressed_markers = bead_channels
+            self.lowly_expressed_markers = list(set(range(len(self.observed_mean))) - set(self.highly_expressed_markers))
         else:
-            highly_expressed_group = 0
-            lowly_expressed_group = 1
+            col_median = np.median(data, axis=0).reshape(-1,1)
+            # We will use K-means with 2 groups to
+            # group markers into two groups
+            # expressed and unexpressed
+            kmeans = KMeans(n_clusters=2).fit(col_median)
 
-        self.highly_expressed_markers = np.where(kmeans.labels_ == highly_expressed_group)[0]
-        self.lowly_expressed_markers = np.where(kmeans.labels_ == lowly_expressed_group)[0]
+            group_0_mean = np.mean(col_median[kmeans.labels_ == 0])
+            group_1_mean = np.mean(col_median[kmeans.labels_ == 1])
+            if group_1_mean > group_0_mean:
+                highly_expressed_group = 1
+                lowly_expressed_group = 0
+            else:
+                highly_expressed_group = 0
+                lowly_expressed_group = 1
+
+            self.highly_expressed_markers = np.where(kmeans.labels_ == highly_expressed_group)[0]
+            self.lowly_expressed_markers = np.where(kmeans.labels_ == lowly_expressed_group)[0]
 
         # For unexpressed markers
         # we fit gaussian mixture model with 2 components to each marginal
@@ -54,9 +60,15 @@ class CellType:
         self.model_for_highly_expressed_markers = {}
         self.model_for_lowly_expressed_markers = {}
 
+
+        if is_bead:
+            n_components = 1
+        else:
+            n_components = 1
+
         counter = 0
         for m in self.lowly_expressed_markers:
-            self.model_for_lowly_expressed_markers[m] = GaussianMixture(n_components=2).fit(lowly_expressed_data[:, counter].reshape(-1, 1))
+            self.model_for_lowly_expressed_markers[m] = GaussianMixture(n_components=1).fit(lowly_expressed_data[:, counter].reshape(-1, 1))
             counter += 1
 
         # Since we expect only a few markers to be highly expressed
