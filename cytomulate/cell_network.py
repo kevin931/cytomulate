@@ -5,6 +5,7 @@ from networkx.algorithms.community import greedy_modularity_communities
 import itertools
 from utilities import smooth_brownian_bridge
 
+
 class CellNetwork:
     def __init__(self):
         self.complete_undirected_network = None
@@ -87,10 +88,11 @@ class CellNetwork:
         pseudo_time = np.zeros((n_samples, n_markers))
         children_cell_labels = list(self.network.successors(cell_label))
         n_children = len(children_cell_labels)
+        labels = np.zeros(n_samples)
 
         if n_children >= 1:
             n_per_child = np.random.multinomial(n_samples, np.ones(n_children)/n_children)
-
+            labels = np.repeat(children_cell_labels, n_per_child)
             start_n = 0
             end_n = 0
             counter = 0
@@ -107,4 +109,4 @@ class CellNetwork:
                 start_n += n_per_child[counter]
                 counter += 1
 
-        return G, pseudo_time
+        return G, pseudo_time, labels

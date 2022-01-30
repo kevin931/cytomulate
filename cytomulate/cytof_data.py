@@ -3,6 +3,7 @@ import numpy as np
 from collections import Counter
 from utilities import smooth_brownian_bridge
 from cell_type import CellType
+from cell_network import CellNetwork
 
 
 class CytofData:
@@ -22,6 +23,8 @@ class CytofData:
         self.cell_type_labels_to_ids = {}
         self.cell_type_ids_to_labels = {}
         self.cell_types = {}
+
+        self.cell_network = None
 
     def initialize_cell_types(self, expression_matrix,
                               labels,
@@ -66,6 +69,9 @@ class CytofData:
     def adjust_cell_types(self):
         for c_type in self.cell_types:
             self.cell_types[c_type].adjust_models(self.background_noise_variance)
+
+    def generate_cell_network(self, network_topology = "forest"):
+        self.cell_network = CellNetwork()
 
     def generate_overall_batch_effects(self, variance=0.001):
         if self.n_batches == 1:
