@@ -82,4 +82,29 @@ class CellNetwork:
             self.trajectories[edges] = smooth_brownian_bridge(end_values, N, function_type, lb, ub)
 
     def sample_network(self, n_samples, cell_label, cell_types):
-        pass
+        n_markers = len(cell_types[cell_label].observed_mean)
+        G = np.zeros((n_samples, n_markers))
+        pseudo_time = np.zeros((n_samples, n_markers))
+        children_cell_labels = list(self.network.successors(cell_label))
+        n_children = len(children_cell_labels)
+
+        if n_children >= 1:
+            n_per_child = np.random.multinomial(n_samples, np.ones(n_children)/n_children)
+
+            start_n = 0
+            end_n = 0
+            counter = 0
+            for c_label in children_cell_labels:
+                n = n_per_child[counter]
+                if n == 0:
+                    continue
+                end_n += n_per_child[counter]
+                for m in range(n_markers):
+                    p_time = np.random.beta(0.4,1,n)
+                    G[start_n: end_n, m] = self.trajectories[(cell_label, c_label)][m](p_time)
+                    pseudo_time[start_n: end_n, m] = p_time
+
+                start_n += n_per_child[counter]
+                counter += 1
+
+        return G, pseudo_time
