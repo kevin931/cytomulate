@@ -107,9 +107,9 @@ class CytofData:
             self.temporal_effects[b] = smooth_brownian_bridge(np.random.normal(0,np.sqrt(variance),1),
                                                               N, function_type, lb, ub)
 
-    def sample(self, n_samples,
-               cell_abundances = None,
-               ordered_by = "ids"):
+    def sample_one_batch(self, n_samples,
+                         cell_abundances = None,
+                         ordered_by = "ids"):
         cell_numbers = {}
         if cell_abundances is None:
             cell_numbers = self.observed_cell_abundances
@@ -156,7 +156,15 @@ class CytofData:
                 continue
             end_n += n
             X = self.cell_types[c_type].sample_cell(n)
-            expression_matrix[start_n : end_n, :] = X
+            G, _ = self.cell_network.sample_network(n, c_type)
+            E = np.random.normal(loc=0, scale=np.sqrt(self.background_noise_variance), size=(n, self.n_markers))
+            expression_matrix[start_n : end_n, :] = X + G + E
             start_n += n
 
         return expression_matrix, ids
+
+    def sample(self, n_samples,
+                     cell_abundances = None,
+                     ordered_by = "ids"):
+        pass
+    

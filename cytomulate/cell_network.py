@@ -11,6 +11,7 @@ class CellNetwork:
         self.complete_undirected_network = None
         self.network = None
         self.bead_label = None
+        self.n_markers = -1
         self.trajectories = {}
 
     def initialize_network(self, cell_types, bead_label=None):
@@ -82,15 +83,17 @@ class CellNetwork:
             from_label = e[0]
             to_label = e[1]
             end_values = cell_types[to_label].observed_mean - cell_types[from_label].observed_mean
+            if self.n_markers <= 0:
+                self.n_markers = len(end_values)
             self.trajectories[e] = smooth_brownian_bridge(end_values, N, function_type, lb, ub)
 
-    def sample_network(self, n_samples, cell_label, cell_types):
-        n_markers = len(cell_types[cell_label].observed_mean)
-        G = np.zeros((n_samples, n_markers))
-        pseudo_time = np.zeros((n_samples, n_markers))
+    def sample_network(self, n_samples, cell_label):
         children_cell_labels = list(self.network.successors(cell_label))
         n_children = len(children_cell_labels)
         labels = np.zeros(n_samples)
+
+        G = np.zeros((n_samples, self.n_markers))
+        pseudo_time = np.zeros((n_samples, self.n_markers))
 
         if n_children >= 1:
             n_per_child = np.random.multinomial(n_samples, np.ones(n_children)/n_children)
@@ -103,7 +106,7 @@ class CellNetwork:
                 if n == 0:
                     continue
                 end_n += n_per_child[counter]
-                for m in range(n_markers):
+                for m in range(self.n_markers):
                     p_time = np.random.beta(0.4,1,n)
                     G[start_n: end_n, m] = self.trajectories[(cell_label, c_label)][m](p_time)
                     pseudo_time[start_n: end_n, m] = p_time
