@@ -64,11 +64,11 @@ class CellType:
         if is_bead:
             n_components = 1
         else:
-            n_components = 1
+            n_components = 2
 
         counter = 0
         for m in self.lowly_expressed_markers:
-            self.model_for_lowly_expressed_markers[m] = GaussianMixture(n_components=1).fit(lowly_expressed_data[:, counter].reshape(-1, 1))
+            self.model_for_lowly_expressed_markers[m] = GaussianMixture(n_components=n_components).fit(lowly_expressed_data[:, counter].reshape(-1, 1))
             counter += 1
 
         # Since we expect only a few markers to be highly expressed

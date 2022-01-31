@@ -42,7 +42,8 @@ class CellNetwork:
             nodes = np.array(list(set(self.complete_undirected_network.nodes) - {self.bead_label}))
             np.random.shuffle(nodes)
             self.network = nx.DiGraph()
-            self.network.add_node(self.bead_label)
+            if self.bead_label is not None:
+                self.network.add_node(self.bead_label)
             for i in range(len(nodes)):
                 if i == len(nodes) - 1:
                     self.network.add_edge(nodes[i], nodes[0])
@@ -69,7 +70,8 @@ class CellNetwork:
                 self.network = nx.compose_all(tree_list)
             else:
                 raise ValueError('Unknown network type')
-            self.network.add_node(self.bead_label)
+            if self.bead_label is not None:
+                self.network.add_node(self.bead_label)
         else:
             raise ValueError('Unknown network type')
 
@@ -80,7 +82,7 @@ class CellNetwork:
             from_label = e[0]
             to_label = e[1]
             end_values = cell_types[to_label].observed_mean - cell_types[from_label].observed_mean
-            self.trajectories[edges] = smooth_brownian_bridge(end_values, N, function_type, lb, ub)
+            self.trajectories[e] = smooth_brownian_bridge(end_values, N, function_type, lb, ub)
 
     def sample_network(self, n_samples, cell_label, cell_types):
         n_markers = len(cell_types[cell_label].observed_mean)

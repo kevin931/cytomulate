@@ -72,6 +72,12 @@ class CytofData:
 
     def generate_cell_network(self, network_topology = "forest"):
         self.cell_network = CellNetwork()
+        self.cell_network.initialize_network(self.cell_types, bead_label=self.bead_label)
+        self.cell_network.prune_network(network_topology)
+
+    def generate_cell_network_trajectories(self, cell_types, N = 5,
+                              function_type = "linear", lb = 0, ub = 1):
+        self.cell_network.generate_trajectories(self.cell_types, N, function_type, lb, ub)
 
     def generate_overall_batch_effects(self, variance=0.001):
         if self.n_batches == 1:

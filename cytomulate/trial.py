@@ -2,7 +2,7 @@
 # used for developing the whole workflow
 
 # Read file and cell type
-from utilities import FileIO
+from utilities1 import FileIO
 from cell_type1 import CellType
 
 # data visual
