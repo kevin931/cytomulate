@@ -60,7 +60,6 @@ class CellType:
         self.model_for_highly_expressed_markers = {}
         self.model_for_lowly_expressed_markers = {}
 
-
         if is_bead:
             n_components = 1
         else:
