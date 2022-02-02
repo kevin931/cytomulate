@@ -152,7 +152,7 @@ class CytofData:
             cell_abundances = {}
             for b in range(self.n_batches):
                 cell_abundances[b] = self.observed_cell_abundances
-        
+
         expression_matrices = {}
         labels = {}
         pseudo_time = {}
@@ -161,4 +161,4 @@ class CytofData:
             expression_matrices[b], labels[b], pseudo_time[b], children_cell_labels[b] = self.sample_one_batch(n_samples[b],
                                                                                                                cell_abundances[b])
 
-        return expression_matrices
+        return expression_matrices, labels, pseudo_time, children_cell_labels
