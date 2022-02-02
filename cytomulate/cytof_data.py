@@ -108,44 +108,24 @@ class CytofData:
                                                               N, function_type, lb, ub)
 
     def sample_one_batch(self, n_samples,
-                         cell_abundances = None,
-                         ordered_by = "ids"):
-        cell_numbers = {}
+                         cell_abundances = None):
         if cell_abundances is None:
-            cell_numbers = self.observed_cell_abundances
-            ordered_by = "labels"
-        else:
-            if type(cell_abundances) is dict:
-                if ordered_by == "ids":
-                    if cell_abundances.keys() != self.cell_type_ids_to_labels.keys():
-                        raise ValueError('Keys do not match')
-                    for cell_id in range(len(self.cell_types)):
-                        cell_numbers[self.cell_type_ids_to_labels[cell_id]] = cell_abundances[cell_id]
-                elif ordered_by == "labels":
-                    if cell_abundances.keys() != self.cell_type_labels_to_ids.keys():
-                        raise ValueError('Keys do not match')
-                    cell_numbers = cell_abundances
-                else:
-                    raise ValueError('Unknown order type')
-            else:
-                if ordered_by == "ids":
-                    for cell_id in range(len(self.cell_types)):
-                        cell_numbers[self.cell_type_ids_to_labels[cell_id]] = cell_abundances[cell_id]
-                elif set(ordered_by) == self.cell_type_labels_to_ids.keys():
-                    for i in range(len(self.cell_types)):
-                        cell_numbers[ordered_by[i]] = cell_abundances[i]
-                else:
-                    raise ValueError('Unknown order type')
+            cell_abundances = self.observed_cell_abundances
+        # We record the order of the cell types
+        cell_type_order = list(cell_abundances.keys())
 
-        cell_probabilities = np.zeros(len(self.cell_types))
-        for cell_id in range(len(self.cell_types)):
-            cell_probabilities[cell_id] = cell_numbers[self.cell_type_ids_to_labels[cell_id]]
+        cell_probabilities = np.zeros(len(cell_abundances))
+        counter = 0
+        for c_type in cell_abundances:
+            cell_probabilities[counter] = cell_abundances[c_type]
+            counter += 1
         cell_probabilities /= np.sum(cell_probabilities)
 
         expression_matrix = np.zeros((n_samples, self.n_markers))
+        pseudo_time = np.zeros((n_samples, self.n_markers))
 
         n_per_cell_type = np.random.multinomial(n_samples, cell_probabilities)
-        ids = np.repeat(range(len(n_per_cell_type)), n_per_cell_type)
+        labels = np.repeat(cell_type_order, n_per_cell_type)
 
         start_n = 0
         end_n = 0
@@ -156,15 +136,19 @@ class CytofData:
                 continue
             end_n += n
             X = self.cell_types[c_type].sample_cell(n)
-            G, _ = self.cell_network.sample_network(n, c_type)
+            G, T, children_labels = self.cell_network.sample_network(n, c_type)
             E = np.random.normal(loc=0, scale=np.sqrt(self.background_noise_variance), size=(n, self.n_markers))
             expression_matrix[start_n : end_n, :] = X + G + E
+            pseudo_time[start_n:end_n, :] = T
             start_n += n
 
-        return expression_matrix, ids
+        return expression_matrix, labels
 
     def sample(self, n_samples,
-                     cell_abundances = None,
-                     ordered_by = "ids"):
-        pass
-    
+                     cell_abundances=None):
+        expression_matrices = {}
+        for b in range(self.n_batches):
+            expression_matrices[b] = self.sample_one_batch(n_samples[b],
+                                                           cell_abundances[b])
+
+        return expression_matrices
