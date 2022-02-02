@@ -123,6 +123,7 @@ class CytofData:
 
         expression_matrix = np.zeros((n_samples, self.n_markers))
         pseudo_time = np.zeros((n_samples, self.n_markers))
+        children_cell_labels = [0] * n_samples
 
         n_per_cell_type = np.random.multinomial(n_samples, cell_probabilities)
         labels = np.repeat(cell_type_order, n_per_cell_type)
@@ -140,15 +141,24 @@ class CytofData:
             E = np.random.normal(loc=0, scale=np.sqrt(self.background_noise_variance), size=(n, self.n_markers))
             expression_matrix[start_n : end_n, :] = X + G + E
             pseudo_time[start_n:end_n, :] = T
+            children_cell_labels[start_n:end_n] = children_labels
             start_n += n
 
-        return expression_matrix, labels
+        return expression_matrix, labels, pseudo_time, children_cell_labels
 
     def sample(self, n_samples,
                      cell_abundances=None):
+        if cell_abundances is None:
+            cell_abundances = {}
+            for b in range(self.n_batches):
+                cell_abundances[b] = self.observed_cell_abundances
+        
         expression_matrices = {}
+        labels = {}
+        pseudo_time = {}
+        children_cell_labels = {}
         for b in range(self.n_batches):
-            expression_matrices[b] = self.sample_one_batch(n_samples[b],
-                                                           cell_abundances[b])
+            expression_matrices[b], labels[b], pseudo_time[b], children_cell_labels[b] = self.sample_one_batch(n_samples[b],
+                                                                                                               cell_abundances[b])
 
         return expression_matrices
