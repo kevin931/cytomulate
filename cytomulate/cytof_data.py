@@ -98,8 +98,8 @@ class CytofData:
                 temp = np.zeros((len(self.cell_types), self.n_markers))
                 temp[np.ix_(range(len(self.cell_types)-1), range(self.n_markers-1))] = \
                     np.random.normal(loc=0, scale=np.sqrt(variance), size=(len(self.cell_types)-1)*(self.n_markers-1)).reshape((len(self.cell_types)-1, self.n_markers-1))
-                temp[:, self.n_markers-1] = -np.sum(self.local_batch_effects[b], axis=1)
-                temp[len(self.cell_types)-1, :] = -np.sum(self.local_batch_effects[b], axis=0)
+                temp[:, self.n_markers-1] = -np.sum(temp, axis=1)
+                temp[len(self.cell_types)-1, :] = -np.sum(temp, axis=0)
                 counter = 0
                 for c_type in self.cell_type_labels_to_ids:
                     self.local_batch_effects[b][c_type] = temp[counter, :].reshape(-1)
@@ -166,9 +166,10 @@ class CytofData:
 
         # Now we add temporal effects]
         time_points = np.linspace(0,1, n_samples)
-        for m in range(self.n_markers):
-            if m in self.temporal_effects.keys():
-                expression_matrix[:, ] += self.temporal_effects[m](time_points)
+        if batch in self.temporal_effects.keys():
+            temporal_effects = self.temporal_effects[batch][0](time_points)
+
+        expression_matrix += temporal_effects[:, np.newaxis]
 
         return expression_matrix, labels, pseudo_time, children_cell_labels
 
@@ -178,6 +179,9 @@ class CytofData:
             cell_abundances = {}
             for b in range(self.n_batches):
                 cell_abundances[b] = self.observed_cell_abundances
+
+        if isinstance(n_samples, int):
+            n_samples = np.repeat(n_samples, self.n_batches)
 
         expression_matrices = {}
         labels = {}

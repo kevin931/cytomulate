@@ -93,7 +93,7 @@ class CellNetwork:
 
         children_cell_labels = list(self.network.successors(cell_label))
         n_children = len(children_cell_labels)
-        labels = np.zeros(n_samples)
+        labels = np.repeat("None", n_samples)
 
         G = np.zeros((n_samples, self.n_markers))
         pseudo_time = np.zeros((n_samples, self.n_markers))
