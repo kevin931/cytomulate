@@ -24,7 +24,7 @@ class CytofData:
         self.cell_type_ids_to_labels = {}
         self.cell_types = {}
 
-        self.cell_network = None
+        self.cell_network = CellNetwork()
 
     def initialize_cell_types(self, expression_matrix,
                               labels,
@@ -70,13 +70,10 @@ class CytofData:
         for c_type in self.cell_types:
             self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
-    def generate_cell_network(self, network_topology = "forest"):
-        self.cell_network = CellNetwork()
+    def generate_cell_network(self, network_topology = "forest", N = 5,
+                              function_type = "linear", lb = 0, ub = 1):
         self.cell_network.initialize_network(self.cell_types, bead_label=self.bead_label)
         self.cell_network.prune_network(network_topology)
-
-    def generate_cell_network_trajectories(self, cell_types, N = 5,
-                              function_type = "linear", lb = 0, ub = 1):
         self.cell_network.generate_trajectories(self.cell_types, N, function_type, lb, ub)
 
     def generate_overall_batch_effects(self, variance=0.001):
@@ -92,23 +89,31 @@ class CytofData:
 
     def generate_local_batch_effects(self, variance = 0.001):
         if self.n_batches == 1:
-            self.local_batch_effects[0] = np.zeros((len(self.cell_types), self.n_markers))
+            self.local_batch_effects[0] = {}
+            for c_type in self.cell_type_labels_to_ids:
+                self.local_batch_effects[0][c_type] = np.zeros(self.n_markers)
         else:
             for b in range(self.n_batches):
-                self.local_batch_effects[b] = np.zeros((len(self.cell_types), self.n_markers))
-                self.local_batch_effects[b][np.ix_(range(len(self.cell_types)-1), range(self.n_markers-1))] = \
+                self.local_batch_effects[b] = {}
+                temp = np.zeros((len(self.cell_types), self.n_markers))
+                temp[np.ix_(range(len(self.cell_types)-1), range(self.n_markers-1))] = \
                     np.random.normal(loc=0, scale=np.sqrt(variance), size=(len(self.cell_types)-1)*(self.n_markers-1)).reshape((len(self.cell_types)-1, self.n_markers-1))
-                self.local_batch_effects[b][:, self.n_markers-1] = -np.sum(self.local_batch_effects[b], axis=1)
-                self.local_batch_effects[b][len(self.cell_types)-1, :] = -np.sum(self.local_batch_effects[b], axis=0)
+                temp[:, self.n_markers-1] = -np.sum(self.local_batch_effects[b], axis=1)
+                temp[len(self.cell_types)-1, :] = -np.sum(self.local_batch_effects[b], axis=0)
+                counter = 0
+                for c_type in self.cell_type_labels_to_ids:
+                    self.local_batch_effects[b][c_type] = temp[counter, :].reshape(-1)
+                    counter += 1
 
-    def generate_temporal_effects(self, variance= 0.001, N = 5,
-                              function_type = "linear", lb = 0, ub = 1):
+    def generate_temporal_effects(self, variance=0.001, N=5,
+                                  function_type="linear", lb=0, ub=1):
         for b in range(self.n_batches):
-            self.temporal_effects[b] = smooth_brownian_bridge(np.random.normal(0,np.sqrt(variance),1),
+            self.temporal_effects[b] = smooth_brownian_bridge(np.random.normal(0, np.sqrt(variance), 1),
                                                               N, function_type, lb, ub)
 
     def sample_one_batch(self, n_samples,
-                         cell_abundances = None):
+                         cell_abundances = None,
+                         batch = 0):
         if cell_abundances is None:
             cell_abundances = self.observed_cell_abundances
         # We record the order of the cell types
@@ -123,26 +128,46 @@ class CytofData:
 
         expression_matrix = np.zeros((n_samples, self.n_markers))
         pseudo_time = np.zeros((n_samples, self.n_markers))
-        children_cell_labels = [0] * n_samples
+        children_cell_labels = np.repeat("None", n_samples)
 
         n_per_cell_type = np.random.multinomial(n_samples, cell_probabilities)
         labels = np.repeat(cell_type_order, n_per_cell_type)
 
+        Psi_b = 0
+        if batch in self.overall_batch_effects.keys():
+            Psi_b = self.overall_batch_effects[batch]
+
         start_n = 0
         end_n = 0
-        for cell_id in range(len(n_per_cell_type)):
-            c_type = self.cell_type_ids_to_labels[cell_id]
-            n = n_per_cell_type[cell_id]
+        counter = 0
+        for c_type in cell_type_order:
+            n = n_per_cell_type[counter]
+            counter += 1
             if n == 0:
                 continue
             end_n += n
             X = self.cell_types[c_type].sample_cell(n)
             G, T, children_labels = self.cell_network.sample_network(n, c_type)
             E = np.random.normal(loc=0, scale=np.sqrt(self.background_noise_variance), size=(n, self.n_markers))
-            expression_matrix[start_n : end_n, :] = X + G + E
+            Psi_bp = 0
+            if batch in self.local_batch_effects.keys():
+                Psi_bp = self.local_batch_effects[batch][c_type]
+            expression_matrix[start_n : end_n, :] = X + G + Psi_b + Psi_bp + E
             pseudo_time[start_n:end_n, :] = T
             children_cell_labels[start_n:end_n] = children_labels
             start_n += n
+
+        # To add temporal effects, we first shuffle the arrays
+        indices = np.random.permutation(n_samples)
+        expression_matrix = expression_matrix[indices, :]
+        labels = labels[indices]
+        pseudo_time = pseudo_time[indices, :]
+        children_cell_labels = children_cell_labels[indices]
+
+        # Now we add temporal effects
+        time_points = np.arange(n_samples)/(n_samples-1)
+        for m in range(self.n_markers):
+            expression_matrix[:, ] += self.temporal_effects[m](time_points)
 
         return expression_matrix, labels, pseudo_time, children_cell_labels
 
@@ -159,6 +184,7 @@ class CytofData:
         children_cell_labels = {}
         for b in range(self.n_batches):
             expression_matrices[b], labels[b], pseudo_time[b], children_cell_labels[b] = self.sample_one_batch(n_samples[b],
-                                                                                                               cell_abundances[b])
+                                                                                                               cell_abundances[b],
+                                                                                                               b)
 
         return expression_matrices, labels, pseudo_time, children_cell_labels

@@ -88,6 +88,9 @@ class CellNetwork:
             self.trajectories[e] = smooth_brownian_bridge(end_values, N, function_type, lb, ub)
 
     def sample_network(self, n_samples, cell_label):
+        if self.network is None:
+            return 0, 0, None
+
         children_cell_labels = list(self.network.successors(cell_label))
         n_children = len(children_cell_labels)
         labels = np.zeros(n_samples)
