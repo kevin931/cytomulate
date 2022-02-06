@@ -814,8 +814,3 @@ for c_type in unique_labels:
     cov_diff += np.linalg.norm(o_cov - cell_types[c_type].observed_cov)
 
 
-
-
-
-
-

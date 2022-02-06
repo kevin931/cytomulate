@@ -166,10 +166,10 @@ class CytofData:
 
         # Now we add temporal effects]
         time_points = np.linspace(0,1, n_samples)
+
         if batch in self.temporal_effects.keys():
             temporal_effects = self.temporal_effects[batch][0](time_points)
-
-        expression_matrix += temporal_effects[:, np.newaxis]
+            expression_matrix += temporal_effects[:, np.newaxis]
 
         return expression_matrix, labels, pseudo_time, children_cell_labels
 
