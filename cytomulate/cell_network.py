@@ -89,7 +89,7 @@ class CellNetwork:
 
     def sample_network(self, n_samples, cell_label):
         if self.network is None:
-            return 0, 0, None
+            return 0, 0, ["None"] * n_samples
 
         children_cell_labels = list(self.network.successors(cell_label))
         n_children = len(children_cell_labels)
