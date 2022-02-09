@@ -93,28 +93,27 @@ class CellNetwork:
 
         children_cell_labels = list(self.network.successors(cell_label))
         n_children = len(children_cell_labels)
-        labels = np.repeat("None", n_samples)
+        labels = ["None"] * n_samples
 
         G = np.zeros((n_samples, self.n_markers))
         pseudo_time = np.zeros((n_samples, self.n_markers))
 
         if n_children >= 1:
             n_per_child = np.random.multinomial(n_samples, np.ones(n_children)/n_children)
-            labels = np.repeat(children_cell_labels, n_per_child)
+            labels = [item for item, count in zip(children_cell_labels, n_per_child) for i in range(count)]
             start_n = 0
             end_n = 0
             counter = 0
             for c_label in children_cell_labels:
                 n = n_per_child[counter]
+                counter += 1
                 if n == 0:
                     continue
-                end_n += n_per_child[counter]
+                end_n += n
                 for m in range(self.n_markers):
                     p_time = np.random.beta(0.4,1,n)
                     G[start_n: end_n, m] = self.trajectories[(cell_label, c_label)][m](p_time)
                     pseudo_time[start_n: end_n, m] = p_time
-
-                start_n += n_per_child[counter]
-                counter += 1
+                start_n += n
 
         return G, pseudo_time, labels

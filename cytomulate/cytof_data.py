@@ -128,10 +128,10 @@ class CytofData:
 
         expression_matrix = np.zeros((n_samples, self.n_markers))
         pseudo_time = np.zeros((n_samples, self.n_markers))
-        children_cell_labels = np.repeat("None", n_samples)
+        children_cell_labels = ["None"] * n_samples
 
         n_per_cell_type = np.random.multinomial(n_samples, cell_probabilities)
-        labels = np.repeat(cell_type_order, n_per_cell_type)
+        labels = [item for item, count in zip(cell_type_order, n_per_cell_type) for i in range(count)]
 
         Psi_b = 0
         if batch in self.overall_batch_effects.keys():
@@ -160,9 +160,9 @@ class CytofData:
         # To add temporal effects, we first shuffle the arrays
         indices = np.random.permutation(n_samples)
         expression_matrix = expression_matrix[indices, :]
-        labels = labels[indices]
+        labels = [labels[i] for i in indices]
         pseudo_time = pseudo_time[indices, :]
-        children_cell_labels = children_cell_labels[indices]
+        children_cell_labels = [children_cell_labels[i] for i in indices]
 
         # Now we add temporal effects]
         time_points = np.linspace(0,1, n_samples)
