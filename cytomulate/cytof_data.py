@@ -8,7 +8,6 @@ from cell_network import CellNetwork
 
 class CytofData:
     def __init__(self, n_batches = 1):
-
         self.n_markers = None
 
         self.background_noise_variance = None

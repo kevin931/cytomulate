@@ -95,25 +95,21 @@ def cell_type_discrepancy(observed_matrix,
                           observed_cell_types,
                           simulated_cell_types,
                           cell_type,
-                          discrepancy_type):
+                          **kwargs):
     observed_index = np.where(observed_cell_types == cell_type)[0]
     simulated_index = np.where(simulated_cell_types == cell_type)[0]
     observed_y = observed_matrix[observed_index, :]
     simulated_y = simulated_matrix[simulated_index, :]
 
-    result = 0
-    if discrepancy_type == "mean":
-        m_obs = np.mean(observed_y, axis=0)
-        m_simu = np.mean(simulated_y, axis=0)
-        result = np.linalg.norm(m_obs - m_simu)
-    elif discrepancy_type == "covariance":
-        cov_obs = np.cov(observed_y, rowvar=False)
-        cov_simu = np.cov(simulated_y, rowvar=False)
-        result = np.linalg.norm(cov_obs - cov_simu)
-    elif discrepancy_type == "kldivergence":
-        result = KLdivergence(observed_y, simulated_y)
-    else:
-        raise ValueError('Unknown discrepancy type')
+    m_obs = np.mean(observed_y, axis=0)
+    m_simu = np.mean(simulated_y, axis=0)
+    mean_discrepancy = np.linalg.norm(m_obs - m_simu, **kwargs)
 
-    return result
+    cov_obs = np.cov(observed_y, rowvar=False)
+    cov_simu = np.cov(simulated_y, rowvar=False)
+    cov_discrepancy = np.linalg.norm(cov_obs - cov_simu, **kwargs)
+
+    kl_divergence = KLdivergence(observed_y, simulated_y)
+
+    return mean_discrepancy, cov_discrepancy, kl_divergence
 
