@@ -1,7 +1,21 @@
 # Math computation
 import numpy as np
 from numpy import random as rd
+from numpy.polynomial import polynomial
 from scipy.interpolate import Akima1DInterpolator
+
+
+def polynomial_function(coefficients, end_value):
+    base_polynomial = polynomial.Polynomial(coefficients, domain=[0, 1])
+    base_polynomial_at_end_points = polynomial.polyval([0, 1], base_polynomial.coef)
+    adjust_polynomial = polynomial.Polynomial([base_polynomial_at_end_points[0],
+                                               base_polynomial_at_end_points[1]-end_value - base_polynomial_at_end_points[0]],
+                                              domain=[0, 1])
+    adjusted_polynomial_coefficients = polynomial.polysub(base_polynomial.coef, adjust_polynomial.coef)
+    adjusted_polynomial = polynomial.Polynomial(adjusted_polynomial_coefficients, domain=[0, 1])
+    return adjusted_polynomial
+
+
 
 
 def linear_function(end_value):
