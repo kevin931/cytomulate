@@ -13,7 +13,11 @@ def polynomial_function(coefficients, end_value):
                                               domain=[0, 1])
     adjusted_polynomial_coefficients = polynomial.polysub(base_polynomial.coef, adjust_polynomial.coef)
     adjusted_polynomial = polynomial.Polynomial(adjusted_polynomial_coefficients, domain=[0, 1])
-    return adjusted_polynomial
+
+    def polynomial_values(t):
+        return polynomial.polyval(t, adjusted_polynomial.coef)
+
+    return polynomial_values
 
 
 
