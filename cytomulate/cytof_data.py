@@ -2,6 +2,7 @@
 import numpy as np
 from collections import Counter
 from utilities import smooth_brownian_bridge
+from utilities import trajectories
 from cell_type import CellType
 from cell_network import CellNetwork
 
@@ -69,11 +70,10 @@ class CytofData:
         for c_type in self.cell_types:
             self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
-    def generate_cell_network(self, network_topology = "forest", N = 5,
-                              function_type = "linear", lb = 0, ub = 1):
+    def generate_cell_network(self, network_topology = "forest", **kwargs):
         self.cell_network.initialize_network(self.cell_types, bead_label=self.bead_label)
         self.cell_network.prune_network(network_topology)
-        self.cell_network.generate_trajectories(self.cell_types, N, function_type, lb, ub)
+        self.cell_network.generate_trajectories(self.cell_types, **kwargs)
 
     def generate_overall_batch_effects(self, variance=0.001):
         if self.n_batches == 1:
@@ -104,11 +104,15 @@ class CytofData:
                     self.local_batch_effects[b][c_type] = temp[counter, :].reshape(-1)
                     counter += 1
 
-    def generate_temporal_effects(self, variance=0.001, N=5,
-                                  function_type="linear", lb=0, ub=1):
+    def generate_temporal_effects(self, variance=None, x=None, y=None, **kwargs):
         for b in range(self.n_batches):
-            self.temporal_effects[b] = smooth_brownian_bridge(np.random.normal(0, np.sqrt(variance), 1),
-                                                              N, function_type, lb, ub)
+            if variance is not None:
+                self.temporal_effects[b] = trajectories(end_values=np.random.normal(0, np.sqrt(variance), 1),
+                                                        **kwargs)
+            else:
+                self.temporal_effects[b] = trajectories(x=x, y=y, **kwargs)
+            # self.temporal_effects[b] = smooth_brownian_bridge(np.random.normal(0, np.sqrt(variance), 1),
+            #                                                   N, function_type, lb, ub)
 
     def sample_one_batch(self, n_samples,
                          cell_abundances = None,
