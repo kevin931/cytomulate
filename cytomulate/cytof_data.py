@@ -126,6 +126,7 @@ class CytofData:
         cell_probabilities /= np.sum(cell_probabilities)
 
         expression_matrix = np.zeros((n_samples, self.n_markers))
+        expressed_index_matrix = np.zeros((n_samples, self.n_markers))
         pseudo_time = np.zeros((n_samples, self.n_markers))
         children_cell_labels = ["None"] * n_samples
 
@@ -145,13 +146,13 @@ class CytofData:
             if n == 0:
                 continue
             end_n += n
-            X = self.cell_types[c_type].sample_cell(n)
-            G, T, children_labels = self.cell_network.sample_network(n, c_type)
-            E = np.random.normal(loc=0, scale=np.sqrt(self.background_noise_variance), size=(n, self.n_markers))
+            X, expressed_index = self.cell_types[c_type].sample_cell(n)
             Psi_bp = 0
             if batch in self.local_batch_effects.keys():
                 Psi_bp = self.local_batch_effects[batch][c_type]
-            expression_matrix[start_n : end_n, :] = X + G + Psi_b + Psi_bp + E
+            G, T, children_labels = self.cell_network.sample_network(n, c_type)
+            expression_matrix[start_n : end_n, :] = X + expressed_index * (G + Psi_b + Psi_bp)
+            expressed_index_matrix[start_n: end_n, :] = expressed_index
             pseudo_time[start_n:end_n, :] = T
             children_cell_labels[start_n:end_n] = children_labels
             start_n += n
@@ -159,6 +160,7 @@ class CytofData:
         # To add temporal effects, we first shuffle the arrays
         indices = np.random.permutation(n_samples)
         expression_matrix = expression_matrix[indices, :]
+        expressed_index_matrix = expressed_index_matrix[indices, :]
         labels = [labels[i] for i in indices]
         pseudo_time = pseudo_time[indices, :]
         children_cell_labels = [children_cell_labels[i] for i in indices]
@@ -168,7 +170,11 @@ class CytofData:
 
         if batch in self.temporal_effects.keys():
             temporal_effects = self.temporal_effects[batch][0](time_points)
-            expression_matrix += temporal_effects[:, np.newaxis]
+            expression_matrix += expressed_index_matrix * temporal_effects[:, np.newaxis]
+
+        expression_matrix = np.clip(expression_matrix, a_min=0, a_max=None)
+        E = np.random.normal(loc=0, scale=np.sqrt(self.background_noise_variance), size=(n_samples, self.n_markers))
+        expression_matrix += E
 
         return expression_matrix, labels, pseudo_time, children_cell_labels
 

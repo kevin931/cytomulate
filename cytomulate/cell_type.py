@@ -125,4 +125,6 @@ class CellType:
         X[:, self.highly_expressed_markers], _ = self.model_for_highly_expressed_markers["all"].sample(n_samples)
         for m in self.lowly_expressed_markers:
             X[:, [m]], _ = self.model_for_lowly_expressed_markers[m].sample(n_samples)
-        return X
+        expressed_index = (X > 0)
+        X = np.clip(X, a_min=0, a_max=None)
+        return X, expressed_index
