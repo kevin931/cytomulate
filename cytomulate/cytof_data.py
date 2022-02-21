@@ -103,15 +103,18 @@ class CytofData:
                     self.local_batch_effects[b][c_type] = temp[counter, :].reshape(-1)
                     counter += 1
 
-    def generate_temporal_effects(self, variance=None, x=None, y=None, **kwargs):
+    def generate_temporal_effects(self, variance=None, coefficients=None, x=None, y=None, **kwargs):
         for b in range(self.n_batches):
             if variance is not None:
-                self.temporal_effects[b] = trajectories(end_values=np.random.normal(0, np.sqrt(variance), 1),
-                                                        **kwargs)
+                if coefficients is None:
+                    self.temporal_effects[b] = trajectories(end_values=np.random.normal(0, np.sqrt(variance), 1),
+                                                            **kwargs)
+                else:
+                    self.temporal_effects[b] = trajectories(end_values=np.random.normal(0, np.sqrt(variance), 1),
+                                                            coefficients=coefficients[b],
+                                                            **kwargs)
             else:
                 self.temporal_effects[b] = trajectories(x=x[b], y=y[b], **kwargs)
-            # self.temporal_effects[b] = smooth_brownian_bridge(np.random.normal(0, np.sqrt(variance), 1),
-            #                                                   N, function_type, lb, ub)
 
     def sample_one_batch(self, n_samples,
                          cell_abundances = None,
