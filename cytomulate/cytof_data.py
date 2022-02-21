@@ -182,7 +182,7 @@ class CytofData:
         E = np.random.normal(loc=0, scale=np.sqrt(self.background_noise_variance), size=(n_samples, self.n_markers))
         expression_matrix += E
 
-        return expression_matrix, labels, pseudo_time, children_cell_labels
+        return expression_matrix, np.array(labels), pseudo_time, np.array(children_cell_labels)
 
     def sample(self, n_samples,
                      cell_abundances=None):
