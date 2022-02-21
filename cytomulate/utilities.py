@@ -46,6 +46,7 @@ def smooth_brownian_bridge(end_values, N = 5, function_type = "linear", lb = 0, 
 
 
 def spline_function(x, y, smoothing_factor = 0.5):
+    x = (x - np.min(x))/(np.max(x) - np.min(x))
     spl = UnivariateSpline(x, y)
     spl.set_smoothing_factor(smoothing_factor)
 

@@ -3,7 +3,6 @@ import networkx as nx
 from networkx.algorithms import tree
 from networkx.algorithms.community import greedy_modularity_communities
 import itertools
-from utilities import smooth_brownian_bridge
 from utilities import trajectories
 
 
@@ -86,7 +85,6 @@ class CellNetwork:
             if self.n_markers <= 0:
                 self.n_markers = len(end_values)
             self.trajectories[e] = trajectories(end_values=end_values, **kwargs)
-            # self.trajectories[e] = smooth_brownian_bridge(end_values, N, function_type, lb, ub)
 
     def sample_network(self, n_samples, cell_label):
         if self.network is None:

@@ -1,7 +1,6 @@
 
 import numpy as np
 from collections import Counter
-from utilities import smooth_brownian_bridge
 from utilities import trajectories
 from cell_type import CellType
 from cell_network import CellNetwork
@@ -110,7 +109,7 @@ class CytofData:
                 self.temporal_effects[b] = trajectories(end_values=np.random.normal(0, np.sqrt(variance), 1),
                                                         **kwargs)
             else:
-                self.temporal_effects[b] = trajectories(x=x, y=y, **kwargs)
+                self.temporal_effects[b] = trajectories(x=x[b], y=y[b], **kwargs)
             # self.temporal_effects[b] = smooth_brownian_bridge(np.random.normal(0, np.sqrt(variance), 1),
             #                                                   N, function_type, lb, ub)
 
