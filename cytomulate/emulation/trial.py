@@ -2,8 +2,8 @@
 # used for developing the whole workflow
 
 # Read file and cell type
-from utilities import FileIO
-from cell_type import CellType
+from utilities1 import FileIO
+from cell_type1 import CellType
 
 # data visual
 import numpy as np
@@ -111,7 +111,7 @@ for t in range(len(forest)):
 background_noise_variance = np.Inf
 max_components = 9
 min_components = 1
-cv_types = ["full"]
+cv_types = ["full", "tied", "diag", "spherical"]
 
 for c_type in cell_types:
     df = cell_types_data[c_type]
@@ -812,10 +812,5 @@ for c_type in unique_labels:
     o_cov = np.cov(ys, rowvar=False)
     mean_diff += np.linalg.norm(o_mean - cell_types[c_type].observed_mean)
     cov_diff += np.linalg.norm(o_cov - cell_types[c_type].observed_cov)
-
-
-
-
-
 
 
