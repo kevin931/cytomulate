@@ -3,7 +3,7 @@ import numpy as np
 from collections import Counter
 from utilities import trajectories
 from cell_type import CellType
-from cell_network import CellNetwork
+from cell_graph import CellGraph
 
 
 class CytofData:
@@ -23,7 +23,7 @@ class CytofData:
         self.cell_type_ids_to_labels = {}
         self.cell_types = {}
 
-        self.cell_network = CellNetwork()
+        self.cell_graph = CellGraph()
 
     def initialize_cell_types(self, expression_matrix,
                               labels,
@@ -69,10 +69,10 @@ class CytofData:
         for c_type in self.cell_types:
             self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
-    def generate_cell_network(self, network_topology = "forest", **kwargs):
-        self.cell_network.initialize_network(self.cell_types, bead_label=self.bead_label)
-        self.cell_network.prune_network(network_topology)
-        self.cell_network.generate_trajectories(self.cell_types, **kwargs)
+    def generate_cell_graph(self, graph_topology = "forest", **kwargs):
+        self.cell_graph.initialize_graph(self.cell_types, bead_label=self.bead_label)
+        self.cell_graph.prune_graph(graph_topology)
+        self.cell_graph.generate_trajectories(self.cell_types, **kwargs)
 
     def generate_overall_batch_effects(self, variance=0.001):
         if self.n_batches == 1:
@@ -156,7 +156,7 @@ class CytofData:
             Psi_bp = 0
             if batch in self.local_batch_effects.keys():
                 Psi_bp = self.local_batch_effects[batch][c_type]
-            G, T, children_labels = self.cell_network.sample_network(n, c_type)
+            G, T, children_labels = self.cell_graph.sample_graph(n, c_type)
             expression_matrix[start_n : end_n, :] = X + expressed_index * (G + Psi_b + Psi_bp)
             expressed_index_matrix[start_n: end_n, :] = expressed_index
             pseudo_time[start_n:end_n, :] = T

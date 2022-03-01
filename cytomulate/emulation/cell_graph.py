@@ -6,19 +6,19 @@ import itertools
 from utilities import trajectories
 
 
-class CellNetwork:
+class CellGraph:
     def __init__(self):
-        self.complete_undirected_network = None
-        self.network = None
+        self.complete_undirected_graph = None
+        self.graph = None
         self.bead_label = None
         self.n_markers = -1
         self.trajectories = {}
 
-    def initialize_network(self, cell_types, bead_label=None):
-        self.complete_undirected_network = nx.Graph()
+    def initialize_graph(self, cell_types, bead_label=None):
+        self.complete_undirected_graph = nx.Graph()
         self.bead_label = bead_label
         for label in cell_types:
-            self.complete_undirected_network.add_node(label)
+            self.complete_undirected_graph.add_node(label)
 
         for labels in itertools.combinations(cell_types.keys(), 2):
             if (labels[0] == bead_label) or (labels[1] == bead_label):
@@ -26,58 +26,58 @@ class CellNetwork:
             else:
                 mean1 = cell_types[labels[0]].observed_mean
                 mean2 = cell_types[labels[1]].observed_mean
-                self.complete_undirected_network.add_edge(labels[0], labels[1], weight=np.linalg.norm(mean1 - mean2))
+                self.complete_undirected_graph.add_edge(labels[0], labels[1], weight=np.linalg.norm(mean1 - mean2))
 
-    def prune_network(self, network_topology="bidirectional complete"):
-        if "complete" in network_topology:
-            self.network = self.complete_undirected_network.to_directed()
-            if network_topology == "complete":
-                nodes = np.array(list(set(self.network.nodes) - {self.bead_label}))
+    def prune_graph(self, graph_topology="bidirectional complete"):
+        if "complete" in graph_topology:
+            self.graph = self.complete_undirected_graph.to_directed()
+            if graph_topology == "complete":
+                nodes = np.array(list(set(self.graph.nodes) - {self.bead_label}))
                 np.random.shuffle(nodes)
                 for labels in itertools.combinations(nodes, 2):
-                    self.network.remove_edge(labels[0], labels[1])
+                    self.graph.remove_edge(labels[0], labels[1])
             else:
-                if network_topology != "bidirectional complete":
-                    raise ValueError('Unknown network type')
-        elif "cyclic" in network_topology:
-            nodes = np.array(list(set(self.complete_undirected_network.nodes) - {self.bead_label}))
+                if graph_topology != "bidirectional complete":
+                    raise ValueError('Unknown graph type')
+        elif "cyclic" in graph_topology:
+            nodes = np.array(list(set(self.complete_undirected_graph.nodes) - {self.bead_label}))
             np.random.shuffle(nodes)
-            self.network = nx.DiGraph()
+            self.graph = nx.DiGraph()
             if self.bead_label is not None:
-                self.network.add_node(self.bead_label)
+                self.graph.add_node(self.bead_label)
             for i in range(len(nodes)):
                 if i == len(nodes) - 1:
-                    self.network.add_edge(nodes[i], nodes[0])
-                    if network_topology == "bidirectional cyclic":
-                        self.network.add_edge(nodes[0], nodes[i])
+                    self.graph.add_edge(nodes[i], nodes[0])
+                    if graph_topology == "bidirectional cyclic":
+                        self.graph.add_edge(nodes[0], nodes[i])
                 else:
-                    self.network.add_edge(nodes[i], nodes[i+1])
-                    if network_topology == "bidirectional cyclic":
-                        self.network.add_edge(nodes[i+1], nodes[i])
-        elif network_topology in ["tree", "forest"]:
-            mst = tree.minimum_spanning_edges(self.complete_undirected_network, algorithm="kruskal", weight="weight", data=False)
+                    self.graph.add_edge(nodes[i], nodes[i+1])
+                    if graph_topology == "bidirectional cyclic":
+                        self.graph.add_edge(nodes[i+1], nodes[i])
+        elif graph_topology in ["tree", "forest"]:
+            mst = tree.minimum_spanning_edges(self.complete_undirected_graph, algorithm="kruskal", weight="weight", data=False)
             mst_G = nx.Graph()
             mst_G.add_edges_from(list(mst))
-            if network_topology == "tree":
+            if graph_topology == "tree":
                 root = set(mst_G.nodes).pop()
-                self.network = nx.dfs_tree(mst_G, root)
-            elif network_topology == "forest":
+                self.graph = nx.dfs_tree(mst_G, root)
+            elif graph_topology == "forest":
                 forest = list(greedy_modularity_communities(mst_G))
                 tree_list = []
                 for t in range(len(forest)):
                     nodes = list(forest[t])
                     root = np.random.choice(nodes)
                     tree_list.append(nx.dfs_tree(mst_G.subgraph(nodes), root))
-                self.network = nx.compose_all(tree_list)
+                self.graph = nx.compose_all(tree_list)
             else:
-                raise ValueError('Unknown network type')
+                raise ValueError('Unknown graph type')
             if self.bead_label is not None:
-                self.network.add_node(self.bead_label)
+                self.graph.add_node(self.bead_label)
         else:
-            raise ValueError('Unknown network type')
+            raise ValueError('Unknown graph type')
 
     def generate_trajectories(self, cell_types, **kwargs):
-        edges = self.network.edges
+        edges = self.graph.edges
         for e in edges:
             from_label = e[0]
             to_label = e[1]
@@ -86,11 +86,11 @@ class CellNetwork:
                 self.n_markers = len(end_values)
             self.trajectories[e] = trajectories(end_values=end_values, **kwargs)
 
-    def sample_network(self, n_samples, cell_label):
-        if self.network is None:
+    def sample_graph(self, n_samples, cell_label):
+        if self.graph is None:
             return 0, 0, ["None"] * n_samples
 
-        children_cell_labels = list(self.network.successors(cell_label))
+        children_cell_labels = list(self.graph.successors(cell_label))
         n_children = len(children_cell_labels)
         labels = ["None"] * n_samples
 
