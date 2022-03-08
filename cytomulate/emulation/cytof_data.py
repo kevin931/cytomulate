@@ -1,13 +1,19 @@
 
 import numpy as np
 from collections import Counter
-from utilities import trajectories
-from cell_type import CellType
-from cell_graph import CellGraph
+from copy import deepcopy
+from emulation.utilities import trajectories
+from emulation.cell_type import CellType
+from emulation.cell_graph import CellGraph
 
 
 class CytofData:
     def __init__(self, n_batches = 1):
+        """Initializer of CytofData
+        Parameters
+        ----------
+        n_batches: number of batches
+        """
         self.n_markers = None
 
         self.background_noise_variance = None
@@ -31,7 +37,24 @@ class CytofData:
                               bead_channels=None,
                               max_components=9,
                               min_components=1,
-                              covariance_types=("full", "tied", "diag", "spherical")):
+                              covariance_types=("full", "tied", "diag", "spherical"),
+                              quick_fit=True):
+        """Initialize cell type models by fitting Gaussian mixtures
+        
+        Parameters
+        ----------
+        expression_matrix: A matrix containing the expression levels of cell events
+        labels: A vector of cell type labels
+        bead_label: (optional) If bead is contained in the cell type labels, the label of the bead
+        bead_channels: (optional) Markers that are used to identify beads
+        max_components: Used for Gaussian mixture model selection. The maximal number of components for a Gaussian mixture
+        min_components: Used for Gaussian mixture model selection. The minimal number of components for a Gaussian mxitrue
+        covariance_types: Used for Gaussian mixture model selection. The candidate types of covariances
+
+        Returns
+        -------
+
+        """
         self.n_markers = np.shape(expression_matrix)[1]
 
         unique_labels = np.unique(labels)
@@ -50,22 +73,38 @@ class CytofData:
 
             ind = np.where(labels == c_type)[0]
             D = expression_matrix[ind, :]
+
+            corrected_quick_fit = quick_fit
+            if c_type == bead_label:
+                corrected_quick_fit = True
+
             self.cell_types[c_type].fit(data=D,
                                         max_components=max_components,
                                         min_components=min_components,
                                         covariance_types=covariance_types,
                                         is_bead=(c_type == bead_label),
-                                        bead_channels=bead_channels)
+                                        bead_channels=bead_channels,
+                                        quick_fit=corrected_quick_fit)
 
-            if (bead_label is None) or (c_type == bead_label):
-                for m in self.cell_types[c_type].lowly_expressed_markers:
-                    est_v = np.min(self.cell_types[c_type].model_for_lowly_expressed_markers[m].covariances_)
-                    if est_v <= self.background_noise_variance:
-                        self.background_noise_variance = est_v
+            if corrected_quick_fit:
+                if (bead_label is None) or (c_type == bead_label):
+                    for m in self.cell_types[c_type].lowly_expressed_markers:
+                        est_v = np.min(self.cell_types[c_type].model_for_lowly_expressed_markers[m].covariances_)
+                        if est_v <= self.background_noise_variance:
+                            self.background_noise_variance = est_v
+            else:
+                if bead_label is None:
+                    self.background_noise_variance = 0
 
             cell_id += 1
 
     def adjust_cell_types(self):
+        """
+
+        Returns
+        -------
+
+        """
         for c_type in self.cell_types:
             self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
@@ -121,22 +160,33 @@ class CytofData:
                          batch = 0):
         if cell_abundances is None:
             cell_abundances = self.observed_cell_abundances
+
         # We record the order of the cell types
         cell_type_order = list(cell_abundances.keys())
 
-        cell_probabilities = np.zeros(len(cell_abundances))
-        counter = 0
-        for c_type in cell_abundances:
-            cell_probabilities[counter] = cell_abundances[c_type]
-            counter += 1
-        cell_probabilities /= np.sum(cell_probabilities)
+        n_per_cell_type = np.zeros(len(cell_abundances), dtype=int)
+
+        if np.sum(list(cell_abundances.values())) == n_samples:
+            counter = 0
+            for c_type in cell_type_order:
+                n_per_cell_type[counter] = cell_abundances[c_type]
+                counter += 1
+        elif np.sum(list(cell_abundances.values())) <= 1.5:
+            cell_probabilities = np.zeros(len(cell_abundances))
+            counter = 0
+            for c_type in cell_type_order:
+                cell_probabilities[counter] = cell_abundances[c_type]
+                counter += 1
+            cell_probabilities /= np.sum(cell_probabilities)
+            n_per_cell_type = np.random.multinomial(n_samples, cell_probabilities)
+        else:
+            raise ValueError('Unknown cell abundances type')
 
         expression_matrix = np.zeros((n_samples, self.n_markers))
         expressed_index_matrix = np.zeros((n_samples, self.n_markers))
         pseudo_time = np.zeros((n_samples, self.n_markers))
         children_cell_labels = ["None"] * n_samples
 
-        n_per_cell_type = np.random.multinomial(n_samples, cell_probabilities)
         labels = [item for item, count in zip(cell_type_order, n_per_cell_type) for i in range(count)]
 
         Psi_b = 0
@@ -190,6 +240,12 @@ class CytofData:
             cell_abundances = {}
             for b in range(self.n_batches):
                 cell_abundances[b] = self.observed_cell_abundances
+
+        if len(cell_abundances) == 1:
+            cell_abundances_copy = deepcopy(cell_abundances)
+            cell_abundances = {}
+            for b in range(self.n_batches):
+                cell_abundances[b] = cell_abundances_copy
 
         if isinstance(n_samples, int):
             n_samples = np.repeat(n_samples, self.n_batches)

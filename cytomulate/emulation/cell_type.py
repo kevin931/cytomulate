@@ -1,5 +1,7 @@
-
+# Math computation
 import numpy as np
+
+# Statistical models
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from scipy.stats import t
@@ -19,16 +21,22 @@ class CellType:
 
     def fit(self, data, max_components,
             min_components, covariance_types,
-            is_bead=False, bead_channels=None):
+            is_bead=False, bead_channels=None,
+            quick_fit=True):
 
         self.observed_n = data.shape[0]
+        min_components = np.min([min_components, self.observed_n])
+        max_components = np.min([max_components, self.observed_n])
         self.observed_mean = np.mean(data, axis=0)
         self.observed_covariance = np.cov(data, rowvar=False)
+        self.model_for_highly_expressed_markers = {}
+        self.model_for_lowly_expressed_markers = {}
 
         if is_bead:
+            quick_fit = True
             self.highly_expressed_markers = bead_channels
             self.lowly_expressed_markers = list(set(range(len(self.observed_mean))) - set(self.highly_expressed_markers))
-        else:
+        elif quick_fit:
             col_median = np.median(data, axis=0).reshape(-1,1)
             # We will use K-means with 2 groups to
             # group markers into two groups
@@ -46,33 +54,35 @@ class CellType:
 
             self.highly_expressed_markers = np.where(kmeans.labels_ == highly_expressed_group)[0]
             self.lowly_expressed_markers = np.where(kmeans.labels_ == lowly_expressed_group)[0]
-
-        # For unexpressed markers
-        # we fit gaussian mixture model with 2 components to each marginal
-        # as it seems reasonable to assume unexpressed markers are independent
-        # one with background noise
-        # one with lowly expressed protein
-        # The main purpose is to speed up the algorithm
-        # since the majority of the markers are un/lowly expressed
-        lowly_expressed_data = data[:, self.lowly_expressed_markers]
-        highly_expressed_data = data[:, self.highly_expressed_markers]
-
-        self.model_for_highly_expressed_markers = {}
-        self.model_for_lowly_expressed_markers = {}
-
-        if is_bead:
-            n_components = 1
         else:
-            n_components = 2
+            self.highly_expressed_markers = np.array(range(len(self.observed_mean)))
+            self.lowly_expressed_markers = None
 
-        counter = 0
-        for m in self.lowly_expressed_markers:
-            self.model_for_lowly_expressed_markers[m] = GaussianMixture(n_components=n_components).fit(lowly_expressed_data[:, counter].reshape(-1, 1))
-            counter += 1
+        if quick_fit:
+            # For unexpressed markers
+            # we fit gaussian mixture model with 2 components to each marginal
+            # as it seems reasonable to assume unexpressed markers are independent
+            # one with background noise
+            # one with lowly expressed protein
+            # The main purpose is to speed up the algorithm
+            # since the majority of the markers are un/lowly expressed
+            lowly_expressed_data = data[:, self.lowly_expressed_markers]
+
+            if is_bead:
+                n_components = 1
+            else:
+                n_components = 2
+
+            counter = 0
+            for m in self.lowly_expressed_markers:
+                self.model_for_lowly_expressed_markers[m] = GaussianMixture(n_components=n_components).fit(lowly_expressed_data[:, counter].reshape(-1, 1))
+                counter += 1
 
         # Since we expect only a few markers to be highly expressed
         # we can probably afford fitting the entire data
         # with multivariate GMM as well as some model selection
+        highly_expressed_data = data[:, self.highly_expressed_markers]
+
         smallest_bic = np.Inf
         current_bic = 0
         best_gm = None
@@ -103,28 +113,30 @@ class CellType:
         else:
             raise ValueError('Unknown covariance type')
 
-        # Then we deal with lowly/ unexpressed markers
-        for m in self.lowly_expressed_markers:
-            n_components = self.model_for_lowly_expressed_markers[m].n_components
-            for c in range(n_components):
-                self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] -= background_noise_variance
-                if self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] <= 0:
-                    self.model_for_lowly_expressed_markers[m].means_[c] = 0
-                    self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] = 0
-                else:
-                    t_stat = (self.model_for_lowly_expressed_markers[m].means_[c]) / \
-                             np.sqrt(self.model_for_lowly_expressed_markers[m].covariances_[c, :, :]/self.observed_n)
-                    n095quantile = t.ppf(0.95, df=self.observed_n - 1)
-                    if t_stat <= n095quantile:
+        if self.lowly_expressed_markers is not None:
+            # Then we deal with lowly/ unexpressed markers
+            for m in self.lowly_expressed_markers:
+                n_components = self.model_for_lowly_expressed_markers[m].n_components
+                for c in range(n_components):
+                    self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] -= background_noise_variance
+                    if self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] <= 0:
                         self.model_for_lowly_expressed_markers[m].means_[c] = 0
                         self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] = 0
+                    else:
+                        t_stat = (self.model_for_lowly_expressed_markers[m].means_[c]) / \
+                                 np.sqrt(self.model_for_lowly_expressed_markers[m].covariances_[c, :, :]/self.observed_n)
+                        n095quantile = t.ppf(0.95, df=self.observed_n - 1)
+                        if t_stat <= n095quantile:
+                            self.model_for_lowly_expressed_markers[m].means_[c] = 0
+                            self.model_for_lowly_expressed_markers[m].covariances_[c, :, :] = 0
 
     def sample_cell(self, n_samples):
         n_markers = len(self.observed_mean)
         X = np.zeros((n_samples, n_markers))
         X[:, self.highly_expressed_markers], _ = self.model_for_highly_expressed_markers["all"].sample(n_samples)
-        for m in self.lowly_expressed_markers:
-            X[:, [m]], _ = self.model_for_lowly_expressed_markers[m].sample(n_samples)
+        if self.lowly_expressed_markers is not None:
+            for m in self.lowly_expressed_markers:
+                X[:, [m]], _ = self.model_for_lowly_expressed_markers[m].sample(n_samples)
         expressed_index = (X > 0)
         X = np.clip(X, a_min=0, a_max=None)
         return X, expressed_index

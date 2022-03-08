@@ -1,9 +1,14 @@
+# Math computation
 import numpy as np
+
+# Graph package and functions
 import networkx as nx
 from networkx.algorithms import tree
 from networkx.algorithms.community import greedy_modularity_communities
+from emulation.utilities import trajectories
+
+#
 import itertools
-from utilities import trajectories
 
 
 class CellGraph:
