@@ -7,6 +7,7 @@ from collections import Counter
 from numpy.polynomial import polynomial
 from scipy.interpolate import Akima1DInterpolator
 from scipy.interpolate import UnivariateSpline
+from scipy.linalg import eigh
 
 
 def spline_function(x, y, smoothing_factor = 0.5):
@@ -139,6 +140,26 @@ def trajectories(end_values=None, coefficients=None, x=None, y=None, **kwargs):
 
     return trajectories_functions
 
+def find_psm(matrix):
+    eigen_result = eigh(matrix)
+    eigen_vals = eigen_result[0]
+    eigen_vals = np.clip(eigen_vals, a_min=0, a_max=None)
+    eigen_vals = np.diag(eigen_vals)
+
+    eigen_vecs = eigen_result[1]
+
+    return eigen_vecs @ eigen_vals @ eigen_vecs.T
+
+def univariate_noise_model(type="normal", **kwargs):
+    if type == "normal":
+        def model(size):
+            return rd.normal(**kwargs, size=size)
+    elif type == "uniform":
+        def model(size):
+            return rd.uniform(**kwargs, size=size)
+    else:
+        raise ValueError('Unknown type')
+    return model
 
 def KLdivergence(x, y):
   """Compute the Kullback-Leibler divergence between two multivariate samples.

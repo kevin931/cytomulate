@@ -1,4 +1,6 @@
 
+from tqdm import tqdm
+
 import numpy as np
 from collections import Counter
 from copy import deepcopy
@@ -8,7 +10,7 @@ from emulation.cell_graph import CellGraph
 
 
 class CytofData:
-    def __init__(self, n_batches = 1):
+    def __init__(self, n_batches=1, bead_label=None, background_noise_model=None):
         """Initializer of CytofData
         Parameters
         ----------
@@ -16,8 +18,8 @@ class CytofData:
         """
         self.n_markers = None
 
-        self.background_noise_variance = None
-        self.bead_label = None
+        self.background_noise_model = background_noise_model
+        self.bead_label = bead_label
 
         self.n_batches = n_batches
         self.overall_batch_effects = {}
@@ -33,20 +35,15 @@ class CytofData:
 
     def initialize_cell_types(self, expression_matrix,
                               labels,
-                              bead_label=None,
-                              bead_channels=None,
                               max_components=9,
                               min_components=1,
-                              covariance_types=("full", "tied", "diag", "spherical"),
-                              quick_fit=True):
+                              covariance_types=("full", "tied", "diag", "spherical")):
         """Initialize cell type models by fitting Gaussian mixtures
         
         Parameters
         ----------
         expression_matrix: A matrix containing the expression levels of cell events
         labels: A vector of cell type labels
-        bead_label: (optional) If bead is contained in the cell type labels, the label of the bead
-        bead_channels: (optional) Markers that are used to identify beads
         max_components: Used for Gaussian mixture model selection. The maximal number of components for a Gaussian mixture
         min_components: Used for Gaussian mixture model selection. The minimal number of components for a Gaussian mxitrue
         covariance_types: Used for Gaussian mixture model selection. The candidate types of covariances
@@ -61,9 +58,8 @@ class CytofData:
 
         abundances = Counter(labels)
 
-        self.background_noise_variance = np.Inf
         cell_id = 0
-        for c_type in unique_labels:
+        for c_type in tqdm(unique_labels):
             self.observed_cell_abundances[c_type] = abundances[c_type]/len(labels)
 
             self.cell_type_labels_to_ids[c_type] = cell_id
@@ -74,39 +70,12 @@ class CytofData:
             ind = np.where(labels == c_type)[0]
             D = expression_matrix[ind, :]
 
-            corrected_quick_fit = quick_fit
-            if c_type == bead_label:
-                corrected_quick_fit = True
-
             self.cell_types[c_type].fit(data=D,
                                         max_components=max_components,
                                         min_components=min_components,
-                                        covariance_types=covariance_types,
-                                        is_bead=(c_type == bead_label),
-                                        bead_channels=bead_channels,
-                                        quick_fit=corrected_quick_fit)
-
-            if corrected_quick_fit:
-                if (bead_label is None) or (c_type == bead_label):
-                    for m in self.cell_types[c_type].lowly_expressed_markers:
-                        est_v = np.min(self.cell_types[c_type].model_for_lowly_expressed_markers[m].covariances_)
-                        if est_v <= self.background_noise_variance:
-                            self.background_noise_variance = est_v
-            else:
-                if bead_label is None:
-                    self.background_noise_variance = 0
+                                        covariance_types=covariance_types)
 
             cell_id += 1
-
-    def adjust_cell_types(self):
-        """
-
-        Returns
-        -------
-
-        """
-        for c_type in self.cell_types:
-            self.cell_types[c_type].adjust_models(self.background_noise_variance)
 
     def generate_cell_graph(self, graph_topology = "forest", **kwargs):
         self.cell_graph.initialize_graph(self.cell_types, bead_label=self.bead_label)
@@ -156,8 +125,9 @@ class CytofData:
                 self.temporal_effects[b] = trajectories(x=x[b], y=y[b], **kwargs)
 
     def sample_one_batch(self, n_samples,
-                         cell_abundances = None,
-                         batch = 0):
+                         cell_abundances=None,
+                         batch=0,
+                         clip=True):
         if cell_abundances is None:
             cell_abundances = self.observed_cell_abundances
 
@@ -202,7 +172,7 @@ class CytofData:
             if n == 0:
                 continue
             end_n += n
-            X, expressed_index = self.cell_types[c_type].sample_cell(n)
+            X, expressed_index = self.cell_types[c_type].sample_cell(n, clip)
             Psi_bp = 0
             if batch in self.local_batch_effects.keys():
                 Psi_bp = self.local_batch_effects[batch][c_type]
@@ -227,15 +197,20 @@ class CytofData:
         if batch in self.temporal_effects.keys():
             temporal_effects = self.temporal_effects[batch][0](time_points)
             expression_matrix += expressed_index_matrix * temporal_effects[:, np.newaxis]
+        if clip:
+            expression_matrix = np.clip(expression_matrix, a_min=0, a_max=None)
 
-        expression_matrix = np.clip(expression_matrix, a_min=0, a_max=None)
-        E = np.random.normal(loc=0, scale=np.sqrt(self.background_noise_variance), size=(n_samples, self.n_markers))
+        E = 0
+        if self.background_noise_model is not None:
+            E = self.background_noise_model(size=(n_samples, self.n_markers))
+
         expression_matrix += E
 
         return expression_matrix, np.array(labels), pseudo_time, np.array(children_cell_labels)
 
     def sample(self, n_samples,
-                     cell_abundances=None):
+                     cell_abundances=None,
+                     clip=True):
         if cell_abundances is None:
             cell_abundances = {}
             for b in range(self.n_batches):
@@ -257,6 +232,7 @@ class CytofData:
         for b in range(self.n_batches):
             expression_matrices[b], labels[b], pseudo_time[b], children_cell_labels[b] = self.sample_one_batch(n_samples[b],
                                                                                                                cell_abundances[b],
-                                                                                                               b)
+                                                                                                               b,
+                                                                                                               clip)
 
         return expression_matrices, labels, pseudo_time, children_cell_labels
