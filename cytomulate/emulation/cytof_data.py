@@ -216,7 +216,7 @@ class CytofData:
             for b in range(self.n_batches):
                 cell_abundances[b] = self.observed_cell_abundances
 
-        if len(cell_abundances) == 1:
+        if np.any(np.isin(list(cell_abundances.keys()), list(self.cell_types.keys()))):
             cell_abundances_copy = deepcopy(cell_abundances)
             cell_abundances = {}
             for b in range(self.n_batches):
