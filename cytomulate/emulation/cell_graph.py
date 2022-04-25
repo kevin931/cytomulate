@@ -121,3 +121,6 @@ class CellGraph:
                 start_n += n
 
         return G, pseudo_time, labels
+
+    def visualize_graph(self):
+        pass

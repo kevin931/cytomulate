@@ -1,99 +1,90 @@
-
 from tqdm import tqdm
+from copy import deepcopy
 
 import numpy as np
-from collections import Counter
-from copy import deepcopy
-from emulation.utilities import trajectories
-from emulation.cell_type import CellType
-from emulation.cell_graph import CellGraph
+from scipy.stats import truncnorm
+
+from creation.cell_type import CellType
+from creation.cell_graph import CellGraph
+from creation.utilities import trajectories
 
 
 class CytofData:
-    def __init__(self, n_batches=1, bead_label=None, background_noise_model=None):
-        """Initializer of CytofData
-        Parameters
-        ----------
-        n_batches: number of batches
-        """
-        self.n_markers = None
+    def __init__(self, n_batches=1, n_types=10, n_markers=20,
+                 n_trees=2, background_noise_model=None):
+
+        self.n_markers = n_markers
 
         self.background_noise_model = background_noise_model
-        self.bead_label = bead_label
 
         self.n_batches = n_batches
         self.overall_batch_effects = {}
         self.local_batch_effects = {}
         self.temporal_effects = {}
+        self.cell_abundances = {}
 
-        self.observed_cell_abundances = {}
         self.cell_type_labels_to_ids = {}
         self.cell_type_ids_to_labels = {}
         self.cell_types = {}
 
         self.cell_graph = CellGraph()
 
-    def initialize_cell_types(self, expression_matrix,
-                              labels,
-                              max_components=9,
-                              min_components=1,
-                              covariance_types=("full", "tied", "diag", "spherical")):
-        """Initialize cell type models by fitting Gaussian mixtures
-        
-        Parameters
-        ----------
-        expression_matrix: A matrix containing the expression levels of cell events
-        labels: A vector of cell type labels
-        max_components: Used for Gaussian mixture model selection. The maximal number of components for a Gaussian mixture
-        min_components: Used for Gaussian mixture model selection. The minimal number of components for a Gaussian mxitrue
-        covariance_types: Used for Gaussian mixture model selection. The candidate types of covariances
+        labels = np.arange(n_types)
 
-        Returns
-        -------
-
-        """
-        self.n_markers = np.shape(expression_matrix)[1]
-
-        unique_labels = np.unique(labels)
-
-        abundances = Counter(labels)
 
         cell_id = 0
-        for c_type in tqdm(unique_labels):
-            self.observed_cell_abundances[c_type] = abundances[c_type]/len(labels)
-
+        for c_type in labels:
             self.cell_type_labels_to_ids[c_type] = cell_id
             self.cell_type_ids_to_labels[cell_id] = c_type
-
-            self.cell_types[c_type] = CellType(label=c_type, cell_id=cell_id)
-
-            ind = np.where(labels == c_type)[0]
-            D = expression_matrix[ind, :]
-
-            self.cell_types[c_type].fit(data=D,
-                                        max_components=max_components,
-                                        min_components=min_components,
-                                        covariance_types=covariance_types)
-
+            self.cell_types[c_type] = CellType(label=c_type, cell_id=cell_id, n_markers=n_markers)
             cell_id += 1
 
-    def generate_cell_graph(self, graph_topology = "forest", **kwargs):
-        self.cell_graph.initialize_graph(self.cell_types, bead_label=self.bead_label)
-        self.cell_graph.prune_graph(graph_topology)
+        self.cell_graph.initialize_graph(self.cell_types, n_trees)
+
+    def initialize_cell_types(self, L=4, scale=0.5, n_components = 5):
+        high_expressions = np.cumsum(truncnorm.rvs(a=0, b=np.inf, loc=0, scale=scale, size = L))
+        low_expressions = np.cumsum(truncnorm.rvs(a=0, b=np.inf, loc=0, scale=scale/10, size=L-1))
+        low_expressions = np.append(0, low_expressions)
+
+        for c_type in tqdm(self.cell_graph.serialized_graph):
+            self.cell_types[c_type].generate_marker_expression_patterns(self.cell_types, self.cell_graph.graph)
+            self.cell_types[c_type].generate_marker_expressions(self.cell_types, self.cell_graph.graph,
+                                                                high_expressions, low_expressions)
+            self.cell_types[c_type].generate_model(n_components)
+
+    def generate_cell_graph(self, **kwargs):
         self.cell_graph.generate_trajectories(self.cell_types, **kwargs)
+
+    def generate_cell_abundances(self, is_random=True):
+        if is_random:
+            for b in range(self.n_batches):
+                self.cell_abundances[b] = {}
+                abundance = np.random.dirichlet(np.ones(len(self.cell_types)), size=1).reshape(-1)
+                counter = 0
+                for c_type in self.cell_types:
+                    self.cell_abundances[b][c_type] = abundance[counter]
+                    counter += 1
+        else:
+            for b in range(self.n_batches):
+                self.cell_abundances[b] = {}
+                abundance = np.ones(len(self.cell_types))/len(self.cell_types)
+                counter = 0
+                for c_type in self.cell_types:
+                    self.cell_abundances[b][c_type] = abundance[counter]
+                    counter += 1
 
     def generate_overall_batch_effects(self, variance=0.001):
         if self.n_batches == 1:
             self.overall_batch_effects[0] = 0
         else:
             batch_effects = np.zeros(self.n_batches)
-            batch_effects[:(self.n_batches-1)] = np.random.normal(loc=0, scale=np.sqrt(variance),
-                                             size=self.n_batches - 1)
-            batch_effects[self.n_batches-1] = -np.sum(batch_effects)
+            batch_effects[:(self.n_batches - 1)] = np.random.normal(loc=0, scale=np.sqrt(variance),
+                                                                    size=self.n_batches - 1)
+            batch_effects[self.n_batches - 1] = -np.sum(batch_effects)
             for b in range(self.n_batches):
                 self.overall_batch_effects[b] = batch_effects[b]
 
-    def generate_local_batch_effects(self, variance = 0.001):
+    def generate_local_batch_effects(self, variance=0.001):
         if self.n_batches == 1:
             self.local_batch_effects[0] = {}
             for c_type in self.cell_type_labels_to_ids:
@@ -102,10 +93,12 @@ class CytofData:
             for b in range(self.n_batches):
                 self.local_batch_effects[b] = {}
                 temp = np.zeros((len(self.cell_types), self.n_markers))
-                temp[np.ix_(range(len(self.cell_types)-1), range(self.n_markers-1))] = \
-                    np.random.normal(loc=0, scale=np.sqrt(variance), size=(len(self.cell_types)-1)*(self.n_markers-1)).reshape((len(self.cell_types)-1, self.n_markers-1))
-                temp[:, self.n_markers-1] = -np.sum(temp, axis=1)
-                temp[len(self.cell_types)-1, :] = -np.sum(temp, axis=0)
+                temp[np.ix_(range(len(self.cell_types) - 1), range(self.n_markers - 1))] = \
+                    np.random.normal(loc=0, scale=np.sqrt(variance),
+                                     size=(len(self.cell_types) - 1) * (self.n_markers - 1)).reshape(
+                        (len(self.cell_types) - 1, self.n_markers - 1))
+                temp[:, self.n_markers - 1] = -np.sum(temp, axis=1)
+                temp[len(self.cell_types) - 1, :] = -np.sum(temp, axis=0)
                 counter = 0
                 for c_type in self.cell_type_labels_to_ids:
                     self.local_batch_effects[b][c_type] = temp[counter, :].reshape(-1)
@@ -129,7 +122,7 @@ class CytofData:
                          batch=0,
                          clip=True):
         if cell_abundances is None:
-            cell_abundances = self.observed_cell_abundances
+            cell_abundances = self.cell_abundances[batch]
 
         # We record the order of the cell types
         cell_type_order = list(cell_abundances.keys())
@@ -177,7 +170,7 @@ class CytofData:
             if batch in self.local_batch_effects.keys():
                 Psi_bp = self.local_batch_effects[batch][c_type]
             G, T, children_labels = self.cell_graph.sample_graph(n, c_type)
-            expression_matrix[start_n : end_n, :] = X + expressed_index * (G + Psi_b + Psi_bp)
+            expression_matrix[start_n: end_n, :] = X + expressed_index * (G + Psi_b + Psi_bp)
             expressed_index_matrix[start_n: end_n, :] = expressed_index
             pseudo_time[start_n:end_n, :] = T
             children_cell_labels[start_n:end_n] = children_labels
@@ -192,7 +185,7 @@ class CytofData:
         children_cell_labels = [children_cell_labels[i] for i in indices]
 
         # Now we add temporal effects]
-        time_points = np.linspace(0,1, n_samples)
+        time_points = np.linspace(0, 1, n_samples)
 
         if batch in self.temporal_effects.keys():
             temporal_effects = self.temporal_effects[batch][0](time_points)
@@ -209,12 +202,12 @@ class CytofData:
         return expression_matrix, np.array(labels), pseudo_time, np.array(children_cell_labels)
 
     def sample(self, n_samples,
-                     cell_abundances=None,
-                     clip=True):
+               cell_abundances=None,
+               clip=True):
         if cell_abundances is None:
             cell_abundances = {}
             for b in range(self.n_batches):
-                cell_abundances[b] = self.observed_cell_abundances
+                cell_abundances[b] = self.cell_abundances[b]
 
         if not np.any([isinstance(i, dict) for i in cell_abundances.values()]):
             cell_abundances_copy = deepcopy(cell_abundances)
@@ -230,9 +223,11 @@ class CytofData:
         pseudo_time = {}
         children_cell_labels = {}
         for b in range(self.n_batches):
-            expression_matrices[b], labels[b], pseudo_time[b], children_cell_labels[b] = self.sample_one_batch(n_samples[b],
-                                                                                                               cell_abundances[b],
-                                                                                                               b,
-                                                                                                               clip)
+            expression_matrices[b], labels[b], pseudo_time[b], children_cell_labels[b] = self.sample_one_batch(
+                n_samples[b],
+                cell_abundances[b],
+                b,
+                clip)
 
         return expression_matrices, labels, pseudo_time, children_cell_labels
+

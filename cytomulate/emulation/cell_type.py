@@ -4,6 +4,7 @@ import numpy as np
 # Statistical models
 from sklearn.mixture import GaussianMixture
 
+from typing import Union, Optional, Any, List, Callable
 
 class CellType:
     def __init__(self, label, cell_id):
