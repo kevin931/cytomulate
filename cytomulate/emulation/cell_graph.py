@@ -31,33 +31,8 @@ class EmulationCellGraph(GeneralCellGraph):
                 mean2 = cell_types[labels[1]].observed_mean
                 self.complete_undirected_graph.add_edge(labels[0], labels[1], weight=np.linalg.norm(mean1 - mean2))
 
-    def prune_graph(self, graph_topology="bidirectional complete"):
-        if "complete" in graph_topology:
-            self.graph = self.complete_undirected_graph.to_directed()
-            if graph_topology == "complete":
-                nodes = np.array(list(set(self.graph.nodes) - {self.bead_label}))
-                np.random.shuffle(nodes)
-                for labels in itertools.combinations(nodes, 2):
-                    self.graph.remove_edge(labels[0], labels[1])
-            else:
-                if graph_topology != "bidirectional complete":
-                    raise ValueError('Unknown graph type')
-        elif "cyclic" in graph_topology:
-            nodes = np.array(list(set(self.complete_undirected_graph.nodes) - {self.bead_label}))
-            np.random.shuffle(nodes)
-            self.graph = nx.DiGraph()
-            if self.bead_label is not None:
-                self.graph.add_node(self.bead_label)
-            for i in range(len(nodes)):
-                if i == len(nodes) - 1:
-                    self.graph.add_edge(nodes[i], nodes[0])
-                    if graph_topology == "bidirectional cyclic":
-                        self.graph.add_edge(nodes[0], nodes[i])
-                else:
-                    self.graph.add_edge(nodes[i], nodes[i+1])
-                    if graph_topology == "bidirectional cyclic":
-                        self.graph.add_edge(nodes[i+1], nodes[i])
-        elif graph_topology in ["tree", "forest"]:
+    def prune_graph(self, graph_topology="tree"):
+        if graph_topology in ["tree", "forest"]:
             mst = tree.minimum_spanning_edges(self.complete_undirected_graph, algorithm="kruskal", weight="weight", data=False)
             mst_G = nx.Graph()
             mst_G.add_edges_from(list(mst))

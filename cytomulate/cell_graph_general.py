@@ -3,6 +3,7 @@ import numpy as np
 
 # Graph package and functions
 import networkx as nx
+import matplotlib.pyplot as plt
 from utilities import trajectories
 
 
@@ -54,4 +55,43 @@ class GeneralCellGraph:
         return G, pseudo_time, labels
 
     def visualize_graph(self):
-        nx.draw(self.graph, with_labels=True)
+        connected_components = list(nx.connected_components(self.graph.to_undirected()))
+        n_plt = 0
+        figs = []
+        for nodes in connected_components:
+            G = self.graph.subgraph(list(nodes))
+            pos = nx.planar_layout(G, scale=20)
+            d = dict(G.degree)
+            nodelist = list(d.keys())
+            nodesize = []
+            max_degree = np.max(list(d.values()))
+
+            for k in d:
+                predecessors = list(G.predecessors(k))
+                if len(predecessors) == 0:
+                    nodesize.append(max_degree * 150)
+                else:
+                    nodesize.append(d[k] * 100)
+
+            colors = []
+            for node in G.nodes():
+                successors = list(G.successors(node))
+                predecessors = list(G.predecessors(node))
+
+                if len(successors) == 0:
+                    colors.append("springgreen")
+                elif len(predecessors) == 0:
+                    colors.append("royalblue")
+                else:
+                    colors.append("magenta")
+            figs.append(plt.figure(n_plt))
+            ax = figs[n_plt].add_subplot(1,1,1)
+            ax.set_title("Tree " + str(n_plt))
+            nx.draw(G, pos,
+                    with_labels=True,
+                    nodelist=nodelist,
+                    node_size=nodesize,
+                    node_color=colors)
+
+            n_plt += 1
+        plt.show()
