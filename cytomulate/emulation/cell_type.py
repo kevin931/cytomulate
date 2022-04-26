@@ -4,14 +4,16 @@ import numpy as np
 # Statistical models
 from sklearn.mixture import GaussianMixture
 
+# Typing
 from typing import Union, Optional, Any, List, Callable
 
-class CellType:
-    def __init__(self, label, cell_id):
-        self.label = label
-        self.id = cell_id
-        self.markers = None
-        self.model = None
+# Superclass
+from cell_type_general import GeneralCellType
+
+
+class EmulationCellType(GeneralCellType):
+    def __init__(self, label, cell_id, n_markers):
+        super().__init__(label, cell_id, n_markers)
         self.observed_n = None
         self.observed_mean = None
         self.observed_covariance = None
@@ -43,11 +45,3 @@ class CellType:
         if self.model.n_components == 1:
             self.model.weights_[0] = 1.
 
-    def sample_cell(self, n_samples, clip):
-        n_markers = len(self.observed_mean)
-        X = np.zeros((n_samples, n_markers))
-        X[:, self.markers], _ = self.model.sample(n_samples)
-        expressed_index = (X > 0)
-        if clip:
-            X = np.clip(X, a_min=0, a_max=None)
-        return X, expressed_index

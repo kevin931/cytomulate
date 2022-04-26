@@ -2,27 +2,26 @@
 import numpy as np
 from copy import deepcopy
 
-
 # Statistical models
 from scipy.stats import truncnorm
 from scipy.stats import invwishart
 from sklearn.mixture import GaussianMixture
 
+# Typing
 from typing import Union, Optional, Any, List, Callable
 
-class CellType:
-    def __init__(self, label, cell_id, n_markers):
-        self.label = label
-        self.id = cell_id
+# Superclass
+from cell_type_general import GeneralCellType
 
-        self.n_markers = n_markers
-        self.markers = np.arange(self.n_markers)
+
+class CreationCellType(GeneralCellType):
+    def __init__(self, label, cell_id, n_markers):
+        super().__init__(label, cell_id, n_markers)
         self.highly_expressed_markers = None
         self.lowly_expressed_markers = None
         self.gating_markers = None
         self.p = 0.4
 
-        self.model = None
         self.cell_mean = np.zeros(self.n_markers)
         self.cell_covariance = np.zeros((self.n_markers, self.n_markers))
 
@@ -87,14 +86,6 @@ class CellType:
         self.model = GaussianMixture(n_components=n_components).fit(X)
         for n in range(n_components):
             self.model.means_[n, :] = self.cell_mean
-        self.model.covariances_ = invwishart.rvs(df=self.n_markers + 1, scale=np.eye(self.n_markers), size=n_components)
+        self.model.covariances_ = invwishart.rvs(df=self.n_markers + 2, scale=np.eye(self.n_markers)/100,
+                                                 size=n_components)
         self.model.weights_ = np.random.dirichlet(np.ones(n_components), size=1).reshape(-1)
-
-    def sample_cell(self, n_samples, clip):
-        n_markers = len(self.cell_mean)
-        X = np.zeros((n_samples, n_markers))
-        X[:, :], _ = self.model.sample(n_samples)
-        expressed_index = (X > 0)
-        if clip:
-            X = np.clip(X, a_min=0, a_max=None)
-        return X, expressed_index
