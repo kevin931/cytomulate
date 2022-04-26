@@ -17,7 +17,7 @@ class GeneralCellGraph:
         for e in edges:
             from_label = e[0]
             to_label = e[1]
-            end_values = cell_types[to_label].observed_mean - cell_types[from_label].observed_mean
+            end_values = cell_types[to_label].cell_mean - cell_types[from_label].cell_mean
             if self.n_markers <= 0:
                 self.n_markers = len(end_values)
             self.trajectories[e] = trajectories(end_values=end_values, **kwargs)

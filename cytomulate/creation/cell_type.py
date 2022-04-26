@@ -22,9 +22,6 @@ class CreationCellType(GeneralCellType):
         self.gating_markers = None
         self.p = 0.4
 
-        self.cell_mean = np.zeros(self.n_markers)
-        self.cell_covariance = np.zeros((self.n_markers, self.n_markers))
-
     def generate_marker_expression_patterns(self, cell_types, cell_graph):
         predecessor_cell_labels = list(cell_graph.predecessors(self.label))
         if len(predecessor_cell_labels) == 0:

@@ -15,6 +15,9 @@ class GeneralCellType:
 
         self.model = None
 
+        self.cell_mean = np.zeros(self.n_markers)
+        self.cell_covariance = np.zeros((self.n_markers, self.n_markers))
+
     def sample_cell(self, n_samples, clip):
         X = np.zeros((n_samples, self.n_markers))
         X[:, :], _ = self.model.sample(n_samples)

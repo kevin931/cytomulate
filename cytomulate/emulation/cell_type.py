@@ -14,20 +14,15 @@ from cell_type_general import GeneralCellType
 class EmulationCellType(GeneralCellType):
     def __init__(self, label, cell_id, n_markers):
         super().__init__(label, cell_id, n_markers)
-        self.observed_n = None
-        self.observed_mean = None
-        self.observed_covariance = None
 
     def fit(self, data, max_components,
             min_components, covariance_types):
 
-        self.observed_n = data.shape[0]
-        min_components = np.min([min_components, self.observed_n])
-        max_components = np.min([max_components, self.observed_n])
-        self.observed_mean = np.mean(data, axis=0)
-        self.observed_covariance = np.cov(data, rowvar=False)
-
-        self.markers = np.array(range(len(self.observed_mean)))
+        n = data.shape[0]
+        min_components = np.min([min_components, n])
+        max_components = np.min([max_components, n])
+        self.cell_mean = np.mean(data, axis=0)
+        self.cell_covariance = np.cov(data, rowvar=False)
 
         smallest_bic = np.Inf
         current_bic = 0

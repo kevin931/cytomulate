@@ -1,9 +1,9 @@
-
 from tqdm import tqdm
+from copy import deepcopy
 
 import numpy as np
 from collections import Counter
-from copy import deepcopy
+
 from emulation.cell_type import EmulationCellType
 from emulation.cell_graph import EmulationCellGraph
 
