@@ -6,14 +6,35 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from utilities import trajectories
 
+# Typing
+from typing import Union, Optional, Any, List, Tuple, Callable
+from cell_type_general import GeneralCellType
+
 
 class GeneralCellGraph:
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the GeneralCellGraph object
+
+        """
         self.graph = None
         self.n_markers = -1
+        # trajectories would be a dictionary whose keys are edges of a
+        # directed graph and whose values would be a list of functions
+        # that describes the actual differentiation path
         self.trajectories = {}
 
-    def generate_trajectories(self, cell_types, **kwargs):
+    def generate_trajectories(self,
+                              cell_types: GeneralCellType,
+                              **kwargs) -> None:
+        """Generate the actual differential paths
+
+        Parameters
+        ----------
+        cell_types: GeneralCellType
+            The cell_types object
+        kwargs:
+            Extra parameters needed for non-default path generation algorithms
+        """
         edges = self.graph.edges
         for e in edges:
             from_label = e[0]
@@ -23,7 +44,25 @@ class GeneralCellGraph:
                 self.n_markers = len(end_values)
             self.trajectories[e] = trajectories(end_values=end_values, **kwargs)
 
-    def sample_graph(self, n_samples, cell_label):
+    def sample_graph(self,
+                     n_samples: int,
+                     cell_label: Union[str, int]) -> Tuple[np.ndarray, np.ndarray, list]:
+        """Draw random samples of a cell type from the cell differentiation graph
+
+        Parameters
+        ----------
+        n_samples: int
+            Number of samples
+        cell_label: str or int
+            The label of the cell needed
+
+        Returns
+        -------
+        np.ndarray, np.ndarray, list: The additive values of the path and
+                                      the pseudo times as well as
+                                      the cell types the cell is differentiating to
+
+        """
         if self.graph is None:
             return 0, 0, ["None"] * n_samples
 
@@ -54,7 +93,10 @@ class GeneralCellGraph:
 
         return G, pseudo_time, labels
 
-    def visualize_graph(self):
+    def visualize_graph(self) -> None:
+        """Visualize the cell graph
+
+        """
         connected_components = list(nx.connected_components(self.graph.to_undirected()))
         n_plt = 0
         figs = []

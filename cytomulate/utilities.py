@@ -1,27 +1,33 @@
 # Math computation
 import numpy as np
 from numpy import random as rd
-from collections import Counter
 
 # Polynomials and spline functions
 from numpy.polynomial import polynomial
 from scipy.interpolate import Akima1DInterpolator
 from scipy.interpolate import UnivariateSpline
-from scipy.linalg import eigh
+
+# Typing
+from typing import Union, Optional, Any, List, Tuple, Callable
 
 
-def spline_function(x, y, smoothing_factor = 0.5):
-    """
-    Generate a smoothing spling function
+def spline_function(x: np.array,
+                    y: np.array,
+                    smoothing_factor: float = 0.5) -> Callable:
+    """Generate a smoothing spline function
+    This is mainly used for generating temporal effects
     Parameters
     ----------
-    x: an array of x values
-    y: an array of y values
-    smoothing_factor: the smoothing factor used in spline fitting
+    x: np.array
+        An array of x values
+    y: np.array
+        An array of y values
+    smoothing_factor: float
+        The smoothing factor used in spline fitting
 
     Returns
     -------
-    A spline function that can be evaulated at point t
+    Callable: A spline function that can be evaluated at point t
     """
     # We first normalize the x values to the unit interval [0,1]
     x = (x - np.min(x))/(np.max(x) - np.min(x))
@@ -35,17 +41,22 @@ def spline_function(x, y, smoothing_factor = 0.5):
     return spline_values
 
 
-def polynomial_function(coefficients, end_value):
-    """
-    Generate a polynomial on [0,1]
+def polynomial_function(coefficients: Union[list, np.array],
+                        end_value: float) -> Callable:
+    """Generate a polynomial on [0,1]
+    This can be used to generate temporal effect and generate differentiation path
     Parameters
     ----------
-    coefficients: an array of the polynomial coefficients
-    end_value: the desired end value
+    coefficients: list or np.array
+        An array of the polynomial coefficients.
+        The resulting polynomial will almost surely not have the same coefficients.
+        They are used to specify the rough "shape" of the polynomial
+    end_value: float
+        The desired end value
 
     Returns
     -------
-    A polynomial function that can be evaluated at point t
+    Callable: A polynomial function that can be evaluated at point t
     """
     # We first use the provided coefficient to generate the base polynomial
     # However, the resulting polynomial does not guarantee that it will start at 0
@@ -65,19 +76,26 @@ def polynomial_function(coefficients, end_value):
     return polynomial_values
 
 
-def brownian_bridge_function(end_value, N = 5, lb = 0, ub = 1):
-    """
-    Generate a random function that starts at 0 and ends at end_value
+def brownian_bridge_function(end_value: float,
+                             N: int = 5,
+                             lb: float = 0,
+                             ub: float = 1) -> Callable:
+    """Generate a random function that starts at 0 and ends at end_value
+    This can be used to generate temporal effect and generate differentiation path
     Parameters
     ----------
-    end_value: the desired end value
-    N: number of steps when simulating a brownian bridge
-    lb: the lower bound of the variance scaling factor
-    ub: the upper bound of the variance scaling factor
+    end_value: float
+        The desired end value
+    N: int
+        Number of steps when simulating a brownian bridge
+    lb: float
+        The lower bound of the variance scaling factor
+    ub: float
+        The upper bound of the variance scaling factor
 
     Returns
     -------
-    A function that can be evaluated at time t
+    Callable: A function that can be evaluated at time t
     """
     # We first generate the variance and the time steps
     sigma2 = np.abs(end_value) * np.random.uniform(lb, ub, 1).reshape((-1,1))
@@ -103,20 +121,27 @@ def brownian_bridge_function(end_value, N = 5, lb = 0, ub = 1):
     return spline_values
 
 
-def trajectories(end_values=None, coefficients=None, x=None, y=None, **kwargs):
-    """
-    Vectorize the spline function or the polynomial function or the brownian bridge function
+def trajectories(end_values: Optional[Union[list, np.array]] = None,
+                 coefficients: Optional[Union[list, np.array]] = None,
+                 x: Optional[np.array] = None,
+                 y: Optional[np.array] = None,
+                 **kwargs) -> list:
+    """Vectorize the spline function or the polynomial function or the brownian bridge function
     Parameters
     ----------
-    end_values: an array of the end values
-    coefficients: if polynomial is desired, an array of the polynomial coefficients
-    x: if spline is sought after, the x values
-    y: if spline is sought after, the y values
-    kwargs: other arguments for target functions
+    end_values: list or np.array
+        An array of the end values
+    coefficients: list or np.array
+        If polynomial is desired, an array of the polynomial coefficients
+    x: np.array
+        If spline is sought after, the x values
+    y: np.array
+        If spline is sought after, the y values
+    kwargs: other arguments for the brownian bridge method or the spline function
 
     Returns
     -------
-    A list of functions
+    list: A list of functions
     """
     trajectories_functions = []
     if end_values is not None:
@@ -140,96 +165,109 @@ def trajectories(end_values=None, coefficients=None, x=None, y=None, **kwargs):
 
     return trajectories_functions
 
-def find_psm(matrix):
-    eigen_result = eigh(matrix)
-    eigen_vals = eigen_result[0]
-    eigen_vals = np.clip(eigen_vals, a_min=0, a_max=None)
-    eigen_vals = np.diag(eigen_vals)
 
-    eigen_vecs = eigen_result[1]
+def univariate_noise_model(noise_distribution: str = "normal",
+                           **kwargs) -> Callable:
+    """Generate a noise distribution
+    This is mainly used to generate background noise in the cytof_data object
+    Parameters
+    ----------
+    noise_distribution: str
+        Either "normal" or "uniform"
+    kwargs: extra parameters needed for numpy.random.normal or numpy.random.uniform
 
-    return eigen_vecs @ eigen_vals @ eigen_vecs.T
-
-def univariate_noise_model(type="normal", **kwargs):
-    if type == "normal":
+    Returns
+    -------
+    Callable: a RV generator that only takes size as its input
+    """
+    if noise_distribution == "normal":
         def model(size):
             return rd.normal(**kwargs, size=size)
-    elif type == "uniform":
+    elif noise_distribution == "uniform":
         def model(size):
             return rd.uniform(**kwargs, size=size)
     else:
-        raise ValueError('Unknown type')
+        raise ValueError('Unknown noise distribution')
     return model
 
-def KLdivergence(x, y):
-  """Compute the Kullback-Leibler divergence between two multivariate samples.
-  Parameters
-  ----------
-  x : 2D array (n,d)
+
+def KLdivergence(x: np.ndarray,
+                 y: np.ndarray) -> float:
+    """Compute the Kullback-Leibler divergence between two multivariate samples.
+    Parameters
+    ----------
+    x : 2D array (n,d)
     Samples from distribution P, which typically represents the true
     distribution.
-  y : 2D array (m,d)
+    y : 2D array (m,d)
     Samples from distribution Q, which typically represents the approximate
     distribution.
-  Returns
-  -------
-  out : float
+    Returns
+    -------
+    out : float
     The estimated Kullback-Leibler divergence D(P||Q).
-  References
-  ----------
-  Pérez-Cruz, F. Kullback-Leibler divergence estimation of
-continuous distributions IEEE International Symposium on Information
-Theory, 2008.
-  """
-  from scipy.spatial import cKDTree as KDTree
+    References
+    ----------
+    Pérez-Cruz, F. Kullback-Leibler divergence estimation of
+    continuous distributions IEEE International Symposium on Information
+    Theory, 2008.
+    """
+    from scipy.spatial import cKDTree as KDTree
 
-  # Check the dimensions are consistent
-  x = np.atleast_2d(x)
-  y = np.atleast_2d(y)
+    # Check the dimensions are consistent
+    x = np.atleast_2d(x)
+    y = np.atleast_2d(y)
 
-  n,d = x.shape
-  m,dy = y.shape
+    n,d = x.shape
+    m,dy = y.shape
 
-  assert(d == dy)
-
-
-  # Build a KD tree representation of the samples and find the nearest neighbour
-  # of each point in x.
-  xtree = KDTree(x)
-  ytree = KDTree(y)
-
-  # Get the first two nearest neighbours for x, since the closest one is the
-  # sample itself.
-  r = xtree.query(x, k=2, eps=.01, p=2)[0][:,1]
-  s = ytree.query(x, k=1, eps=.01, p=2)[0]
-
-  # There is a mistake in the paper. In Eq. 14, the right side misses a negative sign
-  # on the first term of the right hand side.
-  return -np.log(r/s).sum() * d / n + np.log(m / (n - 1.))
+    assert(d == dy)
 
 
-def cell_type_discrepancy(observed_matrix,
-                          simulated_matrix,
-                          observed_cell_types,
-                          simulated_cell_types,
-                          cell_type,
-                          mean_ord = 2,
-                          cov_ord = 2):
+    # Build a KD tree representation of the samples and find the nearest neighbour
+    # of each point in x.
+    xtree = KDTree(x)
+    ytree = KDTree(y)
+
+    # Get the first two nearest neighbours for x, since the closest one is the
+    # sample itself.
+    r = xtree.query(x, k=2, eps=.01, p=2)[0][:,1]
+    s = ytree.query(x, k=1, eps=.01, p=2)[0]
+
+    # There is a mistake in the paper. In Eq. 14, the right side misses a negative sign
+    # on the first term of the right hand side.
+    return -np.log(r/s).sum() * d / n + np.log(m / (n - 1.))
+
+
+def cell_type_discrepancy(observed_matrix: np.ndarray,
+                          simulated_matrix: np.ndarray,
+                          observed_cell_types: np.ndarray,
+                          simulated_cell_types: np.ndarray,
+                          cell_type: Union[int, str],
+                          mean_ord: Union[int, str] = 2,
+                          cov_ord: Union[int, str] = 2) -> Tuple[float, float, float]:
     """
     Calculate the discrepancy between the simulated data and the observed data given a cell type
     Parameters
     ----------
-    observed_matrix: the observed expression matrix
-    simulated_matrix: the simulated expression matrix
-    observed_cell_types: an array of the observed cell type labels
-    simulated_cell_types: an array of the simulated cell type labels
-    cell_type: the desired cell type
-    mean_ord: the type of norm for mean
-    cov_ord: the type of norm for covariance
+    observed_matrix: np.ndarray
+        The observed expression matrix
+    simulated_matrix: np.ndarray
+        The simulated expression matrix
+    observed_cell_types: np.ndarray
+        An array of the observed cell type labels
+    simulated_cell_types: np.ndarray
+        An array of the simulated cell type labels
+    cell_type: int or str
+        The desired cell type
+    mean_ord: int or str
+        The type of norm (ord) allowed in numpy.linalg.norm for mean
+    cov_ord: int or str
+        The type of norm (ord) allowed in numpy.linalg.norm for covariance
 
     Returns
     -------
-    The discrepancies based on mean, covariance, and KL divergence
+    float, float, float: The discrepancies based on mean, covariance, and KL divergence
     """
     # We first extract the corresponding portions
     observed_index = np.where(observed_cell_types == cell_type)[0]
@@ -251,47 +289,3 @@ def cell_type_discrepancy(observed_matrix,
     kl_divergence = KLdivergence(observed_y, simulated_y)
 
     return mean_discrepancy, cov_discrepancy, kl_divergence
-
-
-def combined_cell_type_discrepancy(observed_matrix,
-                          simulated_matrix,
-                          observed_cell_types,
-                          simulated_cell_types,
-                          mean_ord = 2,
-                          cov_ord = 2):
-    """
-    Calculated a weighted sum of 3 discrepancy measures
-    Parameters
-    ----------
-    observed_matrix: the observed expression matrix
-    simulated_matrix: the simulated expression matrix
-    observed_cell_types: an array of the observed cell type labels
-    simulated_cell_types: an array of the simulated cell type labels
-    mean_ord: the type of norm for mean
-    cov_ord: the type of norm for covariance
-
-    Returns
-    -------
-    The discrepancies based on mean, covariance, and KL divergence
-    """
-    # We will weight the discrepancies by the cell abundances
-    cell_types = np.unique(simulated_cell_types)
-    n = simulated_cell_types.shape[0]
-    n_cell_types = dict(Counter(simulated_cell_types))
-    mean_d = 0
-    cov_d = 0
-    KL_d = 0
-
-    for cell_type in cell_types:
-        m, c, k = cell_type_discrepancy(observed_matrix,
-                          simulated_matrix,
-                          observed_cell_types,
-                          simulated_cell_types,
-                          cell_type,
-                          mean_ord,
-                          cov_ord)
-        mean_d += n_cell_types[cell_type]/n * m
-        cov_d += n_cell_types[cell_type] / n * c
-        KL_d += n_cell_types[cell_type] / n * k
-
-    return mean_d, cov_d, KL_d
