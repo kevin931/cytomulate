@@ -143,5 +143,5 @@ class CreationCellType(GeneralCellType):
         for n in range(n_components):
             self.model.means_[n, :] = self.cell_mean
         self.model.covariances_ = invwishart.rvs(df=self.n_markers + 2, scale=np.eye(self.n_markers)/100,
-                                                 size=n_components)
+                                                 size=n_components).reshape((n_components, self.n_markers, self.n_markers))
         self.model.weights_ = np.random.dirichlet(np.ones(n_components), size=1).reshape(-1)
