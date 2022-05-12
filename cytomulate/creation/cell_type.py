@@ -42,6 +42,15 @@ class CreationCellType(GeneralCellType):
     def generate_marker_expression_patterns(self,
                                             cell_types: dict,
                                             cell_graph: CreationCellGraph) -> None:
+        """Generate marker patterns for the cell types
+
+        Parameters
+        ----------
+        cell_types: dict
+            A dictionary of CreationCellType objects
+        cell_graph: CreationCellGraph
+            A cell graph object
+        """
         predecessor_cell_labels = list(cell_graph.predecessors(self.label))
         if len(predecessor_cell_labels) == 0:
             # This means this is a root
@@ -54,6 +63,9 @@ class CreationCellType(GeneralCellType):
             self.highly_expressed_markers = deepcopy(cell_types[predecessor_cell_labels[0]].highly_expressed_markers)
             self.lowly_expressed_markers = deepcopy(cell_types[predecessor_cell_labels[0]].lowly_expressed_markers)
             self.gating_markers = deepcopy(cell_types[predecessor_cell_labels[0]].gating_markers)
+
+            # Then for the markers that can be changed
+            # we randomly choose a subset to flip their signs
             changeable_markers = np.array(list(set(self.markers) - set(self.gating_markers)))
             indicator = np.random.binomial(n=1, p=self.p/2, size=len(changeable_markers))
             markers_to_change = changeable_markers[np.where(indicator == 1)]
@@ -73,9 +85,28 @@ class CreationCellType(GeneralCellType):
         else:
             raise ValueError('Cell graph is not a tree or collection of non-overlapping trees')
 
-    def generate_marker_expressions(self, cell_types, cell_graph, high_expressions, low_expressions):
+    def generate_marker_expressions(self,
+                                    cell_types: dict,
+                                    cell_graph: CreationCellGraph,
+                                    high_expressions: np.ndarray,
+                                    low_expressions: np.ndarray) -> None:
+        """Generate the actual expressions
+
+        Parameters
+        ----------
+        cell_types: dict
+            A dictionary of CreationCellType objects
+        cell_graph: CreationCellGraph
+            A cell graph object
+        high_expressions: np.ndarray
+            An array of high expression levels
+        low_expressions: np.ndarray
+            An array of low expression levels
+        """
         predecessor_cell_labels = list(cell_graph.predecessors(self.label))
+        # We first generate the means of the cell expression menas
         if len(predecessor_cell_labels) == 0:
+            # This means this is a root
             for m in self.highly_expressed_markers:
                 self.cell_mean[m] = np.random.choice(high_expressions, size=1)[0]
             for m in self.lowly_expressed_markers:
@@ -93,10 +124,19 @@ class CreationCellType(GeneralCellType):
         else:
             raise ValueError('Cell graph is not a tree or collection of non-overlapping trees')
 
+        # Now we use the means to generate the actual expressions
         for m in self.markers:
             self.cell_mean[m] = truncnorm.rvs(a=0, b=np.inf, loc=self.cell_mean[m], scale=0.01, size=1)[0]
 
-    def generate_model(self, n_components):
+    def generate_model(self,
+                       n_components: int) -> None:
+        """Randomly generate models for cell types
+
+        Parameters
+        ----------
+        n_components: int
+            Number of components in a GMM
+        """
         X = np.random.multivariate_normal(mean=self.cell_mean, cov=np.eye(self.n_markers),
                                           size=np.max([self.n_markers**2, n_components]))
         self.model = GaussianMixture(n_components=n_components).fit(X)
