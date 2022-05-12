@@ -8,7 +8,6 @@ from utilities import trajectories
 
 # Typing
 from typing import Union, Optional, Any, List, Tuple, Callable
-from cell_type_general import GeneralCellType
 
 
 class GeneralCellGraph:
@@ -24,14 +23,14 @@ class GeneralCellGraph:
         self.trajectories = {}
 
     def generate_trajectories(self,
-                              cell_types: GeneralCellType,
+                              cell_types: dict,
                               **kwargs) -> None:
         """Generate the actual differential paths
 
         Parameters
         ----------
-        cell_types: GeneralCellType
-            The cell_types object
+        cell_types: dict
+            A dictionary of CellType objects
         kwargs:
             Extra parameters needed for non-default path generation algorithms
         """

@@ -9,20 +9,39 @@ from sklearn.mixture import GaussianMixture
 
 # Typing
 from typing import Union, Optional, Any, List, Callable
+from creation.cell_graph import CreationCellGraph
 
 # Superclass
 from cell_type_general import GeneralCellType
 
 
 class CreationCellType(GeneralCellType):
-    def __init__(self, label, cell_id, n_markers):
+    def __init__(self,
+                 label: Union[str, int],
+                 cell_id: int,
+                 n_markers: int) -> None:
+        """Initialize the GeneralCellType object
+
+        Parameters
+        ----------
+        label: str or int
+            The label (name) for the cell type
+        cell_id: int
+            The id number assigned to the cell type
+        n_markers: int
+            Number of markers used in the experiment
+        """
         super().__init__(label, cell_id, n_markers)
         self.highly_expressed_markers = None
         self.lowly_expressed_markers = None
+        # Gating markers are the markers that will not change during differentiation
         self.gating_markers = None
+        # The probability of a marker being highly expressed
         self.p = 0.4
 
-    def generate_marker_expression_patterns(self, cell_types, cell_graph):
+    def generate_marker_expression_patterns(self,
+                                            cell_types: dict,
+                                            cell_graph: CreationCellGraph) -> None:
         predecessor_cell_labels = list(cell_graph.predecessors(self.label))
         if len(predecessor_cell_labels) == 0:
             # This means this is a root

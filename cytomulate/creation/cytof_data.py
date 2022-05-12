@@ -1,18 +1,28 @@
+# Progress bar
 from tqdm import tqdm
 
+# Math
 import numpy as np
 from scipy.stats import truncnorm
 
+# Classes to use
 from creation.cell_type import CreationCellType
 from creation.cell_graph import CreationCellGraph
 
 # Superclass
 from cytof_data_general import GeneralCytofData
 
+# Typing
+from typing import Union, Optional, Any, List, Tuple, Callable
+
 
 class CreationCytofData(GeneralCytofData):
-    def __init__(self, n_batches=1, n_types=10, n_markers=20,
-                 n_trees=2, background_noise_model=None):
+    def __init__(self,
+                 n_batches: int = 1,
+                 n_types: int = 10,
+                 n_markers: int = 20,
+                 n_trees: int = 2,
+                 background_noise_model: Optional[Callable] = None) -> None:
         super().__init__(n_batches, background_noise_model)
 
         self.n_markers = n_markers

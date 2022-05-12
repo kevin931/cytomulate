@@ -9,6 +9,9 @@ from networkx.algorithms import tree
 # Superclass
 from cell_graph_general import GeneralCellGraph
 
+# Typing
+from typing import Union, Optional, Any, List, Tuple, Callable
+
 
 class CreationCellGraph(GeneralCellGraph):
     def __init__(self):
