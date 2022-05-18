@@ -1,13 +1,11 @@
-cytomulate.utilities
+Module: utilities
 ======================================
 
 .. py:currentmodule:: cytomulate.utilities
-.. autofunction:: linear_function
-.. autofunction:: smooth_brownian_bridge
-.. autofunction:: generate_prufer_sequence
-.. autofunction:: generate_random_tree
-
-.. autoclass:: FileIO
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. autofunction:: spline_function
+.. autofunction:: polynomial_function
+.. autofunction:: brownian_bridge_function
+.. autofunction:: trajectories
+.. autofunction:: univariate_noise_model
+.. autofunction:: KLdivergence
+.. autofunction:: cell_type_discrepancy

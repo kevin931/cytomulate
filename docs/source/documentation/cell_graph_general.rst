@@ -1,8 +1,7 @@
-cytomulate.tree
+Module: cell_graph_general
 ======================================
 
-.. py:currentmodule:: cytomulate.tree
-.. autoclass:: Tree
+.. autoclass:: cytomulate.cell_graph_general.GeneralCellGraph
     :members:
     :undoc-members:
     :show-inheritance:

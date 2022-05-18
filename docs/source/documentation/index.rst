@@ -12,18 +12,28 @@ Module Reference
 
 .. toctree::
    :maxdepth: 1
-   :caption: Functional Modules
+   :caption: Package Level Modules
 
    main
-   cell_type
-   cytof_data
-   forest
-   tree
    utilities
+   cell_graph_general
+   cell_type_general
+   cytof_data_general
 
 .. toctree::
    :maxdepth: 1
-   :caption: Package Utilities
+   :caption: Creation Mode
 
-   main
-   utilities
+   creation_cell_graph
+   creation_cell_type
+   creation_cytof_data
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Emulation Mode
+
+   emulation_cell_graph
+   emulation_cell_type
+   emulation_cytof_data
+
