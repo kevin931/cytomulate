@@ -8,26 +8,27 @@ from scipy.interpolate import Akima1DInterpolator
 from scipy.interpolate import UnivariateSpline
 
 # Typing
-from typing import Union, Optional, Any, List, Tuple, Callable
+from typing import Union, Optional, List, Tuple, Callable
 
 
-def spline_function(x: np.array,
-                    y: np.array,
+def spline_function(x: np.ndarray,
+                    y: np.ndarray,
                     smoothing_factor: float = 0.5) -> Callable:
     """Generate a smoothing spline function
     This is mainly used for generating temporal effects
     Parameters
     ----------
-    x: np.array
+    x: np.ndarray
         An array of x values
-    y: np.array
+    y: np.ndarray
         An array of y values
     smoothing_factor: float
         The smoothing factor used in spline fitting
 
     Returns
     -------
-    Callable: A spline function that can be evaluated at point t
+    spline_values: Callable
+        A spline function that can be evaluated at point t
     """
     # We first normalize the x values to the unit interval [0,1]
     x = (x - np.min(x))/(np.max(x) - np.min(x))
@@ -41,13 +42,14 @@ def spline_function(x: np.array,
     return spline_values
 
 
-def polynomial_function(coefficients: Union[list, np.array],
+def polynomial_function(coefficients: Union[list, np.ndarray],
                         end_value: float) -> Callable:
     """Generate a polynomial on [0,1]
     This can be used to generate temporal effect and generate differentiation path
+    
     Parameters
     ----------
-    coefficients: list or np.array
+    coefficients: list or np.ndarray
         An array of the polynomial coefficients.
         The resulting polynomial will almost surely not have the same coefficients.
         They are used to specify the rough "shape" of the polynomial
@@ -56,7 +58,8 @@ def polynomial_function(coefficients: Union[list, np.array],
 
     Returns
     -------
-    Callable: A polynomial function that can be evaluated at point t
+    polynomial_values: Callable
+        A polynomial function that can be evaluated at point t
     """
     # We first use the provided coefficient to generate the base polynomial
     # However, the resulting polynomial does not guarantee that it will start at 0
@@ -82,6 +85,7 @@ def brownian_bridge_function(end_value: float,
                              ub: float = 1) -> Callable:
     """Generate a random function that starts at 0 and ends at end_value
     This can be used to generate temporal effect and generate differentiation path
+    
     Parameters
     ----------
     end_value: float
@@ -95,7 +99,8 @@ def brownian_bridge_function(end_value: float,
 
     Returns
     -------
-    Callable: A function that can be evaluated at time t
+    spline_values: Callable
+        A function that can be evaluated at time t
     """
     # We first generate the variance and the time steps
     sigma2 = np.abs(end_value) * np.random.uniform(lb, ub, 1).reshape((-1,1))
@@ -121,32 +126,35 @@ def brownian_bridge_function(end_value: float,
     return spline_values
 
 
-def trajectories(end_values: Optional[Union[list, np.array]] = None,
-                 coefficients: Optional[Union[list, np.array]] = None,
-                 x: Optional[np.array] = None,
-                 y: Optional[np.array] = None,
-                 **kwargs) -> list:
+def trajectories(end_values: Optional[Union[list, np.ndarray]] = None,
+                 coefficients: Optional[Union[list, np.ndarray]] = None,
+                 x: Optional[np.ndarray] = None,
+                 y: Optional[np.ndarray] = None,
+                 **kwargs) -> List[Callable]:
     """Vectorize the spline function or the polynomial function or the brownian bridge function
+    
     Parameters
     ----------
-    end_values: list or np.array
+    end_values: list or np.ndarray
         An array of the end values
-    coefficients: list or np.array
+    coefficients: list or np.ndarray
         If polynomial is desired, an array of the polynomial coefficients
-    x: np.array
+    x: np.ndarray
         If spline is sought after, the x values
-    y: np.array
+    y: np.ndarray
         If spline is sought after, the y values
-    kwargs: other arguments for the brownian bridge method or the spline function
+    kwargs: 
+        Other arguments for the brownian bridge method or the spline function
 
     Returns
     -------
-    list: A list of functions
+    trajectories_functions: List[Callable]
+        A list of functions
     """
     trajectories_functions = []
     if end_values is not None:
         # If end_values is supplied, then we know it's either polynomial or brownian bridge
-        end_values = np.array(end_values).reshape((-1, 1))
+        end_values = np.ndarray(end_values).reshape((-1, 1))
         n_markers = end_values.shape[0]
         if coefficients is None:
             # If coefficients is not supplied, then we know it's brownian bridge
@@ -170,15 +178,18 @@ def univariate_noise_model(noise_distribution: str = "normal",
                            **kwargs) -> Callable:
     """Generate a noise distribution
     This is mainly used to generate background noise in the cytof_data object
+    
     Parameters
     ----------
     noise_distribution: str
         Either "normal" or "uniform"
-    kwargs: extra parameters needed for numpy.random.normal or numpy.random.uniform
+    kwargs:
+        extra parameters needed for numpy.random.normal or numpy.random.uniform
 
     Returns
     -------
-    Callable: a RV generator that only takes size as its input
+    model: Callable
+        A RV generator that only takes size as its input
     """
     if noise_distribution == "normal":
         def model(size):
@@ -194,18 +205,21 @@ def univariate_noise_model(noise_distribution: str = "normal",
 def KLdivergence(x: np.ndarray,
                  y: np.ndarray) -> float:
     """Compute the Kullback-Leibler divergence between two multivariate samples.
+    
     Parameters
     ----------
-    x : 2D array (n,d)
-    Samples from distribution P, which typically represents the true
-    distribution.
-    y : 2D array (m,d)
-    Samples from distribution Q, which typically represents the approximate
-    distribution.
+    x : np.ndarray
+        A 2D array (n,d) of samples from distribution P, which typically represents the true
+        distribution.
+    y : np.ndarray
+        A 2D array (m,d) of samples from distribution Q, which typically represents the approximate
+        distribution.
+    
     Returns
     -------
     out : float
-    The estimated Kullback-Leibler divergence D(P||Q).
+        The estimated Kullback-Leibler divergence D(P||Q).
+    
     References
     ----------
     Pérez-Cruz, F. Kullback-Leibler divergence estimation of
@@ -222,7 +236,6 @@ def KLdivergence(x: np.ndarray,
     m,dy = y.shape
 
     assert(d == dy)
-
 
     # Build a KD tree representation of the samples and find the nearest neighbour
     # of each point in x.
@@ -248,6 +261,7 @@ def cell_type_discrepancy(observed_matrix: np.ndarray,
                           cov_ord: Union[int, str] = 2) -> Tuple[float, float, float]:
     """
     Calculate the discrepancy between the simulated data and the observed data given a cell type
+    
     Parameters
     ----------
     observed_matrix: np.ndarray
@@ -267,7 +281,12 @@ def cell_type_discrepancy(observed_matrix: np.ndarray,
 
     Returns
     -------
-    float, float, float: The discrepancies based on mean, covariance, and KL divergence
+    mean_discrepancy: float
+        The discrepancies based on mean
+    cov_discrepancy: float
+        The discrepancies based on covariance
+    kl_discrepancy: float 
+        The discrepancies based on KL divergence
     """
     # We first extract the corresponding portions
     observed_index = np.where(observed_cell_types == cell_type)[0]

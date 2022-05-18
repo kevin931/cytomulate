@@ -2,7 +2,7 @@
 import numpy as np
 
 # Typing
-from typing import Union, Optional, Any, List, Tuple, Callable
+from typing import Union, Tuple
 
 
 class GeneralCellType:
@@ -35,6 +35,7 @@ class GeneralCellType:
         self.cell_mean = np.zeros(self.n_markers)
         self.cell_covariance = np.zeros((self.n_markers, self.n_markers))
 
+
     def sample_cell(self,
                     n_samples: int,
                     clip: bool) -> Tuple[np.ndarray, np.ndarray]:
@@ -49,10 +50,13 @@ class GeneralCellType:
 
         Returns
         -------
-        np.ndarray, np.ndarray: The actual expression matrix and
-                                an index array of positive values which
-                                will be used during the actual sample
-                                function in the CytofData object
+        X: np.ndarray
+            The actual expression matrix
+        expressed_index: np.ndarray:  and
+            An index array of positive values which
+            will be used during the actual sample
+            function in the CytofData object
+                                
         """
         X = np.zeros((n_samples, self.n_markers))
         X[:, :], _ = self.model.sample(n_samples)

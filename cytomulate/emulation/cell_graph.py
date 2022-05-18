@@ -8,10 +8,10 @@ from networkx.algorithms import tree
 from networkx.algorithms.community import greedy_modularity_communities
 
 # Superclass
-from cell_graph_general import GeneralCellGraph
+from cytomulate.cell_graph_general import GeneralCellGraph
 
 # Typing
-from typing import Union, Optional, Any, List, Tuple, Callable
+from typing import Union, Optional
 
 
 class EmulationCellGraph(GeneralCellGraph):
@@ -22,6 +22,7 @@ class EmulationCellGraph(GeneralCellGraph):
         super().__init__()
         self.complete_undirected_graph = None
         self.bead_label = None
+
 
     def initialize_graph(self,
                          cell_types: dict,
@@ -51,6 +52,7 @@ class EmulationCellGraph(GeneralCellGraph):
                 mean1 = cell_types[labels[0]].observed_mean
                 mean2 = cell_types[labels[1]].observed_mean
                 self.complete_undirected_graph.add_edge(labels[0], labels[1], weight=np.linalg.norm(mean1 - mean2))
+
 
     def prune_graph(self,
                     graph_topology: str = "tree") -> None:

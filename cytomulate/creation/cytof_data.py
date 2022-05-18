@@ -6,14 +6,14 @@ import numpy as np
 from scipy.stats import truncnorm
 
 # Classes to use
-from creation.cell_type import CreationCellType
-from creation.cell_graph import CreationCellGraph
+from cytomulate.creation.cell_type import CreationCellType
+from cytomulate.creation.cell_graph import CreationCellGraph
 
 # Superclass
-from cytof_data_general import GeneralCytofData
+from cytomulate.cytof_data_general import GeneralCytofData
 
 # Typing
-from typing import Union, Optional, Any, List, Tuple, Callable
+from typing import Optional, Callable
 
 
 class CreationCytofData(GeneralCytofData):
@@ -58,6 +58,7 @@ class CreationCytofData(GeneralCytofData):
         # we initialize the cell graph here
         self.cell_graph.initialize_graph(self.cell_types, n_trees)
 
+
     def initialize_cell_types(self,
                               L: int = 4,
                               scale: float = 0.5,
@@ -84,6 +85,7 @@ class CreationCytofData(GeneralCytofData):
             self.cell_types[c_type].generate_marker_expressions(self.cell_types, self.cell_graph.graph,
                                                                 high_expressions, low_expressions)
             self.cell_types[c_type].generate_model(n_components)
+
 
     def generate_cell_graph(self, **kwargs) -> None:
         """Generate cell differentiation paths

@@ -9,10 +9,10 @@ from sklearn.mixture import GaussianMixture
 
 # Typing
 from typing import Union, Optional, Any, List, Callable
-from creation.cell_graph import CreationCellGraph
+from cytomulate.creation.cell_graph import CreationCellGraph
 
 # Superclass
-from cell_type_general import GeneralCellType
+from cytomulate.cell_type_general import GeneralCellType
 
 
 class CreationCellType(GeneralCellType):
@@ -38,6 +38,7 @@ class CreationCellType(GeneralCellType):
         self.gating_markers = None
         # The probability of a marker being highly expressed
         self.p = 0.4
+
 
     def generate_marker_expression_patterns(self,
                                             cell_types: dict,
@@ -85,6 +86,7 @@ class CreationCellType(GeneralCellType):
         else:
             raise ValueError('Cell graph is not a tree or collection of non-overlapping trees')
 
+
     def generate_marker_expressions(self,
                                     cell_types: dict,
                                     cell_graph: CreationCellGraph,
@@ -127,6 +129,7 @@ class CreationCellType(GeneralCellType):
         # Now we use the means to generate the actual expressions
         for m in self.markers:
             self.cell_mean[m] = truncnorm.rvs(a=0, b=np.inf, loc=self.cell_mean[m], scale=0.01, size=1)[0]
+
 
     def generate_model(self,
                        n_components: int) -> None:

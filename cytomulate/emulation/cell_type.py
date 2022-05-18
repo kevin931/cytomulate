@@ -5,10 +5,10 @@ import numpy as np
 from sklearn.mixture import GaussianMixture
 
 # Typing
-from typing import Union, Optional, Any, List, Callable
+from typing import Union
 
 # Superclass
-from cell_type_general import GeneralCellType
+from cytomulate.cell_type_general import GeneralCellType
 
 
 class EmulationCellType(GeneralCellType):
@@ -17,6 +17,7 @@ class EmulationCellType(GeneralCellType):
                  cell_id: int,
                  n_markers: int) -> None:
         """Initialize the EmulationCellType object
+        
         Parameters
         ----------
         label: str or int
@@ -28,13 +29,16 @@ class EmulationCellType(GeneralCellType):
         """
         super().__init__(label, cell_id, n_markers)
 
+
     def fit(self,
             data: np.ndarray,
             max_components: int,
             min_components: int,
             covariance_types: Union[list, tuple]) -> None:
         """Fit cell type models using the data provided
+        
         The model selection is done using BIC
+        
         Parameters
         ----------
         data: np.ndarray

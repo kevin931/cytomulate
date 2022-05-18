@@ -4,10 +4,10 @@ import numpy as np
 # Graph package and functions
 import networkx as nx
 import matplotlib.pyplot as plt
-from utilities import trajectories
+from cytomulate.utilities import trajectories
 
 # Typing
-from typing import Union, Optional, Any, List, Tuple, Callable
+from typing import Union, Tuple
 
 
 class GeneralCellGraph:
@@ -43,6 +43,7 @@ class GeneralCellGraph:
                 self.n_markers = len(end_values)
             self.trajectories[e] = trajectories(end_values=end_values, **kwargs)
 
+
     def sample_graph(self,
                      n_samples: int,
                      cell_label: Union[str, int]) -> Tuple[np.ndarray, np.ndarray, list]:
@@ -57,10 +58,12 @@ class GeneralCellGraph:
 
         Returns
         -------
-        np.ndarray, np.ndarray, list: The additive values of the path and
-                                      the pseudo times as well as
-                                      the cell types the cell is differentiating to
-
+        G: np.ndarray
+            The additive values of the path
+        pseudo_time: np.ndarray
+            The pseudo times
+        labels: list
+           The cell types to which the cell is differentiating
         """
         if self.graph is None:
             return 0, 0, ["None"] * n_samples
@@ -91,6 +94,7 @@ class GeneralCellGraph:
                 start_n += n
 
         return G, pseudo_time, labels
+
 
     def visualize_graph(self) -> None:
         """Visualize the cell graph

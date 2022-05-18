@@ -7,14 +7,14 @@ import numpy as np
 from collections import Counter
 
 # Classes to include
-from emulation.cell_type import EmulationCellType
-from emulation.cell_graph import EmulationCellGraph
+from cytomulate.emulation.cell_type import EmulationCellType
+from cytomulate.emulation.cell_graph import EmulationCellGraph
 
 # Superclass
-from cytof_data_general import GeneralCytofData
+from cytomulate.cytof_data_general import GeneralCytofData
 
 # Typing
-from typing import Union, Optional, Any, List, Tuple, Callable
+from typing import Union, Optional, Callable
 
 
 class EmulationCytofData(GeneralCytofData):
@@ -87,6 +87,7 @@ class EmulationCytofData(GeneralCytofData):
 
             cell_id += 1
 
+
     def generate_cell_graph(self,
                             graph_topology: str = "forest",
                             **kwargs) -> None:
@@ -102,6 +103,7 @@ class EmulationCytofData(GeneralCytofData):
         self.cell_graph.initialize_graph(self.cell_types, bead_label=self.bead_label)
         self.cell_graph.prune_graph(graph_topology)
         self.cell_graph.generate_trajectories(self.cell_types, **kwargs)
+
 
     def generate_cell_abundances(self,
                                  use_observed: bool = True,

@@ -7,10 +7,7 @@ import networkx as nx
 from networkx.algorithms import tree
 
 # Superclass
-from cell_graph_general import GeneralCellGraph
-
-# Typing
-from typing import Union, Optional, Any, List, Tuple, Callable
+from cytomulate.cell_graph_general import GeneralCellGraph
 
 
 class CreationCellGraph(GeneralCellGraph):

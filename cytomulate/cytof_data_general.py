@@ -5,11 +5,11 @@ import numpy as np
 from copy import deepcopy
 
 # Trajectory functions
-from utilities import trajectories
-from cell_graph_general import GeneralCellGraph
+from cytomulate.utilities import trajectories
+from cytomulate.cell_graph_general import GeneralCellGraph
 
 # Typing
-from typing import Union, Optional, Any, List, Tuple, Callable
+from typing import Union, Optional, Tuple, Callable
 
 
 class GeneralCytofData:
@@ -73,6 +73,7 @@ class GeneralCytofData:
                     self.cell_abundances[b][c_type] = abundance[counter]
                     counter += 1
 
+
     def generate_overall_batch_effects(self,
                                        variance: float = 0.001) -> None:
         """Generate overall batch effects (main effects)
@@ -96,11 +97,14 @@ class GeneralCytofData:
             for b in range(self.n_batches):
                 self.overall_batch_effects[b] = batch_effects[b]
 
+
     def generate_local_batch_effects(self,
                                      variance: float = 0.001) -> None:
         """Generate local batch effects (interaction effects)
+        
         We separate main effects from local effects since some methods are designed only
         to eliminate overall effects
+        
         Parameters
         ----------
         variance: float
@@ -130,11 +134,12 @@ class GeneralCytofData:
                     self.local_batch_effects[b][c_type] = temp[counter, :].reshape(-1)
                     counter += 1
 
+
     def generate_temporal_effects(self,
                                   variance: Optional[float] = None,
-                                  coefficients: Optional[Union[list, np.array]] = None,
-                                  x: Optional[np.array] = None,
-                                  y: Optional[np.array] = None,
+                                  coefficients: Optional[Union[list, np.ndarray]] = None,
+                                  x: Optional[np.ndarray] = None,
+                                  y: Optional[np.ndarray] = None,
                                   **kwargs) -> None:
         """Generate temporal effect
 
@@ -142,11 +147,11 @@ class GeneralCytofData:
         ----------
         variance: float
             The variance of the end point if using Brownian bridge or polynomial
-        coefficients: list or np.array
+        coefficients: list or np.ndarray
             The coefficients of the polynomial to be generated
-        x: np.array
+        x: np.ndarray
             The x values used to fit a spline
-        y: np.array
+        y: np.ndarray
             The y values used to fit a spline
         kwargs: Extra parameters for the brownian bridge method or the spline function
         """
@@ -166,7 +171,7 @@ class GeneralCytofData:
                          n_samples: int,
                          cell_abundances: Optional[dict] = None,
                          batch: int = 0,
-                         clip: bool = True) -> Tuple[np.ndarray, np.array, np.ndarray, np.array]:
+                         clip: bool = True) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Draw random samples for one batch
 
         Parameters
@@ -183,10 +188,14 @@ class GeneralCytofData:
 
         Returns
         -------
-        np.ndarray, np.array, np.ndarray, np.array: The expression matrix,
-                                                    The array of the corresponding cell type labels,
-                                                    The array of the positions on the differentiation paths,
-                                                    The descendants to which the cells are differentiating towards
+        expression_matrix: np.ndarray
+            The expression matrix
+        labels: np.ndarray
+            The array of the corresponding cell type labels
+        pseudo_time: np.ndarray
+            The array of the positions on the differentiation paths
+        children_cell_labels: np.ndarray
+            The descendants to which the cells are differentiating towards
         """
         # If cell_abundances is not provided, we use the one stored in the object
         if cell_abundances is None:
@@ -285,14 +294,14 @@ class GeneralCytofData:
         return expression_matrix, np.array(labels), pseudo_time, np.array(children_cell_labels)
 
     def sample(self,
-               n_samples: Union[int, list, np.array],
+               n_samples: Union[int, list, np.ndarray],
                cell_abundances: Optional[dict] = None,
                clip: bool = True) -> Tuple[dict, dict, dict, dict]:
         """Draw random samples for all batches
 
         Parameters
         ----------
-        n_samples: int or list or np.array
+        n_samples: int or list or np.ndarray
             Number of samples for each batch. If an integer is provided, then it will be used for all batches
         cell_abundances: dict or None
             A nested dictionary whose keys are the batches. The corresponding values should be
@@ -304,10 +313,15 @@ class GeneralCytofData:
 
         Returns
         -------
-        dict, dict, dict, dict: The dictionary of expression matrices,
-                                The dictionary of arrays of the corresponding cell type labels,
-                                The dictionary of arrays of the positions on the differentiation paths,
-                                The dictionary of descendants to which the cells are differentiating towards
+        expression_matrices: dict
+            The dictionary of expression matrices
+        labels: dict
+            The dictionary of arrays of the corresponding cell type labels
+        pseudo_time: dict
+            The dictionary of arrays of the positions on the differentiation paths
+        children_cell_labels: dict
+            The dictionary of descendants to which the cells are differentiating towards
+                                
         """
         if cell_abundances is None:
             # If cell_abundances has not been generated, we generate it using the default
