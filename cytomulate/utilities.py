@@ -38,7 +38,7 @@ def spline_function(x: np.ndarray,
 
     def spline_values(t):
         # We subtract the function value at 0 to ensure that the resulting spline always starts at 0
-        return spl(t) - spl(0)
+        return (spl(t) - spl(0))[()]
     return spline_values
 
 
@@ -74,7 +74,7 @@ def polynomial_function(coefficients: Union[list, np.ndarray],
     adjusted_polynomial = polynomial.Polynomial(adjusted_polynomial_coefficients, domain=[0, 1])
 
     def polynomial_values(t):
-        return polynomial.polyval(t, adjusted_polynomial.coef)
+        return (polynomial.polyval(t, adjusted_polynomial.coef))[()]
 
     return polynomial_values
 
@@ -122,7 +122,7 @@ def brownian_bridge_function(end_value: float,
     spl = Akima1DInterpolator(t_interval, brownian_bridge[0,:])
 
     def spline_values(t):
-        return spl(t)
+        return (spl(t))[()]
     return spline_values
 
 
@@ -154,7 +154,7 @@ def trajectories(end_values: Optional[Union[list, np.ndarray]] = None,
     trajectories_functions = []
     if end_values is not None:
         # If end_values is supplied, then we know it's either polynomial or brownian bridge
-        end_values = np.ndarray(end_values).reshape((-1, 1))
+        end_values = np.array(end_values).reshape((-1, 1))
         n_markers = end_values.shape[0]
         if coefficients is None:
             # If coefficients is not supplied, then we know it's brownian bridge
@@ -201,110 +201,3 @@ def univariate_noise_model(noise_distribution: str = "normal",
         raise ValueError('Unknown noise distribution')
     return model
 
-
-def KLdivergence(x: np.ndarray,
-                 y: np.ndarray) -> float:
-    """Compute the Kullback-Leibler divergence between two multivariate samples.
-    
-    Parameters
-    ----------
-    x : np.ndarray
-        A 2D array (n,d) of samples from distribution P, which typically represents the true
-        distribution.
-    y : np.ndarray
-        A 2D array (m,d) of samples from distribution Q, which typically represents the approximate
-        distribution.
-    
-    Returns
-    -------
-    out : float
-        The estimated Kullback-Leibler divergence D(P||Q).
-    
-    References
-    ----------
-    Pérez-Cruz, F. Kullback-Leibler divergence estimation of
-    continuous distributions IEEE International Symposium on Information
-    Theory, 2008.
-    """
-    from scipy.spatial import cKDTree as KDTree
-
-    # Check the dimensions are consistent
-    x = np.atleast_2d(x)
-    y = np.atleast_2d(y)
-
-    n,d = x.shape
-    m,dy = y.shape
-
-    assert(d == dy)
-
-    # Build a KD tree representation of the samples and find the nearest neighbour
-    # of each point in x.
-    xtree = KDTree(x)
-    ytree = KDTree(y)
-
-    # Get the first two nearest neighbours for x, since the closest one is the
-    # sample itself.
-    r = xtree.query(x, k=2, eps=.01, p=2)[0][:,1]
-    s = ytree.query(x, k=1, eps=.01, p=2)[0]
-
-    # There is a mistake in the paper. In Eq. 14, the right side misses a negative sign
-    # on the first term of the right hand side.
-    return -np.log(r/s).sum() * d / n + np.log(m / (n - 1.))
-
-
-def cell_type_discrepancy(observed_matrix: np.ndarray,
-                          simulated_matrix: np.ndarray,
-                          observed_cell_types: np.ndarray,
-                          simulated_cell_types: np.ndarray,
-                          cell_type: Union[int, str],
-                          mean_ord: Union[int, str] = 2,
-                          cov_ord: Union[int, str] = 2) -> Tuple[float, float, float]:
-    """
-    Calculate the discrepancy between the simulated data and the observed data given a cell type
-    
-    Parameters
-    ----------
-    observed_matrix: np.ndarray
-        The observed expression matrix
-    simulated_matrix: np.ndarray
-        The simulated expression matrix
-    observed_cell_types: np.ndarray
-        An array of the observed cell type labels
-    simulated_cell_types: np.ndarray
-        An array of the simulated cell type labels
-    cell_type: int or str
-        The desired cell type
-    mean_ord: int or str
-        The type of norm (ord) allowed in numpy.linalg.norm for mean
-    cov_ord: int or str
-        The type of norm (ord) allowed in numpy.linalg.norm for covariance
-
-    Returns
-    -------
-    mean_discrepancy: float
-        The discrepancies based on mean
-    cov_discrepancy: float
-        The discrepancies based on covariance
-    kl_discrepancy: float 
-        The discrepancies based on KL divergence
-    """
-    # We first extract the corresponding portions
-    observed_index = np.where(observed_cell_types == cell_type)[0]
-    simulated_index = np.where(simulated_cell_types == cell_type)[0]
-    observed_y = observed_matrix[observed_index, :]
-    simulated_y = simulated_matrix[simulated_index, :]
-
-    # To find the discrepancy based on mean
-    m_obs = np.mean(observed_y, axis=0)
-    m_simu = np.mean(simulated_y, axis=0)
-    mean_discrepancy = np.linalg.norm(m_obs - m_simu, ord=mean_ord)
-
-    # To find the discrepancy based on covariance
-    cov_obs = np.cov(observed_y, rowvar=False)
-    cov_simu = np.cov(simulated_y, rowvar=False)
-    cov_discrepancy = np.linalg.norm(cov_obs - cov_simu, ord=cov_ord)
-
-    # Finally, the KL divergence
-    kl_divergence = KLdivergence(observed_y, simulated_y)
-
-    return mean_discrepancy, cov_discrepancy, kl_divergence

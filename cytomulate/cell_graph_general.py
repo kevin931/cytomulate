@@ -43,7 +43,6 @@ class GeneralCellGraph:
                 self.n_markers = len(end_values)
             self.trajectories[e] = trajectories(end_values=end_values, **kwargs)
 
-
     def sample_graph(self,
                      n_samples: int,
                      cell_label: Union[str, int]) -> Tuple[np.ndarray, np.ndarray, list]:

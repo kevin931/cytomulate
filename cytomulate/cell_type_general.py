@@ -35,7 +35,6 @@ class GeneralCellType:
         self.cell_mean = np.zeros(self.n_markers)
         self.cell_covariance = np.zeros((self.n_markers, self.n_markers))
 
-
     def sample_cell(self,
                     n_samples: int,
                     clip: bool) -> Tuple[np.ndarray, np.ndarray]:
