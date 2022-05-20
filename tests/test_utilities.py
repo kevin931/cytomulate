@@ -45,7 +45,7 @@ def test_trajectories(end_values, coefficients, x, y, t, expected):
 
 
 @pytest.mark.parametrize("kwargs, size, expected", [
-    ({"noise_distribution":"normal", "loc":0, "scale":1}, 5, 5),
+    ({"noise_distribution":"normal", "loc":0, "scale":1}, 5, (5, )),
     ({"noise_distribution":"normal", "loc":0, "scale":1}, (5, 3), (5, 3)),
 ])
 def test_univariate_noise_model(kwargs, size, expected):
