@@ -49,8 +49,8 @@ class EmulationCellGraph(GeneralCellGraph):
                 continue
             else:
                 # The weights are the l2 distance between two means
-                mean1 = cell_types[labels[0]].observed_mean
-                mean2 = cell_types[labels[1]].observed_mean
+                mean1 = cell_types[labels[0]].cell_mean
+                mean2 = cell_types[labels[1]].cell_mean
                 self.complete_undirected_graph.add_edge(labels[0], labels[1], weight=np.linalg.norm(mean1 - mean2))
 
 
