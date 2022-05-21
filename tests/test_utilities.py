@@ -37,6 +37,10 @@ def test_brownian_bridge_function(end_value, N, lb, ub, t, expected):
 @pytest.mark.parametrize("end_values, coefficients, x, y, t, expected", [
     ([1, 2, 3, 4], None, None, None, 0, [0, 0, 0, 0]),
     ([1, 2, 3, 4], None, None, None, 1, [1, 2, 3, 4]),
+    ([1, 2, 3, 4], [1, 2, 3], None, None, 0, [0, 0, 0, 0]),
+    ([1, 2, 3, 4], [1, 2, 3], None, None, 1, [1, 2, 3, 4]),
+    ([1, 2, 3, 4], None, np.linspace(0, 1, 10), np.zeros(10), 0, [0, 0, 0, 0]),
+    ([1, 2, 3, 4], None, np.linspace(0, 1, 10), np.zeros(10), 1, [1, 2, 3, 4]),
 ])
 def test_trajectories(end_values, coefficients, x, y, t, expected):
     f = trajectories(end_values, coefficients, x, y)
@@ -47,7 +51,14 @@ def test_trajectories(end_values, coefficients, x, y, t, expected):
 @pytest.mark.parametrize("kwargs, size, expected", [
     ({"noise_distribution":"normal", "loc":0, "scale":1}, 5, (5, )),
     ({"noise_distribution":"normal", "loc":0, "scale":1}, (5, 3), (5, 3)),
+    ({"noise_distribution":"uniform", "low":0, "high":1}, 5, (5, )),
+    ({"noise_distribution":"uniform", "low":0, "high":1}, (5, 3), (5, 3)),
+    ({"noise_distribution":"gamma"}, (5, 3), (5, 3)),
 ])
 def test_univariate_noise_model(kwargs, size, expected):
-    f = univariate_noise_model(**kwargs)
-    assert f(size).shape == expected
+    try:
+        f = univariate_noise_model(**kwargs)
+        assert f(size).shape == expected
+    except ValueError:
+        assert True
+
