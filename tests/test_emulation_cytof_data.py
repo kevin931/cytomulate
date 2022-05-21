@@ -51,10 +51,10 @@ def test_cell_graph_tree(Cytof_Data):
                                      covariance_types=["diag"])
 
     Cytof_Data.generate_cell_graph(graph_topology="tree")
-    temp = Cytof_Data.sample(n_samples=1)
+    temp = Cytof_Data.cell_graph.sample_graph(n_samples=1, cell_label=0)
 
     assert (nx.number_weakly_connected_components(Cytof_Data.cell_graph.graph) == 1) and \
-           (isinstance(temp[3], dict))
+           (isinstance(temp[0], np.ndarray))
 
 
 def test_cell_graph_forest(Cytof_Data):
@@ -69,10 +69,10 @@ def test_cell_graph_forest(Cytof_Data):
                                      covariance_types=["diag"])
 
     Cytof_Data.generate_cell_graph(graph_topology="forest")
-    temp = Cytof_Data.sample(n_samples=1)
+    temp = Cytof_Data.cell_graph.sample_graph(n_samples=1, cell_label=0)
 
     assert (nx.number_weakly_connected_components(Cytof_Data.cell_graph.graph) >= 1) and \
-           (isinstance(temp[3], dict))
+           (isinstance(temp[0], np.ndarray))
 
 
 def test_overall_batch_effects(Cytof_Data):

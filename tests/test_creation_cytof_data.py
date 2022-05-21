@@ -45,8 +45,8 @@ def test_cell_types(Cytof_Data):
 def test_cell_graph(Cytof_Data):
     Cytof_Data.initialize_cell_types()
     Cytof_Data.generate_cell_graph()
-    temp = Cytof_Data.sample(n_samples=1)
-    assert isinstance(temp[3], dict)
+    temp = Cytof_Data.cell_graph.sample_graph(n_samples=1, cell_label=0)
+    assert isinstance(temp[0], np.ndarray)
 
 
 def test_overall_batch_effects(Cytof_Data):
