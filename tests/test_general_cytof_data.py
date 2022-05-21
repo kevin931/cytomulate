@@ -173,12 +173,12 @@ def test_sample(Cytof_Data):
 
 
 def test_sample_copy_abundance(Cytof_Data):
-    y = CreationCytofData()
+    y = CreationCytofData(n_types=3)
     y.initialize_cell_types()
     Cytof_Data.cell_types = y.cell_types
     Cytof_Data.n_markers = y.n_markers
     Cytof_Data.cell_type_labels_to_ids = y.cell_type_labels_to_ids
     Cytof_Data.cell_type_ids_to_labels = y.cell_type_ids_to_labels
-    temp = Cytof_Data.sample(6,cell_abundances={0:1,1:2,2:3})
+    temp = Cytof_Data.sample(6, cell_abundances={0:1,1:2,2:3})
     assert (isinstance(temp[3], dict))
 

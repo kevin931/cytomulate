@@ -337,9 +337,10 @@ class GeneralCytofData:
         # numbers or probabilities
         # we reuse it for every batch
         if not np.any([isinstance(i, dict) for i in cell_abundances.values()]):
+            cell_abundances_copy = deepcopy(cell_abundances)
             cell_abundances = {}
             for b in range(self.n_batches):
-                cell_abundances[b] = deepcopy(cell_abundances)
+                cell_abundances[b] = deepcopy(cell_abundances_copy)
 
         # If n_samples is an integer, we reuse it for every batch
         if isinstance(n_samples, int):
