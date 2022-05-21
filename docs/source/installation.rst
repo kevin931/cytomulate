@@ -36,5 +36,7 @@ you can elect to install on your own.
 * numpy
 * scipy
 * networkx
+* matplotlib
+* tqdm
 
 

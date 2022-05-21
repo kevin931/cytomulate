@@ -7,5 +7,3 @@ Module: utilities
 .. autofunction:: brownian_bridge_function
 .. autofunction:: trajectories
 .. autofunction:: univariate_noise_model
-.. autofunction:: KLdivergence
-.. autofunction:: cell_type_discrepancy
