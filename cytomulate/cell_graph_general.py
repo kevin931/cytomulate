@@ -64,7 +64,7 @@ class GeneralCellGraph:
         labels: list
            The cell types to which the cell is differentiating
         """
-        if self.graph is None:
+        if len(self.trajectories) < 1:
             return 0, 0, ["None"] * n_samples
 
         children_cell_labels = list(self.graph.successors(cell_label))

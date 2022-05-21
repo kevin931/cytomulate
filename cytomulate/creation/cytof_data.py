@@ -58,7 +58,6 @@ class CreationCytofData(GeneralCytofData):
         # we initialize the cell graph here
         self.cell_graph.initialize_graph(self.cell_types, n_trees)
 
-
     def initialize_cell_types(self,
                               L: int = 4,
                               scale: float = 0.5,
@@ -85,7 +84,6 @@ class CreationCytofData(GeneralCytofData):
             self.cell_types[c_type].generate_marker_expressions(self.cell_types, self.cell_graph.graph,
                                                                 high_expressions, low_expressions)
             self.cell_types[c_type].generate_model(n_components)
-
 
     def generate_cell_graph(self, **kwargs) -> None:
         """Generate cell differentiation paths
