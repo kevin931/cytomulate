@@ -38,10 +38,5 @@ parser: "argparse.ArgumentParser" = argparse.ArgumentParser(description="cytomul
 parser.add_argument("--version", action="version", version=cytomulate.__version__)
 
 
-def main(args: argparse.Namespace):
-    pass 
-
-
 if __name__ == "__main__":
     cmdargs: argparse.Namespace = parser.parse_args()
-    main(args = cmdargs)
