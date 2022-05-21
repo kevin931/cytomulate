@@ -25,6 +25,9 @@ When in doubt, Cytomulate it!
    :maxdepth: 1
    :caption: Tutorial
 
+   tutorial/creation_mode
+   tutorial/emulation_mode
+   tutorial/visualization
 
 .. toctree::
    :maxdepth: 1
