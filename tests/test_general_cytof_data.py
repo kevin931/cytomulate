@@ -74,6 +74,7 @@ def test_sample_one_batch(Cytof_Data):
     Cytof_Data.n_markers = y.n_markers
     Cytof_Data.cell_type_labels_to_ids = y.cell_type_labels_to_ids
     Cytof_Data.cell_type_ids_to_labels = y.cell_type_ids_to_labels
+    Cytof_Data.generate_cell_abundances()
     temp = Cytof_Data.sample_one_batch(1)
     assert (isinstance(temp[3], np.ndarray))
 
