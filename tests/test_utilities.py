@@ -45,12 +45,13 @@ def test_brownian_bridge_function(end_value, N, lb, ub, t, expected):
 ])
 def test_trajectories(end_values, coefficients, x, y, t, expected):
     try:
-        f = trajectories(end_values, coefficients, x, y)
-        results = [np.around(f[i](t)) for i in range(4)]
-        if isinstance(expected, list):
+        if end_values is not None:
+            f = trajectories(end_values, coefficients, x, y)
+            results = [np.around(f[i](t)) for i in range(4)]
             assert results == expected
         else:
-            assert len(results) == expected
+            f = trajectories(end_values, coefficients, x, y)
+            assert isinstance(f, list)
     except ValueError:
         assert True
 
