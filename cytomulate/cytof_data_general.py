@@ -342,6 +342,18 @@ class GeneralCytofData:
             for b in range(self.n_batches):
                 cell_abundances[b] = deepcopy(cell_abundances_copy)
 
+        # Then we make sure the keys of the supplied dictionary
+        # coincide with the one we have in cell_types
+        cell_abundances_copy = deepcopy(cell_abundances)
+        cell_abundances = {}
+        for b in range(self.n_batches):
+            cell_abundances[b] = {}
+            for c_type in self.cell_types:
+                if c_type in cell_abundances_copy[b]:
+                    cell_abundances[b][c_type] = cell_abundances_copy[b][c_type]
+                else:
+                    cell_abundances[b][c_type] = 0
+
         # If n_samples is an integer, we reuse it for every batch
         if isinstance(n_samples, int):
             n_samples = np.repeat(n_samples, self.n_batches)
