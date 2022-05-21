@@ -15,6 +15,15 @@ def Cytof_Data():
                              background_noise_model=model)
 
 
+@pytest.fixture
+def Cytof_Data_No_Diff():
+    model = univariate_noise_model("normal", loc = 0, scale = 1)
+    return CreationCytofData(n_batches=2,
+                             n_types=20,
+                             n_markers=30,
+                             n_trees=-1,
+                             background_noise_model=model)
+
 def test_n_markers(Cytof_Data):
     assert Cytof_Data.n_markers == 30
 
@@ -42,11 +51,27 @@ def test_cell_types(Cytof_Data):
     assert temp[0].shape == (2, 30)
 
 
+def test_cell_types_non_tree(Cytof_Data):
+    Cytof_Data.cell_graph.graph.add_edge(15, 0)
+    Cytof_Data.cell_graph.graph.add_edge(10, 0)
+    try:
+        Cytof_Data.initialize_cell_types()
+    except ValueError:
+        assert True
+
+
 def test_cell_graph(Cytof_Data):
     Cytof_Data.initialize_cell_types()
     Cytof_Data.generate_cell_graph()
     temp = Cytof_Data.cell_graph.sample_graph(n_samples=1, cell_label=0)
     assert isinstance(temp[0], np.ndarray)
+
+
+def test_cell_graph_no_diff(Cytof_Data_No_Diff):
+    Cytof_Data_No_Diff.initialize_cell_types()
+    Cytof_Data_No_Diff.generate_cell_graph()
+    temp = Cytof_Data_No_Diff.cell_graph.sample_graph(n_samples=1, cell_label=0)
+    assert temp[0] == 0
 
 
 def test_overall_batch_effects(Cytof_Data):

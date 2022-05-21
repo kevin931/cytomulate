@@ -176,6 +176,22 @@ def test_cell_abundances(Cytof_Data):
     assert np.sum(list(Cytof_Data.cell_abundances[0].values())) <= 1.5
 
 
+def test_cell_abundances_random(Cytof_Data):
+    expression_matrix = np.random.multivariate_normal(mean=np.zeros(30),
+                                                      cov=np.eye(30),
+                                                      size=1000)
+    labels = np.random.choice(a=[0, 1, 2, 3, 4], size=1000, replace=True)
+    Cytof_Data.initialize_cell_types(expression_matrix=expression_matrix,
+                                     labels=labels,
+                                     max_components=3,
+                                     min_components=3,
+                                     covariance_types=["diag"])
+    Cytof_Data.generate_cell_abundances(use_observed=False,
+                                        is_random=True)
+
+    assert np.sum(list(Cytof_Data.cell_abundances[0].values())) <= 1.5
+
+
 def test_overall_tree(Cytof_Data):
     expression_matrix = np.random.multivariate_normal(mean=np.zeros(30),
                                                       cov=np.eye(30),
