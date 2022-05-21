@@ -213,6 +213,7 @@ class GeneralCytofData:
 
         if np.all([isinstance(i, int) and (i >= 0) for i in cell_abundances.values()]):
             # The values are actual numbers
+            n_samples = np.sum(list(cell_abundances.values()))
             counter = 0
             for c_type in cell_type_order:
                 n_per_cell_type[counter] = cell_abundances[c_type]
