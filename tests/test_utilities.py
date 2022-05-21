@@ -46,7 +46,7 @@ def test_brownian_bridge_function(end_value, N, lb, ub, t, expected):
 def test_trajectories(end_values, coefficients, x, y, t, expected):
     try:
         f = trajectories(end_values, coefficients, x, y)
-        results = [np.around(f[i](t)) for i in range(len(end_values))]
+        results = [np.around(f[i](t)) for i in range(4)]
         if isinstance(expected, list):
             assert results == expected
         else:
