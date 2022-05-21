@@ -75,6 +75,41 @@ def test_cell_graph_forest(Cytof_Data):
            (isinstance(temp[0], np.ndarray))
 
 
+def test_cell_graph_error(Cytof_Data):
+    expression_matrix = np.random.multivariate_normal(mean=np.zeros(30),
+                                                      cov=np.eye(30),
+                                                      size=1000)
+    labels = np.random.choice(a=[0,1,2,3,4], size=1000, replace=True)
+    Cytof_Data.initialize_cell_types(expression_matrix=expression_matrix,
+                                     labels=labels,
+                                     max_components=3,
+                                     min_components=3,
+                                     covariance_types=["diag"])
+    try:
+        Cytof_Data.generate_cell_graph(graph_topology="cyclic")
+    except ValueError:
+        assert True
+
+
+def test_cell_graph_bead(Cytof_Data):
+    expression_matrix = np.random.multivariate_normal(mean=np.zeros(30),
+                                                      cov=np.eye(30),
+                                                      size=1000)
+    labels = np.random.choice(a=[0,1,2,3,4], size=1000, replace=True)
+    Cytof_Data.bead_label = 0
+    Cytof_Data.initialize_cell_types(expression_matrix=expression_matrix,
+                                     labels=labels,
+                                     max_components=1,
+                                     min_components=1,
+                                     covariance_types=["diag"])
+
+    Cytof_Data.generate_cell_graph(graph_topology="forest")
+    temp = Cytof_Data.cell_graph.sample_graph(n_samples=1, cell_label=0)
+
+    assert (nx.number_weakly_connected_components(Cytof_Data.cell_graph.graph) >= 1) and \
+           (isinstance(temp[0], np.ndarray))
+
+
 def test_overall_batch_effects(Cytof_Data):
     expression_matrix = np.random.multivariate_normal(mean=np.zeros(30),
                                                       cov=np.eye(30),

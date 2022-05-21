@@ -73,7 +73,7 @@ class EmulationCellGraph(GeneralCellGraph):
                 # and construct a directed graph
                 root = set(mst_G.nodes).pop()
                 self.graph = nx.dfs_tree(mst_G, root)
-            elif graph_topology == "forest":
+            else:
                 # If a forest is desired, we use community detection algorithm
                 # to divide the trees
                 forest = list(greedy_modularity_communities(mst_G))
@@ -83,8 +83,7 @@ class EmulationCellGraph(GeneralCellGraph):
                     root = np.random.choice(nodes)
                     tree_list.append(nx.dfs_tree(mst_G.subgraph(nodes), root))
                 self.graph = nx.compose_all(tree_list)
-            else:
-                raise ValueError('Unknown graph type')
+
             # Finally, if bead is present, we add bead to the resulting graph
             if self.bead_label is not None:
                 self.graph.add_node(self.bead_label)
