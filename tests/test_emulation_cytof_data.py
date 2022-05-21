@@ -138,7 +138,7 @@ def test_cell_abundances(Cytof_Data):
                                      covariance_types=["diag"])
     Cytof_Data.generate_cell_abundances(use_observed=True)
 
-    assert np.sum(list(Cytof_Data.cell_abundances[0].values)) <= 1.5
+    assert np.sum(list(Cytof_Data.cell_abundances[0].values())) <= 1.5
 
 
 def test_overall_tree(Cytof_Data):

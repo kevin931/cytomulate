@@ -80,7 +80,7 @@ def test_cell_abundances(Cytof_Data):
     Cytof_Data.initialize_cell_types()
     Cytof_Data.generate_cell_abundances()
 
-    assert np.sum(list(Cytof_Data.cell_abundances[0].values)) <= 1.5
+    assert np.sum(list(Cytof_Data.cell_abundances[0].values())) <= 1.5
 
 
 def test_overall(Cytof_Data):
