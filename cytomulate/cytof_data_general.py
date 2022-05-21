@@ -211,13 +211,14 @@ class GeneralCytofData:
         # Record the number of events desired for each cell type
         n_per_cell_type = np.zeros(len(cell_abundances), dtype=int)
 
-        if np.sum(list(cell_abundances.values())) == n_samples:
+        if np.all([isinstance(i, int) and (i >= 0) for i in cell_abundances.values()]):
             # The values are actual numbers
             counter = 0
             for c_type in cell_type_order:
                 n_per_cell_type[counter] = cell_abundances[c_type]
                 counter += 1
-        elif np.sum(list(cell_abundances.values())) <= 1.5:
+        elif np.all([i >= 0 for i in cell_abundances.values()]) and \
+                (np.sum(list(cell_abundances.values())) <= 1.5):
             # The values are probability-like
             cell_probabilities = np.zeros(len(cell_abundances))
             counter = 0
