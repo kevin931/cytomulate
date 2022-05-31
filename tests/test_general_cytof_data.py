@@ -124,6 +124,18 @@ def test_generate_temporal_effects_spline(Cytof_Data):
     assert isinstance(Cytof_Data.temporal_effects[0], list)
 
 
+def test_generate_temporal_effects_spline_nondict(Cytof_Data):
+    y = CreationCytofData()
+    y.initialize_cell_types()
+    Cytof_Data.cell_types = y.cell_types
+    Cytof_Data.n_markers = y.n_markers
+    Cytof_Data.cell_type_labels_to_ids = y.cell_type_labels_to_ids
+    Cytof_Data.cell_type_ids_to_labels = y.cell_type_ids_to_labels
+    Cytof_Data.generate_temporal_effects(x=np.linspace(0, 1, 10),
+                                         y=np.zeros(10))
+    assert isinstance(Cytof_Data.temporal_effects[0], list)
+
+
 def test_sample_one_batch_probability(Cytof_Data):
     y = CreationCytofData()
     y.initialize_cell_types()
