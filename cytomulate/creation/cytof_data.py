@@ -13,7 +13,7 @@ from cytomulate.creation.cell_graph import CreationCellGraph
 from cytomulate.cytof_data_general import GeneralCytofData
 
 # Typing
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 
 
 class CreationCytofData(GeneralCytofData):
