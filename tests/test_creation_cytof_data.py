@@ -47,7 +47,7 @@ def test_n_trees(Cytof_Data):
 
 def test_cell_types(Cytof_Data):
     Cytof_Data.initialize_cell_types()
-    temp = Cytof_Data.cell_types[0].sample_cell(2, True)
+    temp = Cytof_Data.cell_types[0].sample_cell(2)
     assert temp[0].shape == (2, 30)
 
 

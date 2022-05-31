@@ -35,7 +35,7 @@ def test_cell_types(Cytof_Data):
                                      max_components=3,
                                      min_components=3,
                                      covariance_types=["diag"])
-    temp = Cytof_Data.cell_types[0].sample_cell(2, True)
+    temp = Cytof_Data.cell_types[0].sample_cell(2)
     assert temp[0].shape == (2, 30)
 
 
