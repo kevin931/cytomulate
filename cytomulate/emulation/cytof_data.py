@@ -20,7 +20,7 @@ from typing import Union, Optional, Callable
 class EmulationCytofData(GeneralCytofData):
     def __init__(self,
                  n_batches: int = 1,
-                 background_noise_model: Optional[Callable] = None,
+                 background_noise_model: Optional[Callable, dict] = None,
                  bead_label: Optional[Union[str, int]] = None) -> None:
         """Initialize the EmulationCytofData object
 
@@ -28,7 +28,7 @@ class EmulationCytofData(GeneralCytofData):
         ----------
         n_batches: int
             The number of batches to be simulated
-        background_noise_model: Callable
+        background_noise_model: Callable or dict
             The model used to generate random values. It should have only one input: size
         bead_label: str or int
             The label for beads

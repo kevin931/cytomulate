@@ -22,7 +22,7 @@ class CreationCytofData(GeneralCytofData):
                  n_types: int = 10,
                  n_markers: int = 20,
                  n_trees: int = 2,
-                 background_noise_model: Optional[Callable] = None) -> None:
+                 background_noise_model: Optional[Callable, dict] = None) -> None:
         """Initialize the CreationCytofData object
 
         Parameters
@@ -35,7 +35,7 @@ class CreationCytofData(GeneralCytofData):
             Number of markers (columns) to be used
         n_trees: int
             Number of trees in the cell graph
-        background_noise_model: Callable
+        background_noise_model: Callable or dict
             The function used to generate background noise. It should only take one input: size
         """
         super().__init__(n_batches, background_noise_model)

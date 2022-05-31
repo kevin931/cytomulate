@@ -46,8 +46,8 @@ class GeneralCellGraph:
     def sample_graph(self,
                      n_samples: int,
                      cell_label: Union[str, int],
-                     beta_alpha: float = 0.4,
-                     beta_beta: float = 1.0) -> Tuple[np.ndarray, np.ndarray, list]:
+                     beta_alpha: Union[float, int] = 0.4,
+                     beta_beta: Union[float, int] = 1.0) -> Tuple[np.ndarray, np.ndarray, list]:
         """Draw random samples of a cell type from the cell differentiation graph
 
         Parameters

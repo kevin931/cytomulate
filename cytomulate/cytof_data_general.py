@@ -15,14 +15,14 @@ from typing import Union, Optional, Tuple, Callable
 class GeneralCytofData:
     def __init__(self,
                  n_batches: int = 1,
-                 background_noise_model: Optional[Callable] = None) -> None:
+                 background_noise_model: Optional[Callable, dict] = None) -> None:
         """Initialize the GeneralCytofData object
 
         Parameters
         ----------
         n_batches: int
             Number of batches
-        background_noise_model: Optional[Callable]
+        background_noise_model: Callable or dict
             The probabilistic model used to generate noise. It should only have one input: size
         """
 
@@ -190,8 +190,8 @@ class GeneralCytofData:
                          n_samples: int,
                          cell_abundances: Optional[dict] = None,
                          batch: int = 0,
-                         beta_alpha: float = 0.4,
-                         beta_beta: float = 1.0) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+                         beta_alpha: Union[float, int] = 0.4,
+                         beta_beta: Union[float, int] = 1.0) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Draw random samples for one batch
 
         Parameters
@@ -203,9 +203,9 @@ class GeneralCytofData:
             either the actual number of events for each cell type or the probability of each cell type
         batch: int
             The index of the batch for which we want to draw samples
-        beta_alpha: float
+        beta_alpha: float or int
             The alpha parameter of the beta distribution
-        beta_beta: float
+        beta_beta: float or int
             The beta parameter of the beta distribution
 
         Returns
@@ -311,7 +311,7 @@ class GeneralCytofData:
 
         E = 0
         if self.background_noise_model is not None:
-            E = self.background_noise_model(size=(n_samples, self.n_markers))
+            E = self.background_noise_model[batch](size=(n_samples, self.n_markers))
 
         expression_matrix += E
 
@@ -320,8 +320,8 @@ class GeneralCytofData:
     def sample(self,
                n_samples: Union[int, list, np.ndarray],
                cell_abundances: Optional[dict] = None,
-               beta_alpha: Union[float, dict] = 0.4,
-               beta_beta: Union[float, dict] = 0.4) -> Tuple[dict, dict, dict, dict]:
+               beta_alpha: Union[float, int, dict] = 0.4,
+               beta_beta: Union[float, int, dict] = 0.4) -> Tuple[dict, dict, dict, dict]:
         """Draw random samples for all batches
 
         Parameters
@@ -333,9 +333,9 @@ class GeneralCytofData:
             a dictionary mapping cell types to cell numbers or probabilities OR
             It can be a plain dictionary whose keys are the cell labels. The corresponding values should be
             either the actual number of events for each cell type or the probability of each cell type
-        beta_alpha: float or dict
+        beta_alpha: float, int, or dict
             The alpha parameters of the beta distribution
-        beta_beta: float or dict
+        beta_beta: float, int, or dict
             The beta parameters of the beta distribution
 
         Returns
@@ -383,18 +383,23 @@ class GeneralCytofData:
         if isinstance(n_samples, int):
             n_samples = np.repeat(n_samples, self.n_batches)
 
-        if isinstance(beta_alpha, float):
+        if isinstance(beta_alpha, float) or isinstance(beta_alpha, int):
             beta_alpha_copy = beta_alpha
             beta_alpha = {}
             for b in range(self.n_batches):
                 beta_alpha[b] = beta_alpha_copy
 
-        if isinstance(beta_beta, float):
+        if isinstance(beta_beta, float) or isinstance(beta_beta, int):
             beta_beta_copy = beta_beta
             beta_beta = {}
             for b in range(self.n_batches):
                 beta_beta[b] = beta_beta_copy
 
+        if not isinstance(self.background_noise_model, dict):
+            background_noise_model_copy = deepcopy(self.background_noise_model)
+            background_noise_model = {}
+            for b in range(self.n_batches):
+                background_noise_model[b] = deepcopy(background_noise_model_copy)
 
         # Prepare the output dictionaries
         expression_matrices = {}
