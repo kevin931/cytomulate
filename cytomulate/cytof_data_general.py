@@ -15,7 +15,7 @@ from typing import Union, Optional, Tuple, Callable
 class GeneralCytofData:
     def __init__(self,
                  n_batches: int = 1,
-                 background_noise_model: Optional[Callable, dict] = None) -> None:
+                 background_noise_model: Optional[Union[Callable, dict]] = None) -> None:
         """Initialize the GeneralCytofData object
 
         Parameters

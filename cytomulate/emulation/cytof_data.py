@@ -20,7 +20,7 @@ from typing import Union, Optional, Callable
 class EmulationCytofData(GeneralCytofData):
     def __init__(self,
                  n_batches: int = 1,
-                 background_noise_model: Optional[Callable, dict] = None,
+                 background_noise_model: Optional[Union[Callable, dict]] = None,
                  bead_label: Optional[Union[str, int]] = None) -> None:
         """Initialize the EmulationCytofData object
 

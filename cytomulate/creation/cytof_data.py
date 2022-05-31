@@ -22,7 +22,7 @@ class CreationCytofData(GeneralCytofData):
                  n_types: int = 10,
                  n_markers: int = 20,
                  n_trees: int = 2,
-                 background_noise_model: Optional[Callable, dict] = None) -> None:
+                 background_noise_model: Optional[Union[Callable, dict]] = None) -> None:
         """Initialize the CreationCytofData object
 
         Parameters
