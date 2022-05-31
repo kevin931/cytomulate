@@ -61,7 +61,8 @@ class CreationCytofData(GeneralCytofData):
     def initialize_cell_types(self,
                               L: int = 4,
                               scale: float = 0.5,
-                              n_components: int = 5) -> None:
+                              n_components: int = 1,
+                              variance_mode: float = 0.01) -> None:
         """Initialize cell type objects
 
         Parameters
@@ -72,6 +73,8 @@ class CreationCytofData(GeneralCytofData):
             The scale parameter used in generating expression levels
         n_components: int
             Number of components in a GMM
+        variance_mode: float
+            The mode of the variance of the inverse wishart distribution
         """
         # We first generate high expression levels and low expression levels
         # Truncated normals are used to ensure the ordering
@@ -83,7 +86,7 @@ class CreationCytofData(GeneralCytofData):
             self.cell_types[c_type].generate_marker_expression_patterns(self.cell_types, self.cell_graph.graph)
             self.cell_types[c_type].generate_marker_expressions(self.cell_types, self.cell_graph.graph,
                                                                 high_expressions, low_expressions)
-            self.cell_types[c_type].generate_model(n_components)
+            self.cell_types[c_type].generate_model(n_components, variance_mode)
 
     def generate_cell_graph(self, **kwargs) -> None:
         """Generate cell differentiation paths

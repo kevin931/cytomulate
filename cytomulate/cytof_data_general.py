@@ -137,9 +137,9 @@ class GeneralCytofData:
 
     def generate_temporal_effects(self,
                                   variance: Optional[float] = None,
-                                  coefficients: Optional[Union[list, np.ndarray]] = None,
-                                  x: Optional[np.ndarray] = None,
-                                  y: Optional[np.ndarray] = None,
+                                  coefficients: Optional[Union[dict, list, np.ndarray]] = None,
+                                  x: Optional[Union[dict, np.ndarray]] = None,
+                                  y: Optional[Union[dict, np.ndarray]] = None,
                                   **kwargs) -> None:
         """Generate temporal effect
 
@@ -147,14 +147,33 @@ class GeneralCytofData:
         ----------
         variance: float
             The variance of the end point if using Brownian bridge or polynomial
-        coefficients: list or np.ndarray
-            The coefficients of the polynomial to be generated
-        x: np.ndarray
-            The x values used to fit a spline
-        y: np.ndarray
-            The y values used to fit a spline
+        coefficients: dict, list or np.ndarray
+            The coefficients of the polynomial to be generated or a dictionary of coefficients of the polynomials to be generated
+        x: dict or np.ndarray
+            The x values used to fit a spline or a dictionary of x values used to fit a spline
+        y: dict or np.ndarray
+            The y values used to fit a spline or dictionary of y values used to fit a spline
         kwargs: Extra parameters for the brownian bridge method or the spline function
         """
+        if (coefficients is not None) and (not isinstance(coefficients, dict)):
+            # This means that coefficients is a list or an np.ndarray
+            coefficients_copy = deepcopy(coefficients)
+            coefficients = {}
+            for b in range(self.n_batches):
+                coefficients[b] = deepcopy(coefficients_copy)
+
+        if (x is not None) and (not isinstance(x, dict)):
+            x_copy = deepcopy(x)
+            x = {}
+            for b in range(self.n_batches):
+                x[b] = deepcopy(x_copy)
+
+        if (y is not None) and (not isinstance(y, dict)):
+            y_copy = deepcopy(y)
+            y = {}
+            for b in range(self.n_batches):
+                y[b] = deepcopy(y_copy)
+
         for b in range(self.n_batches):
             if variance is not None:
                 if coefficients is None:
@@ -171,7 +190,8 @@ class GeneralCytofData:
                          n_samples: int,
                          cell_abundances: Optional[dict] = None,
                          batch: int = 0,
-                         clip: bool = True) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+                         beta_alpha: float = 0.4,
+                         beta_beta: float = 1.0) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Draw random samples for one batch
 
         Parameters
@@ -183,8 +203,10 @@ class GeneralCytofData:
             either the actual number of events for each cell type or the probability of each cell type
         batch: int
             The index of the batch for which we want to draw samples
-        clip: bool
-            Whether or not the resulting negative expressions should be clipped
+        beta_alpha: float
+            The alpha parameter of the beta distribution
+        beta_beta: float
+            The beta parameter of the beta distribution
 
         Returns
         -------
@@ -255,12 +277,12 @@ class GeneralCytofData:
             if n == 0:
                 continue
             end_n += n
-            X, expressed_index = self.cell_types[c_type].sample_cell(n, clip)
+            X, expressed_index = self.cell_types[c_type].sample_cell(n)
             # If local effects have not been generated, we set them to 0
             Psi_bp = 0
             if batch in self.local_batch_effects.keys():
                 Psi_bp = self.local_batch_effects[batch][c_type]
-            G, T, children_labels = self.cell_graph.sample_graph(n, c_type)
+            G, T, children_labels = self.cell_graph.sample_graph(n, c_type, beta_alpha, beta_beta)
             # Only expressed markers are subject to batch effects
             expression_matrix[start_n: end_n, :] = X + expressed_index * (G + Psi_b + Psi_bp)
             expressed_index_matrix[start_n: end_n, :] = expressed_index
@@ -284,8 +306,8 @@ class GeneralCytofData:
             temporal_effects = self.temporal_effects[batch][0](time_points)
             # Only expressed markers are subject to temporal effects
             expression_matrix += expressed_index_matrix * temporal_effects[:, np.newaxis]
-        if clip:
-            expression_matrix = np.clip(expression_matrix, a_min=0, a_max=None)
+
+        expression_matrix = np.clip(expression_matrix, a_min=0, a_max=None)
 
         E = 0
         if self.background_noise_model is not None:
@@ -298,7 +320,8 @@ class GeneralCytofData:
     def sample(self,
                n_samples: Union[int, list, np.ndarray],
                cell_abundances: Optional[dict] = None,
-               clip: bool = True) -> Tuple[dict, dict, dict, dict]:
+               beta_alpha: Union[float, dict] = 0.4,
+               beta_beta: Union[float, dict] = 0.4) -> Tuple[dict, dict, dict, dict]:
         """Draw random samples for all batches
 
         Parameters
@@ -310,8 +333,10 @@ class GeneralCytofData:
             a dictionary mapping cell types to cell numbers or probabilities OR
             It can be a plain dictionary whose keys are the cell labels. The corresponding values should be
             either the actual number of events for each cell type or the probability of each cell type
-        clip: bool
-            Whether or not the resulting negative expressions should be clipped
+        beta_alpha: float or dict
+            The alpha parameters of the beta distribution
+        beta_beta: float or dict
+            The beta parameters of the beta distribution
 
         Returns
         -------
@@ -358,6 +383,19 @@ class GeneralCytofData:
         if isinstance(n_samples, int):
             n_samples = np.repeat(n_samples, self.n_batches)
 
+        if isinstance(beta_alpha, float):
+            beta_alpha_copy = beta_alpha
+            beta_alpha = {}
+            for b in range(self.n_batches):
+                beta_alpha[b] = beta_alpha_copy
+
+        if isinstance(beta_beta, float):
+            beta_beta_copy = beta_beta
+            beta_beta = {}
+            for b in range(self.n_batches):
+                beta_beta[b] = beta_beta_copy
+
+
         # Prepare the output dictionaries
         expression_matrices = {}
         labels = {}
@@ -368,7 +406,8 @@ class GeneralCytofData:
                 n_samples[b],
                 cell_abundances[b],
                 b,
-                clip)
+                beta_alpha[b],
+                beta_beta[b])
 
         return expression_matrices, labels, pseudo_time, children_cell_labels
 

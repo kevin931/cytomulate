@@ -36,16 +36,13 @@ class GeneralCellType:
         self.cell_covariance = np.zeros((self.n_markers, self.n_markers))
 
     def sample_cell(self,
-                    n_samples: int,
-                    clip: bool) -> Tuple[np.ndarray, np.ndarray]:
+                    n_samples: int) -> Tuple[np.ndarray, np.ndarray]:
         """Draw random samples from the cell type model
 
         Parameters
         ----------
         n_samples: int
             Number of samples
-        clip: bool
-            Whether or not negative values should be clipped
 
         Returns
         -------
@@ -60,6 +57,5 @@ class GeneralCellType:
         X = np.zeros((n_samples, self.n_markers))
         X[:, :], _ = self.model.sample(n_samples)
         expressed_index = (X > 0)
-        if clip:
-            X = np.clip(X, a_min=0, a_max=None)
+        X = np.clip(X, a_min=0, a_max=None)
         return X, expressed_index

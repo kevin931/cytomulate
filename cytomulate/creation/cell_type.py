@@ -132,19 +132,22 @@ class CreationCellType(GeneralCellType):
 
 
     def generate_model(self,
-                       n_components: int) -> None:
+                       n_components: int,
+                       variance_mode: float = 0.01) -> None:
         """Randomly generate models for cell types
 
         Parameters
         ----------
         n_components: int
             Number of components in a GMM
+        variance_mode: float
+            The mode of the variance of the inverse wishart distribution
         """
         X = np.random.multivariate_normal(mean=self.cell_mean, cov=np.eye(self.n_markers),
                                           size=np.max([self.n_markers**2, n_components]))
         self.model = GaussianMixture(n_components=n_components).fit(X)
         for n in range(n_components):
             self.model.means_[n, :] = self.cell_mean
-        self.model.covariances_ = invwishart.rvs(df=self.n_markers + 2, scale=np.eye(self.n_markers)/100,
+        self.model.covariances_ = invwishart.rvs(df=self.n_markers + 2, scale=np.eye(self.n_markers) * variance_mode,
                                                  size=n_components).reshape((n_components, self.n_markers, self.n_markers))
         self.model.weights_ = np.random.dirichlet(np.ones(n_components), size=1).reshape(-1)

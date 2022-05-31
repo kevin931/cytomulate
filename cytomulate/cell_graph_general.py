@@ -45,7 +45,9 @@ class GeneralCellGraph:
 
     def sample_graph(self,
                      n_samples: int,
-                     cell_label: Union[str, int]) -> Tuple[np.ndarray, np.ndarray, list]:
+                     cell_label: Union[str, int],
+                     beta_alpha: float = 0.4,
+                     beta_beta: float = 1.0) -> Tuple[np.ndarray, np.ndarray, list]:
         """Draw random samples of a cell type from the cell differentiation graph
 
         Parameters
@@ -54,6 +56,10 @@ class GeneralCellGraph:
             Number of samples
         cell_label: str or int
             The label of the cell needed
+        beta_alpha: float
+            The alpha parameter of the beta distribution
+        beta_beta: float
+            The beta parameter of the beta distribution
 
         Returns
         -------
@@ -87,7 +93,7 @@ class GeneralCellGraph:
                     continue
                 end_n += n
                 for m in range(self.n_markers):
-                    p_time = np.random.beta(0.4,1,n)
+                    p_time = np.random.beta(beta_alpha, beta_beta, n)
                     G[start_n: end_n, m] = self.trajectories[(cell_label, c_label)][m](p_time)
                     pseudo_time[start_n: end_n, m] = p_time
                 start_n += n
