@@ -311,7 +311,10 @@ class GeneralCytofData:
 
         E = 0
         if self.background_noise_model is not None:
-            E = self.background_noise_model[batch](size=(n_samples, self.n_markers))
+            if isinstance(self.background_noise_model, dict):
+                E = self.background_noise_model[batch](size=(n_samples, self.n_markers))
+            else:
+                E = self.background_noise_model(size=(n_samples, self.n_markers))
 
         expression_matrix += E
 

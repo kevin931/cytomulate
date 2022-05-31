@@ -12,6 +12,14 @@ def Cytof_Data():
     return GeneralCytofData(n_batches=2,
                             background_noise_model=model)
 
+@pytest.fixture
+def Cytof_Data1():
+    """Returns a CreationCytofData instance"""
+    model = {0: univariate_noise_model("normal", loc = 0, scale = 1),
+             1: univariate_noise_model("normal", loc = 0, scale = 0.5)}
+    return GeneralCytofData(n_batches=2,
+                            background_noise_model=model)
+
 
 def test_n_markers(Cytof_Data):
     assert Cytof_Data.n_markers is None
@@ -136,38 +144,38 @@ def test_generate_temporal_effects_spline_nondict(Cytof_Data):
     assert isinstance(Cytof_Data.temporal_effects[0], list)
 
 
-def test_sample_one_batch_probability(Cytof_Data):
+def test_sample_one_batch_probability(Cytof_Data1):
     y = CreationCytofData()
     y.initialize_cell_types()
-    Cytof_Data.cell_types = y.cell_types
-    Cytof_Data.n_markers = y.n_markers
-    Cytof_Data.cell_type_labels_to_ids = y.cell_type_labels_to_ids
-    Cytof_Data.cell_type_ids_to_labels = y.cell_type_ids_to_labels
-    Cytof_Data.generate_cell_abundances()
-    temp = Cytof_Data.sample_one_batch(1)
+    Cytof_Data1.cell_types = y.cell_types
+    Cytof_Data1.n_markers = y.n_markers
+    Cytof_Data1.cell_type_labels_to_ids = y.cell_type_labels_to_ids
+    Cytof_Data1.cell_type_ids_to_labels = y.cell_type_ids_to_labels
+    Cytof_Data1.generate_cell_abundances()
+    temp = Cytof_Data1.sample_one_batch(1)
     assert (isinstance(temp[3], np.ndarray))
 
 
-def test_sample_one_batch_counts(Cytof_Data):
+def test_sample_one_batch_counts(Cytof_Data1):
     y = CreationCytofData(n_types=3)
     y.initialize_cell_types()
-    Cytof_Data.cell_types = y.cell_types
-    Cytof_Data.n_markers = y.n_markers
-    Cytof_Data.cell_type_labels_to_ids = y.cell_type_labels_to_ids
-    Cytof_Data.cell_type_ids_to_labels = y.cell_type_ids_to_labels
-    temp = Cytof_Data.sample_one_batch(6, cell_abundances={0:1,1:2,2:3})
+    Cytof_Data1.cell_types = y.cell_types
+    Cytof_Data1.n_markers = y.n_markers
+    Cytof_Data1.cell_type_labels_to_ids = y.cell_type_labels_to_ids
+    Cytof_Data1.cell_type_ids_to_labels = y.cell_type_ids_to_labels
+    temp = Cytof_Data1.sample_one_batch(6, cell_abundances={0:1,1:2,2:3})
     assert (isinstance(temp[3], np.ndarray))
 
 
-def test_sample_one_batch_error(Cytof_Data):
+def test_sample_one_batch_error(Cytof_Data1):
     try:
         y = CreationCytofData(n_types=3)
         y.initialize_cell_types()
-        Cytof_Data.cell_types = y.cell_types
-        Cytof_Data.n_markers = y.n_markers
-        Cytof_Data.cell_type_labels_to_ids = y.cell_type_labels_to_ids
-        Cytof_Data.cell_type_ids_to_labels = y.cell_type_ids_to_labels
-        temp = Cytof_Data.sample_one_batch(6, cell_abundances={0:-1,1:2,2:3})
+        Cytof_Data1.cell_types = y.cell_types
+        Cytof_Data1.n_markers = y.n_markers
+        Cytof_Data1.cell_type_labels_to_ids = y.cell_type_labels_to_ids
+        Cytof_Data1.cell_type_ids_to_labels = y.cell_type_ids_to_labels
+        temp = Cytof_Data1.sample_one_batch(6, cell_abundances={0:-1,1:2,2:3})
         assert (isinstance(temp[3], np.ndarray))
     except ValueError:
         assert True
