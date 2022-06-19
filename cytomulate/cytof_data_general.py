@@ -6,10 +6,17 @@ from copy import deepcopy
 
 # Trajectory functions
 from cytomulate.utilities import trajectories
-from cytomulate.cell_graph_general import GeneralCellGraph
+from cytomulate.cell_graph_general import GeneralCellGraph    
 
 # Typing
-from typing import Union, Optional, Tuple, Callable
+from typing import Union, Optional, Tuple, Callable, Dict
+
+OPT_PCK: Dict[str, bool] = {"PyCytoData": True}
+
+try:
+    from PyCytoData import PyCytoData
+except ImportError:
+    OPT_PCK["PyCytoData"] = False
 
 
 class GeneralCytofData:
@@ -418,4 +425,69 @@ class GeneralCytofData:
                 beta_beta[b])
 
         return expression_matrices, labels, pseudo_time, children_cell_labels
+    
+    
+    def sample_to_pycytodata(self,
+                             n_samples: Union[int, list, np.ndarray],
+                             cell_abundances: Optional[dict] = None,
+                             beta_alpha: Union[float, int, dict] = 0.4,
+                             beta_beta: Union[float, int, dict] = 0.4) -> PyCytoData: #type: ignore
+        """Draw random samples for all batches and returns a PyCytoData object.
+        
+        This method is a wrapper for the ``sample`` method but provides an interface to
+        return a ``PyCytoData`` object.
 
+        Parameters
+        ----------
+        n_samples: int or list or np.ndarray
+            Number of samples for each batch. If an integer is provided, then it will be used for all batches
+        cell_abundances: dict or None
+            A nested dictionary whose keys are the batches. The corresponding values should be
+            a dictionary mapping cell types to cell numbers or probabilities OR
+            It can be a plain dictionary whose keys are the cell labels. The corresponding values should be
+            either the actual number of events for each cell type or the probability of each cell type
+        beta_alpha: float, int, or dict
+            The alpha parameters of the beta distribution
+        beta_beta: float, int, or dict
+            The beta parameters of the beta distribution
+
+        Returns
+        -------
+        pcd: PyCytoData
+            A PyCytoData object with the simulated data.
+            
+        Raises
+        -------
+        ImportError: No ``PyCytoData`` installation present.
+            
+        Note
+        -----
+        The ``PyCytoData`` is not compatible with storing ``pseudo_time`` and ``children_cell_labels``. If you would
+        like these information, use the traditional ``sample`` method instead.
+        
+        Note
+        -----
+        ``PyCytoData`` is an optional dependency. If an ``ImportError`` is raised, you need to install the
+        the package first. Tutorials can be found here: https://pycytodata.readthedocs.io/en/latest/installation.html.
+        """
+
+        if not OPT_PCK["PyCytoData"]:
+            raise ImportError("Error importing 'PyCytoData'. Install it first if you haven't done so.")
+
+        exprs, labels, _, _ = self.sample(n_samples=n_samples, 
+                                          cell_abundances=cell_abundances,
+                                          beta_alpha=beta_alpha,
+                                          beta_beta=beta_beta)
+        
+        sample_index: np.ndarray = np.repeat("0", n_samples)
+        pcd: PyCytoData = PyCytoData(expression_matrix=exprs[0], cell_types=labels[0], sample_index=sample_index)
+        
+        if self.n_batches > 1:
+            b: int
+            for b in range(self.n_batches):
+                if b == 0:
+                    continue
+                sample_index = np.repeat(str(b), n_samples)
+                pcd.add_sample(expression_matrix=exprs[b], cell_types=labels[b], sample_index=sample_index)
+                
+        return pcd

@@ -4,6 +4,14 @@ from cytomulate.creation.cytof_data import CreationCytofData
 from cytomulate.cytof_data_general import GeneralCytofData
 from cytomulate.utilities import univariate_noise_model
 
+from typing import Dict
+
+OPT_PCK: Dict[str, bool] = {"PyCytoData": True}
+
+try:
+    from PyCytoData import PyCytoData
+except ImportError:
+    OPT_PCK["PyCytoData"] = False
 
 @pytest.fixture
 def Cytof_Data():
@@ -213,3 +221,15 @@ def test_sample_missing_abundance(Cytof_Data):
     temp = Cytof_Data.sample(4, cell_abundances={0:1,2:3})
     assert temp[0][0].shape[0] == 4
 
+
+@pytest.mark.parametrize("n_batches",[1,2])
+def test_sample_to_pycytodata(n_batches: int):
+    if OPT_PCK["PyCytoData"]:
+        y: CreationCytofData = CreationCytofData(n_batches=n_batches)
+        y.initialize_cell_types()
+        pcd: PyCytoData = y.sample_to_pycytodata(100)
+        assert isinstance(pcd, PyCytoData)
+        assert pcd.n_cell_types <= 10
+        assert pcd.n_samples == n_batches
+        assert pcd.n_channels == 20
+    
