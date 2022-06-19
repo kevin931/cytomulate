@@ -1,5 +1,6 @@
 [report]
 exclude_lines =
     except ImportError:
+    raise ImportError
     pragma: no cover
     if __name__ == .__main__.:
