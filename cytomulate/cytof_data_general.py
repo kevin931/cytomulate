@@ -431,7 +431,7 @@ class GeneralCytofData:
                              n_samples: Union[int, list, np.ndarray],
                              cell_abundances: Optional[dict] = None,
                              beta_alpha: Union[float, int, dict] = 0.4,
-                             beta_beta: Union[float, int, dict] = 0.4) -> PyCytoData: #type: ignore
+                             beta_beta: Union[float, int, dict] = 0.4) -> "PyCytoData": #type: ignore
         """Draw random samples for all batches and returns a PyCytoData object.
         
         This method is a wrapper for the ``sample`` method but provides an interface to
