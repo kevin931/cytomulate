@@ -4,9 +4,9 @@
 
 |
 
-##############################################
-Cytomulate: Your Choice of CyTOF Simulation
-##############################################
+#############################################################
+Cytomulate: Accurate and Efficient Simulation of CyTOF data
+#############################################################
 
 Cytomulate is a package to simulation realistic data for Mass Cytometry or Cytometry by Time-of-Flight (CyTOF).
 We strive to achieve both model-based and real-data-based simulation as solutions to benchmarking,
@@ -55,6 +55,8 @@ When in doubt, Cytomulate it!
    :caption: Resources
    :hidden:
 
+   references
+   Our Paper <https://doi.org/10.1101/2022.04.26.489549>
    Dr. Xinlei (Shery) Wang <https://people.smu.edu/swang/>
    Dr. Tao Wang <https://qbrc.swmed.edu/labs/wanglab/aboutpi.php>
    DBAI <https://dbai.biohpc.swmed.edu/>
@@ -64,6 +66,8 @@ When in doubt, Cytomulate it!
 ***********************
 Resources
 ***********************
+
+For our paper, read our preprint `here <https://doi.org/10.1101/2022.04.26.489549>`_.
 
 For more resources on our labs, collaborators, and related projects, please visit the following:
 

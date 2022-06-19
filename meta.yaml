@@ -33,10 +33,10 @@ test:
 about:
   home: https://github.com/kevin931/cytomulate
   license: MIT
-  summary: 'Cytomulate: Your Choice of CyTOF Simulation'
+  summary: 'Accurate and Efficient Simulation of CyTOF data'
   description: |
     Cytomulate is a package for simulating datasets for CyTOF.
-    There are both data-based and model-based simulation.
+    There are both data-based and model-based simulation methods.
   dev_url: https://github.com/kevin931/cytomulate
   doc_url: https://cytomulate.readthedocs.io/en/dev/
   doc_source_url: https://github.com/kevin931/cytomulate/tree/dev/docs

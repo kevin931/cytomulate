@@ -5,6 +5,7 @@ Quickstart Guide
 We get it: you want a TLDR for how to use this package. Here you go. We will walk you from installation
 to cytomulating entire datasets.
 
+--------------------------------
 
 *****************************************************
 Creation Mode: Probabilistic Model-Based Simulation
@@ -17,7 +18,7 @@ No cell differentiation will be simulated.
 .. code:: python
 
     import numpy as np
-    from cytomulate.creation.cytof_data import CreationCytofData
+    from cytomulate import CreationCytofData
     np.random.seed(42)
     # Instantiate a CreationCytofData object
     cytof_data = CreationCytofData()
@@ -26,6 +27,7 @@ No cell differentiation will be simulated.
     # Finally, we can generate random samples
     expression_matrices, labels, _, _ = cytof_data.sample(n_samples = 1000)
 
+-------------------------------------
 
 *****************************************************
 Emulation Mode: Real Data-Based Simulation
@@ -40,7 +42,7 @@ No cell differentiation will be simulated.
 
     # For simulating from multivariate Gaussian
     import numpy as np
-    from cytomulate.emulation.cytof_data import EmulationCytofData
+    from cytomulate import EmulationCytofData
     np.random.seed(42)
     # We simulate two cell types with different menas
     X1 = np.random.multivariate_normal(mean=np.zeros(20), cov=np.eye(20), size=500)

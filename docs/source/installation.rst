@@ -39,4 +39,29 @@ you can elect to install on your own.
 * matplotlib
 * tqdm
 
+--------------
+
+********************************
+Optional Dependency: PyCytoData
+********************************
+
+If you would like compatibility with ``PyCytoData``, you can install an optional
+dependency in the following way:
+
+.. code-block::
+
+    pip install PyCytoData
+
+or via ``conda``:
+
+.. code-block::
+
+    conda install pycytodata -c kevin931 -c bioconda
+
+Now, you can have the option to output your simulation results in a ``PyCytoData`` object.
+
+.. note::
+
+    ``PyCytoData`` requires ``Python>=3.7``, which is more strict than ``cytomulate``.
+    If you are still running an older version, please consider upgrading.
 

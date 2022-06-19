@@ -31,8 +31,8 @@ has a template for **Feature Request** that you can use to talk about your ideas
 another great place to talk about ideas or just to get the conversations started is our
 new `Discussion Page <https://github.com/kevin931/cytomulate/discussions>`_.
 
-Please also look at our `Project Roadmap <>`_ to get an idea of where we're headed. However,
-it never hurts to ask even if your idea is different from our plan.
+Please also look at our `Project Roadmap <https://cytomulate.readthedocs.io/en/dev/change/development.html>`_
+to get an idea of where we're headed. However, it never hurts to ask even if your idea is different from our plan.
 
 ********************
 Pull Requests
