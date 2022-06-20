@@ -57,6 +57,8 @@ setup(
     description = "Accurate and Efficient Simulation of CyTOF data",
     author = "Yuqiu Yang, Kevin Wang, Tao Wang, Sherry Wang",
     author_email = "yuqiuy@smu.edu, kevinwang@smu.edu, Tao.Wang@UTSouthwestern.edu, swang@mail.smu.edu",
+    long_description_content_type = "text/markdown",
+    long_description = open("README.md").read(),
     packages=["cytomulate"],
     python_requires=">=3.5",
     install_requires=["numpy",
