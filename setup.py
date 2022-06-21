@@ -20,7 +20,10 @@ class PypiCommand(distutils.cmd.Command):
     
     
     def run(self):
-        shutil.rmtree("dist/")
+        try:
+            shutil.rmtree("dist/")
+        except FileNotFoundError:
+            pass
         
         wheel_file = "cytomulate-{}-py3-none-any.whl".format(VERSION)
         tar_file = "cytomulate-{}.tar.gz".format(VERSION)
