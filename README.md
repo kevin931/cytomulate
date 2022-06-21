@@ -53,7 +53,7 @@ This is a little bit more involved because we need existing data! If you already
 >>> from cytomulate import EmulationCytoData
 >>> from PyCytoData import DataLoader
 
->>> exprs = DataLoader(dataset="levine13")
+>>> exprs = DataLoader.load_dataset(dataset="levine13")
 >>> cytof_data = EmulationCytofData()
 >>> cytof_data.initialize_cell_types(expression_matrix=exprs.expression_matrix,
 ...                                  labels=exprs.cell_types)
