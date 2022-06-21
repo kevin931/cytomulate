@@ -148,6 +148,24 @@ class CreationCellType(GeneralCellType):
         self.model = GaussianMixture(n_components=n_components).fit(X)
         for n in range(n_components):
             self.model.means_[n, :] = self.cell_mean
-        self.model.covariances_ = invwishart.rvs(df=self.n_markers + 2, scale=np.eye(self.n_markers) * variance_mode,
-                                                 size=n_components).reshape((n_components, self.n_markers, self.n_markers))
+
+        base_correlation = invwishart.rvs(df=self.n_markers + 2, scale=np.eye(self.n_markers),
+                                                 size=1).reshape((1, self.n_markers, self.n_markers))
+        base_var = np.diag(base_correlation[0,:,:])
+        base_var = np.diag(np.sqrt(1/base_var))
+        base_correlation = base_var @ base_correlation @ base_var
+
+        scaled_matrices = []
+        variance_var = 0.01
+        shape_par = (variance_mode**2)/variance_var + 2
+        scale_par = variance_mode * (shape_par - 1)
+        for n in range(n_components):
+            scale_matrix = np.diag(1/np.random.gamma(shape_par, 1/scale_par, size=self.n_markers))
+            scaled_matrices.append(scale_matrix @ base_correlation[0,:,:] @ scale_matrix)
+        scaled_matrices = np.array(scaled_matrices)
+
+        self.model.covariances_ = scaled_matrices
+
+        # self.model.covariances_ = invwishart.rvs(df=self.n_markers + 2, scale=np.eye(self.n_markers) * variance_mode,
+        #                                          size=n_components).reshape((n_components, self.n_markers, self.n_markers))
         self.model.weights_ = np.random.dirichlet(np.ones(n_components), size=1).reshape(-1)

@@ -82,7 +82,7 @@ def polynomial_function(coefficients: Union[list, np.ndarray],
 def brownian_bridge_function(end_value: float,
                              N: int = 5,
                              lb: float = 0,
-                             ub: float = 1) -> Callable:
+                             ub: float = 0.1) -> Callable:
     """Generate a random function that starts at 0 and ends at end_value
     This can be used to generate temporal effect and generate differentiation path
     
