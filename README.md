@@ -44,7 +44,7 @@ To create your datasets, you can run the following:
 >>> cytof_data.initialize_cell_types()
 >>> expression_matrices, labels, _, _ = cytof_data.sample(n_samples = 1000)
 ```
-The ``expression_matricess`` is a dictionary that contains the expression matrix from each sample. Correspondingly, ``labels`` is a dictionary that contains their cell types.
+The ``expression_matrices`` is a dictionary that contains the expression matrix from each sample. Correspondingly, ``labels`` is a dictionary that contains their cell types.
 
 
 ### Emulation Mode
