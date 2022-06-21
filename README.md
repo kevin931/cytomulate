@@ -17,12 +17,14 @@
 You can easily install ``cytomulate`` from either ``PyPI`` or ``conda``. For the former, use the following command:
 
 ```shell
+pip install cytomulate
 
 ```
 
 Or if you are using a conda environment, you can use the following command:
 
 ```shell
+conda install -c normalizingflow cytomulate
 
 ```
 If you wish to use ``PyCytoData``, you can install separately with more instructions [here](https://cytomulate.readthedocs.io/en/dev/installation.html).
@@ -54,6 +56,7 @@ This is a little bit more involved because we need existing data! If you already
 >>> from PyCytoData import DataLoader
 
 >>> exprs = DataLoader.load_dataset(dataset="levine13")
+>>> exprs.preprocess(arcsinh=True)
 >>> cytof_data = EmulationCytofData()
 >>> cytof_data.initialize_cell_types(expression_matrix=exprs.expression_matrix,
 ...                                  labels=exprs.cell_types)
@@ -81,9 +84,11 @@ guidelines, development guides, etc.
 
 Our documentation is built automatically on the cloud! If you wish to build locally, check our detailed guide [here](https://cytomulate.readthedocs.io/en/latest/change/build.html)!
 
-## Latest Release
+## Latest Release: v0.0.2
 
-This is our latest release:
+- This is the first stable pre-release of cytomulate
+- A fix for critical installation error from **v0.0.1**.
+- Availability on ``PyPI`` and ``conda``.
 
 
 ## References

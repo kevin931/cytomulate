@@ -11,7 +11,11 @@ you will be able to cytomutate within minutes!
 Conda
 ***********
 
-We plan on releasing this package on ``conda``. Stay tuned!
+You can easily install ``cytomulate`` from ``conda``:
+
+.. code-block::
+
+    conda install -c normalizingflow cytomulate
 
 
 ---------
@@ -20,7 +24,11 @@ We plan on releasing this package on ``conda``. Stay tuned!
 PyPI
 ***********
 
-We plan on releasing this package on ``PyPI``. Stay tuned!
+If you prefer ``PyPI``, the installation is easy as well:
+
+.. code-block:: 
+
+    pip install cytomulate
 
 ---------
 

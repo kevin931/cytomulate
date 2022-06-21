@@ -12,11 +12,9 @@ what we're planning on doing and how we plan to support our software!
 Project Roadmap and Milestones
 *********************************
 
-Major milestones:
+Milestones and goals:
 
-* Data-based simulation
-* Model-based simulation
-* Publication on PyPI and Anaconda
+* More integration with existing datasets
 
 If you don't see what you like on our milestones, feel free to start a discussion post or
 an issue to let us know! 

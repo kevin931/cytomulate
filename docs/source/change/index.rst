@@ -8,12 +8,13 @@ doing!
 Latest Release
 ---------------
 
-v0.0.0
-********
-    - Development officially begins!
-    - We're building everything from the ground up in python!
+**************
+v0.0.2
+**************
 
-
+- This is the first stable pre-release of cytomulate
+- A fix for critical installation error from **v0.0.1**.
+- Availability on ``PyPI`` and ``conda``.
 
 .. toctree::
     :maxdepth: 1
