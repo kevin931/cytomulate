@@ -8,7 +8,7 @@ from scipy.stats import invwishart
 from sklearn.mixture import GaussianMixture
 
 # Typing
-from typing import Union, Optional, Any, List, Callable
+from typing import Union
 from cytomulate.creation.cell_graph import CreationCellGraph
 
 # Superclass
