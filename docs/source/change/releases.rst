@@ -2,6 +2,8 @@
 Releases
 ###########
 
+This is a complete history of ``cytomulate`` releases.
+
 -------------------
 
 **************

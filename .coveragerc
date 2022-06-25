@@ -2,5 +2,6 @@
 exclude_lines =
     except ImportError:
     raise ImportError
+    if not OPT_PCK
     pragma: no cover
     if __name__ == .__main__.:

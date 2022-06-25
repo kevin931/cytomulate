@@ -3,7 +3,7 @@ References
 ################
 
 Here, you will find a list of relevant references. For a complete list, you can
-read `our paper<https://doi.org/10.1101/2022.04.26.489549>`_.
+read `our paper <https://doi.org/10.1101/2022.04.26.489549>`_.
 
 -----------------------
 

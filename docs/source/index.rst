@@ -27,6 +27,7 @@ When in doubt, Cytomulate it!
 
    tutorial/creation_mode
    tutorial/emulation_mode
+   tutorial/cli
    tutorial/visualization
 
 .. toctree::
