@@ -27,5 +27,4 @@ html_theme_options = {
     'includehidden': True,
     'titles_only': True
 }
-html_static_path = ['_static']
 master_doc = "index"

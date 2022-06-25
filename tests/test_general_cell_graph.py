@@ -34,10 +34,11 @@ def test_sample_graph(Cell_Graph):
     assert isinstance(temp[0], np.ndarray)
 
 
-def test_visualize_graph(Cell_Graph):
+def test_visualize_graph(Cell_Graph, mocker):
+    plt_mock = mocker.MagicMock()
+    mocker.patch("matplotlib.pyplot.show", plt_mock)
     y = CreationCytofData()
     y.initialize_cell_types()
     Cell_Graph.graph = y.cell_graph.graph
     Cell_Graph.visualize_graph()
-
-    assert True
+    plt_mock.assert_called_once()
