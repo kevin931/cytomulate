@@ -60,7 +60,7 @@ along with ``n_cells`` for the number of cells per batch and ``-o`` the output d
 
 .. code-block:: shell
 
-    pyton -m cytomulate \
+    python -m cytomulate \
         --creation \
         --n_cells 1000 \
         -o <your_dir_here>
@@ -82,7 +82,7 @@ You can also have a bit more customization by specifying the details of your sam
 
 .. code-block:: shell
 
-    pyton -m cytomulate \
+    python -m cytomulate \
         --creation \
         --n_cells 1000 \
         --n_batches 2 \
@@ -99,7 +99,7 @@ the following flag:
 
 .. code-block:: shell
 
-    pyton -m cytomulate \
+    python -m cytomulate \
         --creation \
         --n_cells 1000 \
         -o <your_dir_here> \
@@ -120,7 +120,7 @@ it seems:
 
 .. code-block:: shell
 
-    pyton -m cytomulate \
+    python -m cytomulate \
         --emulation \
         --n_cells 1000 \
         -o <your_dir_here> \
@@ -134,7 +134,7 @@ files are saved differently, you can customize the IO process accordingly:
 
 .. code-block:: shell
 
-    pyton -m cytomulate \
+    python -m cytomulate \
         --emulation \
         --n_cells 1000 \
         -o <your_dir_here> \

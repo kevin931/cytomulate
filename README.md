@@ -62,7 +62,6 @@ This is a little bit more involved because we need existing data! If you already
 ...                                  labels=exprs.cell_types)
 >>> expression_matrices, labels, _, _ = cytof_data.sample(n_samples = 1000)
 ```
-
 This is it!
 
 ### Working with PyCytoData
@@ -76,6 +75,29 @@ As you've seen above, you can use ``PyCytoData`` to download datasets! If you're
 >>> simulation_data = cytof_data.sample_to_pycytodata(n_samples = 1000)
 ```
 This will allow you to use all the downstream capabilities of ``PyCytoData``.
+
+### Command-Line Interface (CLI)
+
+If you prefer to use cytomulate from the command-line, you've got that option as well! One **caveat** is that this mode requires ``PyCytoData`` to be installed. To run the Creation Mode, you can do:
+
+```shell
+python -m cytomulate \
+	--creation \
+	--n_cells 1000 \
+	-o <your_dir_here>
+```
+
+To run the emulation mode, you can run the following:
+
+```shell
+python -m cytomulate \
+	--emulation \
+	--n_cells 1000 \
+	-o <your_dir_here> \
+	--exprs <you_path_to_exprssion_matrix> \
+	--cell_types <you_path_to_cell_types>
+```
+Of course, we have much more customization options! For more details, read our [tutorial here](https://cytomulate.readthedocs.io/en/dev/tutorial/cli.html).
 
 ## Documentation
 
