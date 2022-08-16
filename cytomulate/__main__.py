@@ -49,6 +49,7 @@ except ImportError:
 
 parser: "argparse.ArgumentParser" = argparse.ArgumentParser(description="cytomulate: CyTOF Simulation")
 parser.add_argument("--version", action="version", version=__version__)
+parser.add_argument("--trajectory", help="Add cell differentiation trajectory.", action="store_true")
 
 # Creation Mode
 parser.add_argument("--creation", help="Creation mode of Cytomulate.", action="store_true")
@@ -110,6 +111,8 @@ def main(cmdargs: argparse.Namespace):
     if cmdargs.creation:
         cytof_data = CreationCytofData(n_batches=cmdargs.n_batches, n_types=cmdargs.n_types, n_markers=cmdargs.n_markers, n_trees=cmdargs.n_trees)
         cytof_data.initialize_cell_types()
+        if cmdargs.trajectory:
+            cytof_data.generate_cell_graph()
         exprs: PyCytoData = cytof_data.sample_to_pycytodata(n_samples = cmdargs.n_cells)
         FileIO.save_np_array(exprs.expression_matrix, path=exprs_path, col_names=exprs.channels)
         FileIO.save_np_array(exprs.cell_types, path=cell_types_path, dtype="%s")
@@ -127,6 +130,8 @@ def main(cmdargs: argparse.Namespace):
         cytof_data = EmulationCytofData(n_batches=cmdargs.n_batches)
         cytof_data.initialize_cell_types(expression_matrix=expression_matrix,
                                          labels=cell_types)
+        if cmdargs.trajectory:
+            cytof_data.generate_cell_graph()
         exprs: PyCytoData = cytof_data.sample_to_pycytodata(n_samples = cmdargs.n_cells)
         FileIO.save_np_array(exprs.expression_matrix, path=exprs_path, col_names=exprs.channels)
         FileIO.save_np_array(exprs.cell_types, path=cell_types_path, dtype="%s")

@@ -19,14 +19,15 @@ Admittedly, the CLI mode is not as feature-rich as the full API, but there
 is still plenty you can do. Here, you will find a list of all arguments
 and flags at your disposal:
 
-=========================== =============== ============== ============ ==============================================
+=========================== =============== ============== ============ ===================================================
 Argument                      Mode             Inputs       Default         Functionality
---------------------------- --------------- -------------- ------------ ----------------------------------------------
+--------------------------- --------------- -------------- ------------ ---------------------------------------------------
 ``--help`` or ``-h``          General          None          None        Print help and documentation
 ``--version``                 General          None          None        Print the version of cytomulate 
 ``--creation``                Creation         None          None        Run creation mode
 ``--emulation``               Emulation        None          None        Run emulation mode
 ``--n_cells``                 General          ``int``       None        The number of cells per batch.
+``--trajectory``              General          None          None        Whether to generate trajectories for cell types.
 ``--n_batches``               Creation         ``int``       ``1``       The number of batches.
 ``--n_types``                 Creation         ``int``       ``10``      The number of cell types.
 ``--n_markers``               Creation         ``int``       ``20``      The number of markers.
@@ -39,7 +40,7 @@ Argument                      Mode             Inputs       Default         Func
 ``--cell_types_delim``        Emulation        ``str``       ``\t``      The delimiter of the cell types.
 ``--out_dir`` or ``-o``       General          ``str``       None        Directory to save results.
 ``--make_new_dir``            General          None          ``False``   Whether to create the directory provided.
-=========================== =============== ============== ============ ==============================================
+=========================== =============== ============== ============ ===================================================
 
 If that table look a bit cryptic to you, don't panic! Here a few explanations.
 The **Mode** indicates in which context you should use such arguments: the
@@ -88,10 +89,11 @@ You can also have a bit more customization by specifying the details of your sam
         --n_batches 2 \
         --n_types 5 \
         --n_markers 20 \
+        --trajectory \
         -o <your_dir_here>
 
-This will generate two batches with 1000 cells, 5 cell types, and 20 markers. Both
-batches will be combined and saved to a single file, but the ``sample_index.txt``
+This will generate two batches with 1000 cells, 5 cell types, and 20 markers with trajectories.
+Both batches will be combined and saved to a single file, but the ``sample_index.txt``
 will delineate the indices accordingly.
 
 If you wish ``cytomulate`` to create the directory you entered, you can add
@@ -123,6 +125,18 @@ it seems:
     python -m cytomulate \
         --emulation \
         --n_cells 1000 \
+        -o <your_dir_here> \
+        --exprs <you_path_to_exprssion_matrix> \
+        --cell_types <you_path_to_cell_types>
+
+You also have the option to generate trajectories here as well:
+
+.. code-block:: shell
+
+    python -m cytomulate \
+        --emulation \
+        --n_cells 1000 \
+        --trajectory \
         -o <your_dir_here> \
         --exprs <you_path_to_exprssion_matrix> \
         --cell_types <you_path_to_cell_types>
