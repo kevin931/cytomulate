@@ -83,7 +83,10 @@ class GeneralCytofData:
 
     def generate_overall_batch_effects(self,
                                        variance: float = 0.001) -> None:
-        """Generate overall batch effects (main effects)
+        """Generate overall batch effects.
+        
+        This is the main batch effect of the dataset, which does not have
+        an interaction with the channels.
 
         Parameters
         ----------
@@ -110,7 +113,8 @@ class GeneralCytofData:
         """Generate local batch effects (interaction effects)
         
         We separate main effects from local effects since some methods are designed only
-        to eliminate overall effects
+        to eliminate overall effects. This will have interactions between cell types
+        and specific channels.
         
         Parameters
         ----------
@@ -155,12 +159,19 @@ class GeneralCytofData:
         variance: float
             The variance of the end point if using Brownian bridge or polynomial
         coefficients: dict, list or np.ndarray
-            The coefficients of the polynomial to be generated or a dictionary of coefficients of the polynomials to be generated
+            The coefficients of the polynomial to be generated or a dictionary of coefficients of the polynomials to be generated.
+            The coefficients are consistent with the Numpy interface: each corresponds to the rising degrees (i.e. the first is the
+            constant, the second is the first term, etc.)
         x: dict or np.ndarray
             The x values used to fit a spline or a dictionary of x values used to fit a spline
         y: dict or np.ndarray
             The y values used to fit a spline or dictionary of y values used to fit a spline
         kwargs: Extra parameters for the brownian bridge method or the spline function
+        
+        Note
+        -------
+        The polynomial only specifies the shape, not the actual polymial. We will shift and transform the polynomial to fit in the
+        [0,1] range.
         """
         if (coefficients is not None) and (not isinstance(coefficients, dict)):
             # This means that coefficients is a list or an np.ndarray

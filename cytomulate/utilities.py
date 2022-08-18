@@ -15,7 +15,9 @@ def spline_function(x: np.ndarray,
                     y: np.ndarray,
                     smoothing_factor: float = 0.5) -> Callable:
     """Generate a smoothing spline function
-    This is mainly used for generating temporal effects
+    
+    This functions generates a spline, which is mainly used for generating temporal effects.
+    
     Parameters
     ----------
     x: np.ndarray
