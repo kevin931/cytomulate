@@ -27,7 +27,11 @@ Argument                      Mode             Inputs       Default         Func
 ``--creation``                Creation         None          None        Run creation mode
 ``--emulation``               Emulation        None          None        Run emulation mode
 ``--n_cells``                 General          ``int``       None        The number of cells per batch.
-``--trajectory``              General          None          None        Whether to generate trajectories for cell types.
+``--trajectory``              Complex          None          None        Whether to generate trajectories for cell types.
+``--batch_effect``            Complex          None          None        Whether to generate batch effect.
+``--batch_effect_var``        Complex          ``float``     ``0.1``     The variance for batch effect.
+``--temporal_effect``         Complex          None          None        Whether to generate temporal effect.
+``--temporal_effect_var``     Complex          ``float``     ``0.1``     The variance for temporal effect.
 ``--n_batches``               Creation         ``int``       ``1``       The number of batches.
 ``--n_types``                 Creation         ``int``       ``10``      The number of cell types.
 ``--n_markers``               Creation         ``int``       ``20``      The number of markers.
@@ -164,3 +168,62 @@ and they are comma separated. These are both pretty standard. If your
 files are saved in other formats or your cell types are saved with
 your expression matrix, you will need to preprocess them separately
 and save to these cytomulate-supported formats accordingly.
+
+------------------------
+
+*********************
+Complex Simulations
+*********************
+
+As you may have noticed from the `Complex Simulation <https://cytomulate.readthedocs.io/en/dev/tutorial/cli.html>`_
+section, we have a few complex simulation options. Above, you've seen the
+``--trajectory`` flag. For details on each mode, you can read the linked
+tutorial. However, doing this in the CLI is very easy:
+
+.. code-block:: shell
+
+    python -m cytomulate \
+        --creation \
+        --n_cells 1000 \
+        --trajectory \
+        --batch_effect \
+        --temporal_effect \
+        -o <your_dir_here>
+
+This will generate trajectory, temporal effect, and batch effect all
+with default settings (var=0.1 and Brownian Bridge for temporal effect).
+One thing you can change is the variance:
+
+.. code-block:: shell
+
+    python -m cytomulate \
+        --creation \
+        --n_cells 1000 \
+        --trajectory \
+        --batch_effect \
+        --batch_effect_var 0.2 \
+        --temporal_effect \
+        --temporal_effect_var 0.2 \
+        -o <your_dir_here>
+
+Here, we have changed the variance to 0.2.
+
+.. note:: We do not support changing the temporal effect model. To do so, use the interactive mode instead.
+
+The interface is the same for the Emulation Mode:
+
+.. code-block:: shell
+
+    python -m cytomulate \
+        --emulation \
+        --n_cells 1000 \
+        --trajectory \
+        --batch_effect \
+        --batch_effect_var 0.2 \
+        --temporal_effect \
+        --temporal_effect_var 0.2 \
+        -o <your_dir_here> \
+        --exprs <you_path_to_exprssion_matrix> \
+        --cell_types <you_path_to_cell_types>
+
+For more customizations, read our other tutorials or use the interactive mode.

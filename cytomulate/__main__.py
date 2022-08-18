@@ -49,7 +49,6 @@ except ImportError:
 
 parser: "argparse.ArgumentParser" = argparse.ArgumentParser(description="cytomulate: CyTOF Simulation")
 parser.add_argument("--version", action="version", version=__version__)
-parser.add_argument("--trajectory", help="Add cell differentiation trajectory.", action="store_true")
 
 # Creation Mode
 parser.add_argument("--creation", help="Creation mode of Cytomulate.", action="store_true")
@@ -68,6 +67,13 @@ parser.add_argument("--exprs_colnames", help="Whether the first row of the exist
 parser.add_argument("--cell_types_colnames", help="Whether the first row of the existing cell types is column names.", action="store_true")
 parser.add_argument("--exprs_delim", help="The delimiter of existing expression matrix.", type=str, default="\t")
 parser.add_argument("--cell_types_delim", help="The delimiter of existing cell types.", type=str, default="\t")
+
+# Complex Simulation
+parser.add_argument("--trajectory", help="Add cell differentiation trajectory.", action="store_true")
+parser.add_argument("--temporal_effect", help="Add temporal effect to the dataset. Only the Brownian Bridge method is supported.", action="store_true")
+parser.add_argument("--temporal_effect_var", help="Add cell differentiation trajectory.", type=float, default=0.1)
+parser.add_argument("--batch_effect", help="Add batch effect to the dataset.", action="store_true")
+parser.add_argument("--batch_effect_var", help="Add cell differentiation trajectory.", type=float, default=0.1)
 
 # Output
 parser.add_argument("-o", "--out_dir", help="Directory to save simulation data files", type=str)
@@ -111,6 +117,11 @@ def main(cmdargs: argparse.Namespace):
     if cmdargs.creation:
         cytof_data = CreationCytofData(n_batches=cmdargs.n_batches, n_types=cmdargs.n_types, n_markers=cmdargs.n_markers, n_trees=cmdargs.n_trees)
         cytof_data.initialize_cell_types()
+        if cmdargs.temporal_effect:
+            cytof_data.generate_temporal_effects(variance=cmdargs.temporal_effect_var)
+        if cmdargs.batch_effect:
+            cytof_data.generate_overall_batch_effects(variance=cmdargs.batch_effect_var)
+            cytof_data.generate_local_batch_effects(variance=cmdargs.batch_effect_var)
         if cmdargs.trajectory:
             cytof_data.generate_cell_graph()
         exprs: PyCytoData = cytof_data.sample_to_pycytodata(n_samples = cmdargs.n_cells)
@@ -130,6 +141,11 @@ def main(cmdargs: argparse.Namespace):
         cytof_data = EmulationCytofData(n_batches=cmdargs.n_batches)
         cytof_data.initialize_cell_types(expression_matrix=expression_matrix,
                                          labels=cell_types)
+        if cmdargs.temporal_effect:
+            cytof_data.generate_temporal_effects(variance=cmdargs.temporal_effect_var)
+        if cmdargs.batch_effect:
+            cytof_data.generate_overall_batch_effects(variance=cmdargs.batch_effect_var)
+            cytof_data.generate_local_batch_effects(variance=cmdargs.batch_effect_var)
         if cmdargs.trajectory:
             cytof_data.generate_cell_graph()
         exprs: PyCytoData = cytof_data.sample_to_pycytodata(n_samples = cmdargs.n_cells)

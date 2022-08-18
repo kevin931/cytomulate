@@ -64,11 +64,13 @@ if OPT_PCK["PyCytoData"]:
             np.savetxt("./tmp_pytest/cell_types.txt", cell_types, delimiter="\t", fmt="%s")
             
         
-        @pytest.mark.parametrize("n_batches,n_markers,n_types,n_trees,trajectory,count",
-                                [(1, 20, 10, 2, False, 1),
-                                (2, 30, 5, 1, False, 2),
-                                (1, 40, 20, 3, True, 3)])
-        def test_creation_mode(self, mocker, n_batches, n_markers, n_types, n_trees, trajectory, count):
+        @pytest.mark.parametrize("n_batches,n_markers,n_types,n_trees,trajectory,batch_effect,batch_effect_var,temporal_effect,temporal_effect_var,count",
+                                [(1, 20, 10, 2, False, False, 0.1, False, 0.1, 1),
+                                (2, 30, 5, 1, False, True, 0.1, False, 0.1, 2),
+                                (1, 40, 20, 3, True, False, 0.1, True, 0.1, 3),
+                                (1, 40, 20, 3, True, True, 0.1, True, 0.1, 4)])
+        def test_creation_mode(self, mocker, n_batches: int, n_markers: int, n_types: int, n_trees: int, trajectory: bool,
+                               batch_effect: bool, batch_effect_var: float,temporal_effect: bool, temporal_effect_var: float, count):
             os.mkdir("./tmp_pytest/creation{}/".format(count))
             cmdargs: mocker.MagicMock = mocker.MagicMock()
             cmdargs.creation = True
@@ -81,6 +83,10 @@ if OPT_PCK["PyCytoData"]:
             cmdargs.n_trees = n_trees
             cmdargs.make_new_dir = False
             cmdargs.trajectory = trajectory
+            cmdargs.temporal_effect = temporal_effect
+            cmdargs.temporal_effect_var = temporal_effect_var
+            cmdargs.batch_effect = batch_effect
+            cmdargs.batch_effect_var = batch_effect_var
             
             try:
                 __main__.main(cmdargs)
@@ -102,15 +108,15 @@ if OPT_PCK["PyCytoData"]:
                 assert exprs.n_channels == n_markers
                 assert exprs.n_cell_types <= n_types
                 assert exprs.n_samples == n_batches
-            else:
-                assert False
                 
         
-        @pytest.mark.parametrize("colnames,n_batches,trajectory,count",
-                                [(False,1, False, 1),
-                                (False,2, False, 2),
-                                (True,1, True, 3)])  
-        def test_emulation_mode(self, mocker, colnames: bool, n_batches: int, trajectory: bool, count: int):
+        @pytest.mark.parametrize("colnames,n_batches,trajectory,batch_effect,batch_effect_var,temporal_effect,temporal_effect_var,count",
+                                [(False,1, False, False, 0.1, False, 0.1, 1),
+                                (False,2, False, False, 0.1, True, 0.1, 2),
+                                (True,1, True, True, 0.1, True, 0.2, 3),
+                                (False,1, False, True, 0.2, False, 0.1, 4)])  
+        def test_emulation_mode(self, mocker, colnames: bool, n_batches: int, trajectory: bool,
+                                batch_effect: bool, batch_effect_var: float,temporal_effect: bool, temporal_effect_var: float, count: int):
             os.mkdir("./tmp_pytest/emulation{}/".format(count))
             cmdargs: mocker.MagicMock = mocker.MagicMock()
             cmdargs.creation = False
@@ -126,6 +132,10 @@ if OPT_PCK["PyCytoData"]:
             cmdargs.n_batches = n_batches
             cmdargs.make_new_dir = False
             cmdargs.trajectory = trajectory
+            cmdargs.temporal_effect = temporal_effect
+            cmdargs.temporal_effect_var = temporal_effect_var
+            cmdargs.batch_effect = batch_effect
+            cmdargs.batch_effect_var = batch_effect_var
             
             try:
                 __main__.main(cmdargs)
@@ -147,8 +157,6 @@ if OPT_PCK["PyCytoData"]:
                 assert exprs.n_channels == 10
                 assert exprs.n_cell_types <= 2
                 assert exprs.n_samples == n_batches
-            else:
-                assert False
                 
                 
         def test_emulation_creation_error(self, mocker):
@@ -166,20 +174,22 @@ if OPT_PCK["PyCytoData"]:
             cmdargs: mocker.MagicMock = mocker.MagicMock()
             cmdargs.creation = True
             cmdargs.emulation = False
-            cmdargs.out_dir = "./tmp_pytest/creation4/"
+            cmdargs.out_dir = "./tmp_pytest/creation5/"
             cmdargs.n_cells = 1000
             cmdargs.n_batches = 1
             cmdargs.n_markers = 20
             cmdargs.n_types = 5
             cmdargs.n_trees = 2
             cmdargs.make_new_dir = True
-            
+            cmdargs.trajectory = False
+            cmdargs.temporal_effect = False
+            cmdargs.batch_effect = False
             try:
                 __main__.main(cmdargs)
             except SystemExit:
-                assert os.path.exists("./tmp_pytest/creation4/exprs.txt")
-                assert os.path.exists("./tmp_pytest/creation4/cell_types.txt")
-                assert os.path.exists("./tmp_pytest/creation4/sample_index.txt")
+                assert os.path.exists("./tmp_pytest/creation5/exprs.txt")
+                assert os.path.exists("./tmp_pytest/creation5/cell_types.txt")
+                assert os.path.exists("./tmp_pytest/creation5/sample_index.txt")
             else:
                 assert False
             
