@@ -4,7 +4,7 @@ import os
 import shutil
 import distutils.cmd
 
-VERSION = "0.0.2"
+VERSION = "0.1.0"
 
 class PypiCommand(distutils.cmd.Command):
     
@@ -59,7 +59,7 @@ setup(
     version = VERSION,
     description = "Accurate and Efficient Simulation of CyTOF data",
     author = "Yuqiu Yang, Kevin Wang, Tao Wang, Sherry Wang",
-    author_email = "yuqiuy@smu.edu, kevinwang@smu.edu, Tao.Wang@UTSouthwestern.edu, swang@mail.smu.edu",
+    author_email = "yuqiuy@smu.edu, kevinwang@smu.edu, Tao.Wang@UTSouthwestern.edu, swang@smu.edu",
     long_description_content_type = "text/markdown",
     long_description = open("README.md").read(),
     packages=["cytomulate",

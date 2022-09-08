@@ -1,5 +1,5 @@
 {% set name = "cytomulate" %}
-{% set version = "0.0.2" %}
+{% set version = "0.1.0" %}
 
 package:
   name: cytomulate
@@ -37,7 +37,8 @@ about:
   summary: 'Accurate and Efficient Simulation of CyTOF data'
   description: |
     Cytomulate is a package for simulating datasets for CyTOF.
-    There are both data-based and model-based simulation methods.
+    With Emulation Mode and Creation Mode, you can generate the
+    dataset for your needs!
   dev_url: https://github.com/kevin931/cytomulate
   doc_url: https://cytomulate.readthedocs.io/en/dev/
   doc_source_url: https://github.com/kevin931/cytomulate/tree/dev/docs

@@ -7,6 +7,31 @@ This is a complete history of ``cytomulate`` releases.
 -------------------
 
 **************
+v0.1.0
+**************
+
+Our **FIRST OFFICIAL RELEASE** is here! From now on, all our
+releases will be supported with our standard support cycle.
+Here you will find our release notes.
+
+Changes and New Features
+--------------------------
+
+- Added Command-Line Interface with support for complex simulations
+- Improved docstrings
+- Improved documentations with tutorials
+
+From Pre-release
+------------------
+
+These are listed for documetation reasons for the first official release.
+
+- Support for ``Emulation Mode`` and ``Creation Mode``
+- Support for complex simulations
+- Availability on ``PyPI`` and ``conda``
+
+
+**************
 v0.0.2
 **************
 

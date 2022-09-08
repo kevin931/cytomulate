@@ -8,8 +8,8 @@
 
 | Branch | Release | CI/CD | Documentation | Code Coverage |
 | --- | --- | --- | --- | --- |
-| main | ![Badge1](https://img.shields.io/badge/Version-v0.0.2-success) | ![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=main) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/main/?badge=main) |  [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
-| dev | ![Badge1](https://img.shields.io/badge/Version-v0.0.2-success) |![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=dev) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/dev/?badge=dev) | [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
+| main | ![Badge1](https://img.shields.io/badge/Version-v0.1.0-success) | ![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=main) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/main/?badge=main) |  [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
+| dev | ![Badge1](https://img.shields.io/badge/Version-v0.1.0-success) |![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=dev) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/dev/?badge=dev) | [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
 
 
 ## Installation
@@ -66,7 +66,9 @@ This is it!
 
 ### Working with PyCytoData
 
-As you've seen above, you can use ``PyCytoData`` to download datasets! If you're familiar with that interface and in love with its easy workflow, you can have ``cytomulate`` output a ``PyCytoData`` object as well:
+![PyCytoData](/assets/pycytodata.jpg)
+
+We're fully compatible with ``PyCytoData``! As you've seen above, you can use ``PyCytoData`` to download datasets! If you're familiar with that interface and in love with its easy workflow, you can have ``cytomulate`` output a ``PyCytoData`` object as well:
 
 ```python
 >>> from cytomulate import CreationCytofData
@@ -106,11 +108,23 @@ guidelines, development guides, etc.
 
 Our documentation is built automatically on the cloud! If you wish to build locally, check our detailed guide [here](https://cytomulate.readthedocs.io/en/latest/change/build.html)!
 
-## Latest Release: v0.0.2
+## Latest Release: v0.1.0
 
-- This is the first stable pre-release of cytomulate
-- A fix for critical installation error from **v0.0.1**.
-- Availability on ``PyPI`` and ``conda``.
+Our **FIRST OFFICIAL RELEASE** is here! From now on, all our releases will be supported with our standard support cycle. Here you will find our release notes.
+
+### Changes and New Features
+
+- Added Command-Line Interface with support for complex simulations
+- Improved docstrings
+- Improved documentations with tutorials
+
+### From Pre-release
+
+These are listed for documetation reasons for the first official release.
+
+- Support for ``Emulation Mode`` and ``Creation Mode``
+- Support for complex simulations
+- Availability on ``PyPI`` and ``conda``
 
 
 ## References
