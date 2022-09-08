@@ -73,3 +73,6 @@ Now, you can have the option to output your simulation results in a ``PyCytoData
     ``PyCytoData`` requires ``Python>=3.7``, which is more strict than ``cytomulate``.
     If you are still running an older version, please consider upgrading.
 
+.. image:: ../../../assets/pycytodata.jpg
+   :width: 600
+   :alt: PyCytoData Alliance

@@ -1,18 +1,26 @@
-.. image:: ../../assets/cytomulate.jpg
-   :width: 600
-   :alt: Logo
-
-|
-
 #############################################################
 Cytomulate: Accurate and Efficient Simulation of CyTOF data
 #############################################################
 
 Cytomulate is a package to simulation realistic data for Mass Cytometry or Cytometry by Time-of-Flight (CyTOF).
-We strive to achieve both model-based and real-data-based simulation as solutions to benchmarking,
-method validation, prototyping, and more.
+We support both model-based through **Creation Mode** and real-data-based simulation through **Emulation Mode**.
+Cytomulate serves as solutions to benchmarking, method validation, prototyping, and more. You can easily generate
+realistic and accurately CyTOF simulations within seconds.
 
-When in doubt, Cytomulate it!
+Using our unified framework compatible with `PyCytoData <https://pycytodata.readthedocs.io/en/latest/>`_,
+you can stay within our ecosystem: starting from simulation to precessing, you can then select the best dimension
+reduction method for your dataset and proceed onto other downstream analyses. All you need is a few simple commands!
+For more details, **read our tutorials and documentations linked below!** Or try this example:
+
+.. code-block:: python
+
+   >>> from cytomulate import CreationCytofData
+
+   >>> cytof_data = CreationCytofData()
+   >>> cytof_data.initialize_cell_types()
+   >>> expression_matrices, labels, _, _ = cytof_data.sample(n_samples = 100)
+
+**When in doubt, Cytomulate it!**
 
 .. toctree::
    :maxdepth: 1

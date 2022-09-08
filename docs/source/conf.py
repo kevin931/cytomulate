@@ -20,11 +20,14 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 html_theme = "sphinx_rtd_theme"
+html_logo = "../../assets/cytomulate.jpg"
 html_theme_options = {
     'collapse_navigation': False,
     'sticky_navigation': True,
     'navigation_depth': 4,
     'includehidden': True,
-    'titles_only': True
+    'titles_only': True,
+    'logo_only': True,
+    'display_version': False
 }
 master_doc = "index"

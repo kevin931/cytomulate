@@ -2,8 +2,7 @@
 Development and Roadmap
 #########################
 
-Currently, we're pre-release, meaning that we're still building the package from the ground up!
-However, this doesn't prevent us from sketching out a roadmap our project! Here, you will find
+We're officially releasing our stable releases!! Here, you will find
 what we're planning on doing and how we plan to support our software!
 
 -------
@@ -14,7 +13,7 @@ Project Roadmap and Milestones
 
 Milestones and goals:
 
-* More integration with existing datasets
+* More downstream intergation with ``PyCytoData``
 
 If you don't see what you like on our milestones, feel free to start a discussion post or
 an issue to let us know! 
