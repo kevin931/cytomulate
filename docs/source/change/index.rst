@@ -9,12 +9,28 @@ Latest Release
 ---------------
 
 **************
-v0.0.2
+v0.1.0
 **************
 
-- This is the first stable pre-release of cytomulate
-- A fix for critical installation error from **v0.0.1**.
-- Availability on ``PyPI`` and ``conda``.
+Our **FIRST OFFICIAL RELEASE** is here! From now on, all our
+releases will be supported with our standard support cycle.
+Here you will find our release notes.
+
+Changes and New Features
+--------------------------
+
+- Added Command-Line Interface with support for complex simulations
+- Improved docstrings
+- Improved documentations with tutorials
+
+From Pre-release
+------------------
+
+These are listed for documetation reasons for the first official release.
+
+- Support for ``Emulation Mode`` and ``Creation Mode``
+- Support for complex simulations
+- Availability on ``PyPI`` and ``conda``
 
 .. toctree::
     :maxdepth: 1
