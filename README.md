@@ -29,6 +29,22 @@ conda install -c normalizingflow cytomulate
 ```
 If you wish to use ``PyCytoData``, you can install separately with more instructions [here](https://cytomulate.readthedocs.io/en/dev/installation.html).
 
+### Dependencies
+
+Good news: we didn't have to write `cytomulate` from scratch in assembly language! This means that we will need dependencies to install it. Below is a list of packages that you will need:
+
+- numpy
+- scipy
+- scikit-learn
+- networkx
+- matplotlib
+- tqdm
+
+Most of these are pretty standard! And even better news: the installation instructions should automatically handle all the dependency issues. If you have a problem with installation, let us know and we're happy to help!
+
+While the above are all core dependencies, we highly highly highly highly highly recommend `PyCytoData` as well! You can get all the benefits of an integrated pipeline! But of course, for those of you who don't fancy more dependencies, we understand as well!
+
+
 ## Examples
 
 We have two modes: **Creation Mode** and **Emulation Mode**. The former is probabilistic-model based simulation without the need of datasets; the latter is based on existing datasets to match as much of the existing features as possible. Here, we give two quick examples of how they work.
