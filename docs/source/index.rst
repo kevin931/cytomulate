@@ -36,6 +36,7 @@ For more details, **read our tutorials and documentations linked below!** Or try
    tutorial/cli
    tutorial/complex
    tutorial/visualization
+   tutorial/pycytodata
 
 .. toctree::
    :maxdepth: 1
