@@ -72,7 +72,7 @@ this is because Cytomulate can accomodate multiple samples as indexed by
 the dictionary keys. Of course, you can procceed to extract the expression
 matrix and then work with it in downstream analyses.
 
-``PyCytoData`` Output
+PyCytoData Output
 ------------------------
 
 For those of you who are familiar with ``PyCytoData`` or want a cleaner interface
@@ -82,7 +82,7 @@ to work with, Cytomulate can output a ``PyCytoData`` object.
     
     ``PyCytoData`` is required to be installed for this to work. Since it is an
     optional dependency, read our `Installation Guide <https://cytomulate.readthedocs.io/en/dev/installation.html>`_
-    for further details. Once installed, ``PyCytoData`` is fully compatible.
+    for further details. Once installed, ``PyCytoData`` is fully compatible with ``Cytomulate``
 
 
 To do this, simply use the following method instead:
@@ -237,7 +237,7 @@ Now, let's look at our outputs:
                'Erythroblast'], dtype='<U17')}
 
 
-``PyCytoData`` Output
+PyCytoData Output
 ------------------------
 
 If you have fallen in love with ``PyCytoData``, good news: the emulation mode is compatible with
