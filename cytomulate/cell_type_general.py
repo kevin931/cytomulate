@@ -34,7 +34,9 @@ class GeneralCellType:
         # cell_mean and cell_covariance are used during cell differentiation
         self.cell_mean = np.zeros(self.n_markers)
         self.cell_covariance = np.zeros((self.n_markers, self.n_markers))
-
+        # zero_probabilities is used for adjustment 
+        self.zero_probabilities = np.zeros(n_markers)
+        
     def sample_cell(self,
                     n_samples: int) -> Tuple[np.ndarray, np.ndarray]:
         """Draw random samples from the cell type model
@@ -56,6 +58,20 @@ class GeneralCellType:
         """
         X = np.zeros((n_samples, self.n_markers))
         X[:, :], _ = self.model.sample(n_samples)
-        expressed_index = (X > 0)
         X = np.clip(X, a_min=0, a_max=None)
+        for m in range(self.n_markers):
+            n_zero_exp = int((self.zero_probabilities[m]) * n_samples) 
+            n_zero_present = np.sum(X[:, m]<0.0001)
+            n_zero_needed = np.max([0, n_zero_exp-n_zero_present])
+            non_zero_ind = np.where(X[:,m]>=0.0001)[0]
+            p = 1/(X[non_zero_ind, m])
+            p /= np.sum(p)
+            # if n_zero_needed is 0, this should yield 
+            # [] which when plugged into the next statement
+            # shall change nothing 
+            ind_to_zero = np.random.choice(non_zero_ind, size=n_zero_needed,
+                                            replace=False, p=p)
+            X[ind_to_zero, m] = 0
+                
+        expressed_index = (X > 0)
         return X, expressed_index

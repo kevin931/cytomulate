@@ -4,7 +4,8 @@ from cytomulate.utilities import spline_function, \
     polynomial_function, \
     brownian_bridge_function, \
     trajectories, \
-    univariate_noise_model
+    univariate_noise_model, \
+    estimate_noise_model
 
 
 @pytest.mark.parametrize("x, y, smoothing_factor, t, expected", [
@@ -58,7 +59,7 @@ def test_trajectories(end_values, coefficients, x, y, t, expected):
 
 @pytest.mark.parametrize("kwargs, size, expected", [
     ({"noise_distribution":"normal", "loc":0, "scale":1}, 5, (5, )),
-    ({"noise_distribution":"normal", "loc":0, "scale":1}, (5, 3), (5, 3)),
+    ({"noise_distribution":"half_normal", "loc":0, "scale":1}, (5, 3), (5, 3)),
     ({"noise_distribution":"uniform", "low":0, "high":1}, 5, (5, )),
     ({"noise_distribution":"uniform", "low":0, "high":1}, (5, 3), (5, 3)),
     ({"noise_distribution":"gamma"}, (5, 3), (5, 3)),
@@ -70,3 +71,12 @@ def test_univariate_noise_model(kwargs, size, expected):
     except ValueError:
         assert True
 
+
+@pytest.mark.parametrize("kwargs, size, expected", [
+    (-np.abs(np.random.normal(size=(5,5), loc=0, scale=1)), "half_normal", 5, (5, )),
+    (np.random.uniform(size=(5,5), low=-1, high=0), "uniform", 5, (5, )),
+])
+def test_estimate_noise_model(data, noise_distribution, size, expected):
+    f = estimate_noise_model(data=data,
+                             noise_distribution=noise_distribution)
+    assert f(size).shape == expected

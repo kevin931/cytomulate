@@ -29,7 +29,6 @@ class EmulationCellType(GeneralCellType):
         """
         super().__init__(label, cell_id, n_markers)
 
-
     def fit(self,
             data: np.ndarray,
             max_components: int,
@@ -60,7 +59,10 @@ class EmulationCellType(GeneralCellType):
 
         self.cell_mean = np.mean(data, axis=0)
         self.cell_covariance = np.cov(data, rowvar=False)
-
+        
+        for m in range(self.n_markers):
+            self.zero_probabilities[m] = np.mean(data[:, m] < 0.0001)
+        
         # We use BIC (the smaller the better) to perform model selection
         smallest_bic = np.Inf
         current_bic = 0

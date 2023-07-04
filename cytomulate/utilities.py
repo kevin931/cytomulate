@@ -1,6 +1,7 @@
 # Math computation
 import numpy as np
 from numpy import random as rd
+from scipy.special import erfinv 
 
 # Polynomials and spline functions
 from numpy.polynomial import polynomial
@@ -176,7 +177,7 @@ def trajectories(end_values: Optional[Union[list, np.ndarray]] = None,
     return trajectories_functions
 
 
-def univariate_noise_model(noise_distribution: str = "normal",
+def univariate_noise_model(noise_distribution: str = "uniform",
                            **kwargs) -> Callable:
     """Generate a noise distribution
     This is mainly used to generate background noise in the cytof_data object
@@ -184,7 +185,7 @@ def univariate_noise_model(noise_distribution: str = "normal",
     Parameters
     ----------
     noise_distribution: str
-        Either "normal" or "uniform"
+        Either "normal", "half_normal", or "uniform"
     kwargs:
         extra parameters needed for numpy.random.normal or numpy.random.uniform
 
@@ -193,7 +194,10 @@ def univariate_noise_model(noise_distribution: str = "normal",
     model: Callable
         A RV generator that only takes size as its input
     """
-    if noise_distribution == "normal":
+    if noise_distribution == "half_normal":
+        def model(size):
+            return -np.abs(rd.normal(**kwargs, size=size))
+    elif noise_distribution == "normal":
         def model(size):
             return rd.normal(**kwargs, size=size)
     elif noise_distribution == "uniform":
@@ -203,3 +207,33 @@ def univariate_noise_model(noise_distribution: str = "normal",
         raise ValueError('Unknown noise distribution')
     return model
 
+
+def estimate_noise_model(data: np.ndarray,
+                         noise_distribution: str = "uniform") -> Callable:
+    """Estimate the noise model from data 
+
+    Parameters
+    ----------
+    data : np.ndarray
+        An array of expression matrix 
+    noise_distribution : str, optional
+        Either "half_normal" or "uniform", by default "uniform"
+
+    Returns
+    -------
+    Callable
+        A RV generator that only takes size as its input
+    """
+    para_dict = {"noise_distribution": noise_distribution}
+    if noise_distribution == "uniform":
+        min_val = np.min(data)
+        para_dict["low"] = min_val
+        para_dict["high"] = 0
+        
+    if noise_distribution == "half_normal":
+        m = np.median(data[np.where(data<=0)])
+        scale = np.abs(m/(np.sqrt(2)*erfinv(0.5)))
+        para_dict["loc"] = 0
+        para_dict["scale"] = scale
+    
+    return univariate_noise_model(**para_dict)
