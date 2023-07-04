@@ -63,15 +63,16 @@ class GeneralCellType:
             n_zero_exp = int((self.zero_probabilities[m]) * n_samples) 
             n_zero_present = np.sum(X[:, m]<0.0001)
             n_zero_needed = np.max([0, n_zero_exp-n_zero_present])
-            non_zero_ind = np.where(X[:,m]>=0.0001)[0]
-            p = 1/(X[non_zero_ind, m])
-            p /= np.sum(p)
-            # if n_zero_needed is 0, this should yield 
-            # [] which when plugged into the next statement
-            # shall change nothing 
-            ind_to_zero = np.random.choice(non_zero_ind, size=n_zero_needed,
-                                            replace=False, p=p)
-            X[ind_to_zero, m] = 0
+            if n_zero_needed > 0:
+                non_zero_ind = np.where(X[:,m]>=0.0001)[0]
+                p = 1/(X[non_zero_ind, m])
+                p /= np.sum(p)
+                # if n_zero_needed is 0, this should yield 
+                # [] which when plugged into the next statement
+                # shall change nothing 
+                ind_to_zero = np.random.choice(non_zero_ind, size=n_zero_needed,
+                                                replace=False, p=p)
+                X[ind_to_zero, m] = 0
                 
         expressed_index = (X > 0)
         return X, expressed_index
