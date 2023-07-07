@@ -14,7 +14,7 @@ from cytomulate.emulation.cell_graph import EmulationCellGraph
 from cytomulate.cytof_data_general import GeneralCytofData
 
 # Typing
-from typing import Union, Optional, Callable
+from typing import Union, Optional, Callable, Tuple, List
 
 
 class EmulationCytofData(GeneralCytofData):
@@ -22,7 +22,12 @@ class EmulationCytofData(GeneralCytofData):
                  n_batches: int = 1,
                  background_noise_model: Optional[Union[Callable, dict]] = None,
                  bead_label: Optional[Union[str, int]] = None) -> None:
-        """Initialize the EmulationCytofData object
+        """The Emulation Mode object for Cytomulate.
+        
+        This class serves as a starting point for the Emulation Mode of Cytomulate. The constructor
+        defines the key parameters of the simulation, including the number of batches. Unlike the
+        Creation mode, other parameters such as the number of protein markers are fixed from the
+        dataset rather than user-soecified. The number of cells is defined later at a sampling step.
 
         Parameters
         ----------
@@ -46,8 +51,14 @@ class EmulationCytofData(GeneralCytofData):
                               labels: np.ndarray,
                               max_components: int = 9,
                               min_components: int = 1,
-                              covariance_types: Union[list, tuple] = ("full", "tied", "diag", "spherical")) -> None:
+                              covariance_types: Union[List[str], Tuple[str]] = ("full", "tied", "diag", "spherical")) -> None:
         """Initialize cell type models by fitting Gaussian mixtures
+        
+        This method fits the GMM models for each cell type. Namely, a Gaussian Mixture Model
+        is generated for each cell type at this stage according to the parameters specified.
+        An extensive model selection procedure based on the Bayesian Information Criterion (BIC)
+        is performed when multiple possibilities of components and covariance types are
+        specified. See details in `max_components` and `covariance_types`.
         
         Parameters
         ----------
@@ -56,11 +67,17 @@ class EmulationCytofData(GeneralCytofData):
         labels: np.ndarray
             A vector of cell type labels
         max_components: int
-            Used for Gaussian mixture model selection. The maximal number of components for a Gaussian mixture
+            The maximal number of components for a Gaussian mixture. Used for Gaussian mixture model selection.
+            This must be smaller or equal to the `max_components`. If `max_components` equals `min_components`,
+            the exact number will be used for fitting. Otherwise, a model selection procedure will ensue using
+            Bayesian Information Criterion.
         min_components: int
-            Used for Gaussian mixture model selection. The minimal number of components for a Gaussian mxitrue
+            The minimal number of components for a Gaussian mxitrue. Used for Gaussian mixture model selection.
+            This must be smaller or equal to the `max_components`. See `max_components` for details on model
+            selection.
         covariance_types: list or tuple
-            Used for Gaussian mixture model selection. The candidate types of covariances
+            The candidate types of covariances used for Gaussian mixture model selection. If only one is specified,
+            no model selection will be performed based on the covariance structure.
         """
         self.n_markers = np.shape(expression_matrix)[1]
 
@@ -92,6 +109,9 @@ class EmulationCytofData(GeneralCytofData):
                             graph_topology: str = "forest",
                             **kwargs) -> None:
         """Generate a cell graph as well as differentiation paths
+        
+        This method is part of complex simulation's cellular trajectory simulation. It
+        generates differentiation paths, which will be used at the sampling stage.
 
         Parameters
         ----------
@@ -110,12 +130,20 @@ class EmulationCytofData(GeneralCytofData):
                                  is_random: bool = True) -> None:
         """Generate cell abundances
 
+        Generate the cell abundances for all cell types: namely, the amount
+        of cells in each cell type. This method supports either data-based
+        cell abundance or randomly-generated cell abundance. In the latter
+        case, each cell type's probability can be further randomized.
+
         Parameters
         ----------
         use_observed: bool
             Whether the cell abundances should use the observed ones
         is_random: bool
-            Whether the cell abundances should be randomly generated
+            In the case that `user_obsersed` is `False`, whether the cell abundances'
+            probability should be randomly generated. If `True`, the abundance of each
+            cell type is sampled from a dirichlet distribution. If `False`, then all cell
+            types an have equal probability. 
         """
         if use_observed:
             for b in range(self.n_batches):

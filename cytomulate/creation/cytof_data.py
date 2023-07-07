@@ -23,20 +23,28 @@ class CreationCytofData(GeneralCytofData):
                  n_markers: int = 20,
                  n_trees: int = 2,
                  background_noise_model: Optional[Union[Callable, dict]] = None) -> None:
-        """Initialize the CreationCytofData object
+        """The Creation Mode object for Cytomulate.
+        
+        This class serves as a starting point for the Creation Mode of Cytomulate. The constructor
+        defines the key parameters of the simulation, including the number of batches, cell types,
+        protein markers, and trees. The number of cells is defined later at a sampling step.
 
         Parameters
         ----------
         n_batches: int
-            Number of batches to be simulated
+            Number of batches to be simulated. All other the parameters apply to every batch.
         n_types: int
-            Number of cell types to be simulated
+            Number of cell types to be simulated.
         n_markers: int
-            Number of markers (columns) to be used
+            Number of protein markers (columns) to be simulated.
         n_trees: int
-            Number of trees in the cell graph
+            Number of trees in the cell graph. Each tree encapsulates and represents the relationship
+            between cell types. Note that it is not necessary to add trajectory in complex simulation
+            even though trees are used in general.
         background_noise_model: Callable or dict
-            The function used to generate background noise. It should only take one input: size
+            The function used to generate background noise. It should only take one input: size. In the
+            cases of multiple batches with different noise models, a dictionary with batch number as keys
+            and function as value is used.
         """
         super().__init__(n_batches, background_noise_model)
 
@@ -63,7 +71,10 @@ class CreationCytofData(GeneralCytofData):
                               scale: float = 0.5,
                               n_components: int = 1,
                               variance_mode: float = 0.01) -> None:
-        """Initialize cell type objects
+        """Initialize cell type models.
+        
+        This method initialzes the models for each cell type. Namely, a Gaussian Mixture Model
+        is generated for each cell type at this stage according to the parameters specified.
 
         Parameters
         ----------
@@ -90,6 +101,9 @@ class CreationCytofData(GeneralCytofData):
 
     def generate_cell_graph(self, **kwargs) -> None:
         """Generate cell differentiation paths
+
+        This method is part of complex simulation's cellular trajectory simulation. It
+        generates differentiation paths, which will be used at the sampling stage.
 
         Parameters
         ----------
