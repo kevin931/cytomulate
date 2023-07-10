@@ -23,7 +23,11 @@ class GeneralCytofData:
     def __init__(self,
                  n_batches: int = 1,
                  background_noise_model: Optional[Union[Callable, dict]] = None) -> None:
-        """Initialize the GeneralCytofData object
+        """Initialize the GeneralCytofData object.
+        
+        This is the base class for `CreationCytofData` and `EmulationCytofData`, both of
+        which inherits most of the methods. This class provides functionalities including
+        sampling and complex simulations.
 
         Parameters
         ----------
@@ -53,12 +57,18 @@ class GeneralCytofData:
 
     def generate_cell_abundances(self,
                                  is_random: bool = True) -> None:
-        """Generate cell abundances
+        """Generate cell abundances.
+        
+        This method generates the cell abundane for each batch. The probability
+        of each cell type can be either random or fixed with equal probabilities.
+        See `is_random` parameter for details.
 
         Parameters
         ----------
         is_random: bool
-            Whether the cell abundances should be randomly generated
+            Whether the cell abundances should be randomly generated. If
+            `True`, the abundance of each cell type is sampled from a dirichlet
+            distribution. If `False`, then all cell types an have equal probability. 
         """
         if is_random:
             # If randomly generate cell abundances,
@@ -218,13 +228,16 @@ class GeneralCytofData:
             Number of samples
         cell_abundances: dict or None
             A dictionary whose keys are the cell labels. The corresponding values should be
-            either the actual number of events for each cell type or the probability of each cell type
+            either the actual number of events for each cell type or the probability of each cell type.
+            If this is not provided, the one stored in the object will be used. Defaults to `None`.
         batch: int
-            The index of the batch for which we want to draw samples
+            The index of the batch for which we want to draw samples. Defaults to 0.
         beta_alpha: float or int
-            The alpha parameter of the beta distribution
+            The alpha parameter of the beta distribution, which should be contrained to the positive reals.
+            Defaults to 0.4.
         beta_beta: float or int
-            The beta parameter of the beta distribution
+            The beta parameter of the beta distribution, which should be contrained to the positive reals.
+            Defaults to 1.0.
 
         Returns
         -------
@@ -355,9 +368,11 @@ class GeneralCytofData:
             It can be a plain dictionary whose keys are the cell labels. The corresponding values should be
             either the actual number of events for each cell type or the probability of each cell type
         beta_alpha: float, int, or dict
-            The alpha parameters of the beta distribution
+            The alpha parameters of the beta distribution, which should be contrained to the positive reals.
+            Defaults to 0.4.
         beta_beta: float, int, or dict
-            The beta parameters of the beta distribution
+            The beta parameters of the beta distribution, which should be contrained to the positive reals.
+            Defaults to 0.4.
 
         Returns
         -------

@@ -32,7 +32,8 @@ class GeneralCellGraph:
         cell_types: dict
             A dictionary of CellType objects
         kwargs:
-            Extra parameters needed for non-default path generation algorithms
+            Extra parameters needed for non-default path generation algorithms, which
+            are passed to ``cytomulate.utilities.trajectories``.
         """
         edges = self.graph.edges
         for e in edges:
