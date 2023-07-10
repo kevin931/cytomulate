@@ -34,10 +34,12 @@ For more details, **read our tutorials and documentations linked below!** Or try
    :caption: Tutorial
 
    tutorial/emulation
+   tutorial/creation
    tutorial/cli
    tutorial/complex
    tutorial/visualization
    tutorial/pycytodata
+   tutorial/benchmark
 
 .. toctree::
    :maxdepth: 1
