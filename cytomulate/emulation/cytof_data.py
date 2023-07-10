@@ -143,7 +143,13 @@ class EmulationCytofData(GeneralCytofData):
             In the case that `user_obsersed` is `False`, whether the cell abundances'
             probability should be randomly generated. If `True`, the abundance of each
             cell type is sampled from a dirichlet distribution. If `False`, then all cell
-            types an have equal probability. 
+            types an have equal probability.
+            
+        Note
+        -----
+        If you wish to use the default observed cell abundance from the data,
+        it is not necessary to call this method. Otherwise, you should always
+        set ``used_observed`` to ``False``.
         """
         if use_observed:
             for b in range(self.n_batches):

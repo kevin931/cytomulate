@@ -79,13 +79,18 @@ class CreationCytofData(GeneralCytofData):
         Parameters
         ----------
         L: int
-            Number of levels of expressions
+            Number of levels of expressions. The levels are used to differentiate between cell types
+            whose expressions for the same marker may be different. We recommend at least 2, but
+            not too many.
         scale: float
-            The scale parameter used in generating expression levels
+            The scale parameter used in generating expression levels' mean, which comes from a 
+            truncated normal distribution on the positive reals. The ``scale`` is the standard the
+            deviation of the distribution. When the scale is large, the levels of expressions
+            are more spead out, and vice versa.
         n_components: int
-            Number of components in a GMM
+            Number of components in a GMM.
         variance_mode: float
-            The mode of the variance of the inverse wishart distribution
+            The mode of the variance of the inverse wishart distribution.
         """
         # We first generate high expression levels and low expression levels
         # Truncated normals are used to ensure the ordering
