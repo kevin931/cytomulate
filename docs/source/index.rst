@@ -33,6 +33,7 @@ For more details, **read our tutorials and documentations linked below!** Or try
    :maxdepth: 1
    :caption: Tutorial
 
+   tutorial/emulation
    tutorial/cli
    tutorial/complex
    tutorial/visualization
