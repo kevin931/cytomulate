@@ -48,7 +48,7 @@ Selected References
 - Abe K, Minoura K, Maeda Y, Nishikawa H, Shimamura T. Model-based clustering for flow and mass cytometry data with clinical information. BMC Bioinformatics. 2020 Sep 17;21(Suppl 13):393.
 - Ji D, Nalisnick E, Qian Y, Scheuermann RH, Smyth P. Bayesian trees for automated cytometry data analysis. BioRxiv. 2018 Sep 19;
 - Dai Y, Xu A, Li J, Wu L, Yu S, Chen J, et al. CytoTree: an R/Bioconductor package for analysis and visualization of flow and mass cytometry data. BMC Bioinformatics. 2021 Mar 22;22(1):138.
-- Wang K, Yang Y, Wu F, Song B, Wang X, Wang T. A Comparison of Dimension Reduction Methods for Cytometry by Time-of-Flight Data. BioRxiv. 2022 Apr 27;
+- Wang, K., Yang, Y., Wu, F., Song, B., Wang, X., & Wang, T. (2023). Comparative analysis of dimension reduction methods for cytometry by time-of-flight data. Nature Communications, 14(1), 1836.
 - Laurens  van der M, Geoffrey H. Visualizing Data using t-SNE. J Mach Learn Res. 2008;
 - McInnes L, Healy J, Melville J. UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction. arXiv. 2018;
 - Hastie T, Tibshirani R, Friedman J. The Elements of Statistical Learning: Data Mining, Inference, and Prediction, Second Edition. Springer; 2008.
