@@ -231,10 +231,10 @@ matrix), you can simulate with the following:
 
     >>> cytof_data = EmulationCytofData(n_batches = 1)
     >>> cytof_data.initialize_cell_types(expression_matrix = dataset,
-                                         labels = cell_types,
-                                         max_components = 3,
-                                         min_components = 3,
-                                         covariance_types = "full")
+    ...                                  labels = cell_types,
+    ...                                  max_components = 3,
+    ...                                  min_components = 3,
+    ...                                  covariance_types = "full")
 
 which tells Cytomulate to use 3 components exactly with a full covariance matrix.
 
@@ -263,10 +263,10 @@ matrix, you can run the following code:
 
     >>> cytof_data = EmulationCytofData(n_batches = 1)
     >>> cytof_data.initialize_cell_types(expression_matrix = dataset,
-                                         labels = cell_types,
-                                         max_components = 5,
-                                         min_components = 1,
-                                         covariance_types = "full")
+    ...                                  labels = cell_types,
+    ...                                  max_components = 5,
+    ...                                  min_components = 1,
+    ...                                  covariance_types = "full")
 
 
 Or if you wish to fix the number of components while selecting the type of covariance matrices,
@@ -276,10 +276,10 @@ run this instead:
 
     >>> cytof_data = EmulationCytofData(n_batches = 1)
     >>> cytof_data.initialize_cell_types(expression_matrix = dataset,
-                                         labels = cell_types,
-                                         max_components = 5,
-                                         min_components = 5,
-                                         covariance_types = ("full", "tied", "diag", "spherical"))
+    ...                                  labels = cell_types,
+    ...                                  max_components = 5,
+    ...                                  min_components = 5,
+    ...                                  covariance_types = ("full", "tied", "diag", "spherical"))
 
 Note that as long as ``max_component == min_components``, the specified number will be used. Also,
 you can specify a subset of teh ``covariance_types`` without having to run all four.
@@ -331,10 +331,10 @@ By default, we learn from the dataset itself. So if you use the following snippe
 
     >>> cytof_data = EmulationCytofData(n_batches = 1)
     >>> cytof_data.initialize_cell_types(expression_matrix = dataset,
-                                         labels = cell_types,
-                                         max_components = 9,
-                                         min_components = 1,
-                                         covariance_types = ("full", "tied", "diag", "spherical"))
+    ...                                  labels = cell_types,
+    ...                                  max_components = 9,
+    ...                                  min_components = 1,
+    ...                                  covariance_types = ("full", "tied", "diag", "spherical"))
     >>> expression_matrices, labels, _, _ = cytof_data.sample(n_samples = 100)
 
 Cytomulate will estimate the proportion of cells from real data. This is generally not affected by other
@@ -359,10 +359,10 @@ snippet:
 
     >>> cytof_data = EmulationCytofData(n_batches = 1)
     >>> cytof_data.initialize_cell_types(expression_matrix = dataset,
-                                         labels = cell_types,
-                                         max_components = 9,
-                                         min_components = 1,
-                                         covariance_types = ("full", "tied", "diag", "spherical"))
+    ...                                  labels = cell_types,
+    ...                                  max_components = 9,
+    ...                                  min_components = 1,
+    ...                                  covariance_types = ("full", "tied", "diag", "spherical"))
     >>> cytof_data.generate_cell_abundance(use_observed = False,
                                            is_random = False)
 
@@ -378,10 +378,10 @@ can be generated with the Dirichlet distribution by simply setting ``is_random``
 
     >>> cytof_data = EmulationCytofData(n_batches = 1)
     >>> cytof_data.initialize_cell_types(expression_matrix = dataset,
-                                         labels = cell_types,
-                                         max_components = 9,
-                                         min_components = 1,
-                                         covariance_types = ("full", "tied", "diag", "spherical"))
+    ...                                  labels = cell_types,
+    ...                                  max_components = 9,
+    ...                                  min_components = 1,
+    ...                                  covariance_types = ("full", "tied", "diag", "spherical"))
     >>> cytof_data.generate_cell_abundance(use_observed = False,
                                            is_random = True)
 
