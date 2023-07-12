@@ -3,7 +3,7 @@ Benchmark Analyses
 ######################
 
 Since Cytomulate is open source, we also would like to share our pipelines for obtaining the benchmark
-results in `our paper <https://doi.org/10.1101/2022.04.26.489549>`_. Here, we write a brief tutorial
+results in `our paper <https://doi.org/10.1101/2022.06.14.496200>`_. Here, we write a brief tutorial
 on how to use the codes and how to benefit from it!
 
 --------------------------------
