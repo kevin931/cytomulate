@@ -8,8 +8,11 @@ from numpy.polynomial import polynomial
 from scipy.interpolate import Akima1DInterpolator
 from scipy.interpolate import UnivariateSpline
 
+# Warnings
+import warnings
+
 # Typing
-from typing import Union, Optional, List, Tuple, Callable
+from typing import Union, Optional, List, Callable
 
 
 def spline_function(x: np.ndarray,
@@ -177,10 +180,13 @@ def trajectories(end_values: Optional[Union[list, np.ndarray]] = None,
     return trajectories_functions
 
 
-def univariate_noise_model(noise_distribution: str = "uniform",
+def univariate_noise_model(noise_distribution: Optional[str] = None,
                            **kwargs) -> Callable:
     """Generate a noise distribution
-    This is mainly used to generate background noise in the cytof_data object
+    This is mainly used to generate background noise in the cytof_data object.
+    
+    .. versionchanged:: 0.2.0 The default `noise_distribution` is changed to `uniform`. If no user-specified value is provided, a warning is given to inform users of the change.
+    .. versionadded:: 0.2.0 Added the `half_normal` option to the `noise_distribution` parameter.
     
     Parameters
     ----------
@@ -194,6 +200,10 @@ def univariate_noise_model(noise_distribution: str = "uniform",
     model: Callable
         A RV generator that only takes size as its input
     """
+    if noise_distribution is None:
+        warnings.warn("The default `noise_distribution` is now changed from `normal` to `uniform` as of v0.2.0. Please see the release notes for details.")
+        noise_distribution = "uniform"
+        
     if noise_distribution == "half_normal":
         def model(size):
             return -np.abs(rd.normal(**kwargs, size=size))
@@ -210,7 +220,9 @@ def univariate_noise_model(noise_distribution: str = "uniform",
 
 def estimate_noise_model(data: np.ndarray,
                          noise_distribution: str = "uniform") -> Callable:
-    """Estimate the noise model from data 
+    """Estimate the noise model from data
+    
+    .. versionadded:: 0.2.0
 
     Parameters
     ----------

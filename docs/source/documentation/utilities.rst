@@ -7,3 +7,4 @@ Module: utilities
 .. autofunction:: brownian_bridge_function
 .. autofunction:: trajectories
 .. autofunction:: univariate_noise_model
+.. autofunction:: estimate_noise_model

@@ -70,7 +70,13 @@ def test_univariate_noise_model(kwargs, size, expected):
         assert f(size).shape == expected
     except ValueError:
         assert True
+        
 
+def test_univariate_noise_model_warning():
+    with pytest.warns(UserWarning) as record:
+        f = univariate_noise_model()
+        assert str(record[0].message) == "The default `noise_distribution` is now changed from `normal` to `uniform` as of v0.2.0. Please see the release notes for details."
+    
 
 @pytest.mark.parametrize("data, noise_distribution, size, expected", [
     (-np.abs(np.random.normal(size=(5,5), loc=0, scale=1)), "half_normal", 5, (5, )),
