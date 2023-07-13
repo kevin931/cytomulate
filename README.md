@@ -8,8 +8,8 @@
 
 | Branch | Release | CI/CD | Documentation | Code Coverage |
 | --- | --- | --- | --- | --- |
-| main | ![Badge1](https://img.shields.io/badge/Version-v0.1.1-success) | ![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=main) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/main/?badge=main) |  [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
-| dev | ![Badge1](https://img.shields.io/badge/Version-v0.1.1-success) |![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=dev) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/dev/?badge=dev) | [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
+| main | ![Badge1](https://img.shields.io/badge/Version-v0.2.0-success) | ![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=main) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/main/?badge=main) |  [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
+| dev | ![Badge1](https://img.shields.io/badge/Version-v0.2.0-success) |![Tests](https://github.com/kevin931/cytomulate/actions/workflows/ci.yml/badge.svg?branch=dev) | [![Documentation Status](https://readthedocs.org/projects/cytomulate/badge/?version=dev)](https://cytomulate.readthedocs.io/en/dev/?badge=dev) | [![codecov](https://codecov.io/gh/kevin931/cytomulate/branch/dev/graph/badge.svg?token=F5H0QTXGMR)](https://codecov.io/gh/kevin931/cytomulate) |
 
 
 ## Installation
@@ -124,16 +124,24 @@ guidelines, development guides, etc.
 
 Our documentation is built automatically on the cloud! If you wish to build locally, check our detailed guide [here](https://cytomulate.readthedocs.io/en/latest/change/build.html)!
 
-## Latest Release: v0.1.1
+## Latest Release: v0.2.0
 
-This is our first maintenance update to be released to v0.1.x,
-and we are packing in lots of enhancements! All changes are
-regarding documentations!
+Welcome to Cytomulate v0.2.0! Hooray! We are not only bringing documentation enhancements, but we
+are also introducing a new feature for more accurate simulations!
+
+### Changes and New Features
+- The `utilities.univariate_noise_model()` method:
+    - Added `half_normal` option to the `noise_distribution` parameter
+    - Changed the default `noise_distribution` to `uniform` (This is a **breaking change** because of the benefits to simulated results).
+    - A warning is given when no user-specified `noise_distribution` is supplied to warn the breaking change
+- Added the `utilities.estimate_noise_model()` method to estimate the noise present in the data
+- Added a built-in estimation procedure to match the amount of zeroes observed in the dataset
 
 ### Improvements
-- Added 4 more detailed tutorials on [our documentation website](https://cytomulate.readthedocs.io)
+- Added 4 more detailed tutorials on `our documentation website <https://cytomulate.readthedocs.io>`_
 - Improved docstrings with more details on key parameters
 - Updated the lastest references and links
+
 
 ## References
 
