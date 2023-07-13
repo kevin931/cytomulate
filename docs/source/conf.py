@@ -3,9 +3,9 @@ import sys
 sys.path.insert(0, os.path.abspath('../../'))
 
 project = 'cytomulate'
-copyright = '2022, cytomulate developers'
+copyright = '2022-2023, cytomulate developers'
 author = 'cytomulate developers'
-release = '0.1.0'
+release = '0.1.1'
 
 extensions = [
     "sphinx_rtd_theme",
