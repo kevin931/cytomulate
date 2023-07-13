@@ -12,16 +12,13 @@ v0.1.1
 
 This is our first maintenance update to be released to v0.1.x,
 and we are packing in lots of enhancements! All changes are
-regarding documentationo 
+regarding documentations!
 
 Improvements
 ---------------
 - Added 4 more detailed tutorials on `our documentation website <https://cytomulate.readthedocs.io>`_
 - Improved docstrings with more details on key parameters
 - Updated the lastest references and links
-
-
-
 
 **************
 v0.1.0

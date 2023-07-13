@@ -128,13 +128,12 @@ Our documentation is built automatically on the cloud! If you wish to build loca
 
 This is our first maintenance update to be released to v0.1.x,
 and we are packing in lots of enhancements! All changes are
-regarding documentationo 
+regarding documentations!
 
 ### Improvements
 - Added 4 more detailed tutorials on [our documentation website](https://cytomulate.readthedocs.io)
 - Improved docstrings with more details on key parameters
 - Updated the lastest references and links
-
 
 ## References
 
