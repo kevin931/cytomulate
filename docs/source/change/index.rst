@@ -14,7 +14,7 @@ v0.1.1
 
 This is our first maintenance update to be released to v0.1.x,
 and we are packing in lots of enhancements! All changes are
-regarding documentationo 
+regarding documentations!
 
 Improvements
 ---------------
