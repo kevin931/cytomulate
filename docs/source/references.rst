@@ -3,7 +3,7 @@ References
 ################
 
 Here, you will find a list of relevant references. For a complete list, you can
-read `our paper <https://doi.org/10.1101/2022.04.26.489549>`_.
+read `our paper <https://doi.org/10.1186/s13059-023-03099-1>`_.
 
 -----------------------
 
@@ -15,16 +15,18 @@ If you decide to cytomulate it in your package, citing our paper is highly appre
 
 .. code-block:: text
 
-    @article {Yang2022.06.14.496200,
-        author = {Yang, Yuqiu and Wang, Kaiwen and Lu, Zeyu and Wang, Tao and Wang, Xinlei},
-        title = {Cytomulate: Accurate and Efficient Simulation of CyTOF data},
-        elocation-id = {2022.06.14.496200},
-        year = {2022},
-        doi = {10.1101/2022.06.14.496200},
-        publisher = {Cold Spring Harbor Laboratory},
-        URL = {https://www.biorxiv.org/content/early/2022/06/16/2022.06.14.496200},
-        eprint = {https://www.biorxiv.org/content/early/2022/06/16/2022.06.14.496200.full.pdf},
-        journal = {bioRxiv}
+    @article{Yang2023,
+        title = {Cytomulate: accurate and efficient simulation of CyTOF data},
+        volume = {24},
+        ISSN = {1474-760X},
+        url = {http://dx.doi.org/10.1186/s13059-023-03099-1},
+        DOI = {10.1186/s13059-023-03099-1},
+        number = {1},
+        journal = {Genome Biology},
+        publisher = {Springer Science and Business Media LLC},
+        author = {Yang,  Yuqiu and Wang,  Kaiwen and Lu,  Zeyu and Wang,  Tao and Wang,  Xinlei},
+        year = {2023},
+        month = nov 
     }
 
 
